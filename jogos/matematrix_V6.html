@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>MATEMATRIX — Rei da Cidade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070912;
+  --neon-cyan:#2FF3E0;
+  --neon-magenta:#FF2E9A;
+  --neon-gold:#FFD447;
+  --neon-red:#FF3B45;
+  --neon-purple:#9D4CFF;
+  --ink:#EAF0FF;
+  --dim:#7C8AB5;
+  --panel:#0f1730ee;
+  --panel-border:#2a3a6b;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:'Rajdhani',sans-serif; overflow:hidden; user-select:none;}
+.pixel{font-family:'Press Start 2P',monospace;}
+#app{position:relative;width:100%;height:100vh;}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% -10%, #17224a 0%, var(--bg) 60%);}
+.screen.active{display:flex;}
+.scanlines{position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 1px, transparent 2px, transparent 3px);
+  mix-blend-mode:overlay; opacity:.5; z-index:50;}
+.vignette{position:absolute;inset:0;pointer-events:none;z-index:49;
+  box-shadow: inset 0 0 160px 60px #000000cc;}
+
+/* ---------- Title ---------- */
+#title-screen h1{font-size:2.6rem;letter-spacing:2px;text-align:center;margin:0 0 6px;
+  color:var(--neon-cyan); text-shadow:0 0 10px var(--neon-cyan),0 0 30px #0ff8,4px 4px 0 var(--neon-magenta);}
+#title-screen .sub{font-size:.85rem;color:var(--neon-gold);letter-spacing:3px;margin-bottom:40px;text-shadow:0 0 8px #ffd44780;}
+.city-skyline{position:absolute;bottom:0;left:0;width:100%;height:40%;opacity:.65;z-index:0;pointer-events:none;}
+.menu-btn{font-family:'Press Start 2P',monospace;font-size:.75rem;color:var(--ink);
+  background:linear-gradient(180deg,#1a2550,#0c1230); border:2px solid var(--neon-cyan);
+  padding:16px 28px;margin:8px;border-radius:6px;cursor:pointer;letter-spacing:1px;
+  box-shadow:0 0 0 rgba(47,243,224,0); transition:.15s;}
+.menu-btn:hover{box-shadow:0 0 18px var(--neon-cyan); transform:translateY(-2px);}
+.menu-btn.magenta{border-color:var(--neon-magenta);}
+.menu-btn.magenta:hover{box-shadow:0 0 18px var(--neon-magenta);}
+.menu-btn.small{font-size:.6rem;padding:10px 16px;}
+.menu-col{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;}
+
+/* ---------- generic panel ---------- */
+.panel{background:var(--panel);border:2px solid var(--panel-border);border-radius:10px;
+  padding:22px 26px;max-width:560px;width:92vw;max-height:88vh;overflow:auto;
+  box-shadow:0 0 40px #000a, inset 0 0 30px #0006;}
+.panel h2{font-family:'Press Start 2P';font-size:1rem;color:var(--neon-gold);margin:0 0 16px;text-align:center;}
+.panel label{display:block;font-size:.95rem;color:var(--dim);margin:12px 0 4px;}
+.panel input[type=text], .panel select{width:100%;padding:10px;border-radius:6px;border:1px solid var(--panel-border);
+  background:#080e1f;color:var(--ink);font-size:1rem;font-family:'Rajdhani';}
+.row{display:flex;gap:8px;flex-wrap:wrap;}
+.chip{border:1px solid var(--panel-border);padding:6px 12px;border-radius:20px;font-size:.85rem;cursor:pointer;color:var(--dim);}
+.chip.sel{border-color:var(--neon-cyan);color:var(--neon-cyan);background:#0ff1}
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin-top:10px;}
+th,td{border-bottom:1px solid var(--panel-border);padding:6px 8px;text-align:left;}
+th{color:var(--neon-gold);}
+.back-link{position:fixed;top:14px;left:14px;z-index:60;font-size:1.6rem;color:var(--ink);cursor:pointer;opacity:.7;}
+.back-link:hover{opacity:1;}
+.code-badge{font-family:'Press Start 2P';color:var(--neon-gold);background:#000a;border:1px dashed var(--neon-gold);
+  padding:8px 12px;display:inline-block;border-radius:6px;letter-spacing:2px;}
+
+/* ---------- HUD ---------- */
+#hud{position:absolute;top:0;left:0;width:100%;padding:10px 16px;display:flex;justify-content:space-between;
+  z-index:20;pointer-events:none;font-family:'Press Start 2P';font-size:.6rem;}
+.hud-block{background:#0009;border:1px solid var(--panel-border);border-radius:6px;padding:6px 10px;display:flex;align-items:center;gap:8px;}
+#coins{color:var(--neon-gold);}
+#phaseLabel{color:var(--neon-cyan);}
+#gunLabel{color:var(--neon-purple);}
+#progWrap{position:absolute;top:44px;left:50%;transform:translateX(-50%);width:min(46vw,340px);height:8px;
+  background:#0009;border:1px solid var(--panel-border);border-radius:4px;overflow:hidden;z-index:20;}
+#progBar{height:100%;width:0%;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-magenta));}
+#bossBarWrap{position:absolute;top:44px;left:50%;transform:translateX(-50%);width:min(70vw,520px);height:14px;
+  background:#0009;border:1px solid var(--neon-red);border-radius:4px;overflow:hidden;z-index:20;display:none;}
+#bossBar{height:100%;width:100%;background:linear-gradient(90deg,#FF3B45,#FF2E9A);}
+#bossLabel{position:absolute;top:60px;left:50%;transform:translateX(-50%);font-family:'Press Start 2P';font-size:.55rem;
+  color:var(--neon-red);z-index:20;display:none;}
+
+#gameCanvas{display:block;background:#0a0f1f;width:100%;height:100%;}
+
+/* ---------- touch controls ---------- */
+#touchControls{position:absolute;bottom:0;left:0;width:100%;z-index:30;display:none;justify-content:space-between;
+  padding:18px;pointer-events:none;}
+#touchControls.show{display:flex;}
+.tbtn{pointer-events:auto;width:64px;height:64px;border-radius:50%;background:#0f1730cc;border:2px solid var(--neon-cyan);
+  color:var(--neon-cyan);font-size:1.4rem;display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P';
+  user-select:none;}
+.tbtn:active{background:#2FF3E055;}
+.tgroup{display:flex;gap:14px;}
+.tbtn.action{border-color:var(--neon-magenta);color:var(--neon-magenta);}
+.tbtn.jump{border-color:var(--neon-gold);color:var(--neon-gold);}
+
+/* ---------- jump-challenge banner (in-game, non blocking) ---------- */
+#jumpBanner{position:absolute;top:70px;left:50%;transform:translateX(-50%);z-index:25;display:none;
+  background:#050a1acc;border:2px solid var(--neon-cyan);border-radius:10px;padding:10px 18px;
+  max-width:90vw;text-align:center;pointer-events:none;}
+#jumpBanner.show{display:block;}
+#jumpBanner .tag{font-family:'Press Start 2P';font-size:.55rem;color:var(--neon-magenta);letter-spacing:1px;}
+#jumpBanner .title{font-family:'Press Start 2P';font-size:.75rem;color:var(--neon-gold);margin-top:6px;line-height:1.6;}
+#jumpBanner .progress{font-family:'Press Start 2P';font-size:.5rem;color:var(--neon-cyan);margin-top:8px;letter-spacing:1px;}
+#jumpFeedback{position:absolute;top:150px;left:50%;transform:translateX(-50%);z-index:26;font-family:'Press Start 2P';
+  font-size:.7rem;padding:8px 14px;border-radius:8px;display:none;pointer-events:none;}
+#jumpFeedback.ok{display:block;background:#0c3020ee;color:#4CFF7B;border:1px solid #4CFF7B;}
+#jumpFeedback.bad{display:block;background:#3a0c10ee;color:#ff8b90;border:1px solid var(--neon-red);}
+
+/* ---------- blocking overlay (equation strategies, results) ---------- */
+#challengeOverlay{position:absolute;inset:0;background:#000000d9;z-index:40;display:none;align-items:center;justify-content:center;}
+#challengeOverlay.active{display:flex;}
+.chal-panel{width:min(92vw,640px);max-height:90vh;overflow:auto;background:linear-gradient(180deg,#111a3a,#070a17);
+  border:2px solid var(--neon-cyan);border-radius:12px;padding:24px;box-shadow:0 0 40px #2ff3e055;}
+.chal-tag{font-family:'Press Start 2P';font-size:.6rem;color:var(--neon-magenta);letter-spacing:2px;}
+.chal-title{font-family:'Press Start 2P';font-size:.95rem;color:var(--neon-gold);margin:10px 0 16px;line-height:1.6;}
+.opt-btn{display:block;width:100%;text-align:left;background:#0c1430;border:1px solid var(--panel-border);color:var(--ink);
+  padding:12px 14px;border-radius:8px;margin:8px 0;cursor:pointer;font-size:1.05rem;transition:.12s;}
+.opt-btn:hover{border-color:var(--neon-cyan);}
+.feedback{margin-top:10px;font-size:.95rem;padding:10px;border-radius:8px;}
+.feedback.ok{background:#0c3020;color:#4CFF7B;}
+.strategy-box{background:#08102a;border:1px dashed var(--panel-border);border-radius:8px;padding:12px;margin-top:10px;font-size:.9rem;color:var(--dim);}
+.strategy-box b{color:var(--neon-cyan);}
+
+#toast{position:absolute;top:90px;left:50%;transform:translateX(-50%);z-index:35;font-family:'Press Start 2P';
+  font-size:.7rem;color:var(--neon-gold);text-shadow:0 0 8px #FFD44799;opacity:0;transition:.3s;pointer-events:none;text-align:center;}
+#toast.show{opacity:1;top:70px;}
+::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:var(--panel-border);border-radius:4px;}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<!-- ============ TITLE ============ -->
+<div class="screen active" id="title-screen">
+  <svg class="city-skyline" viewBox="0 0 800 200" preserveAspectRatio="none">
+    <rect x="0" y="120" width="60" height="80" fill="#101a3a"/><rect x="70" y="90" width="40" height="110" fill="#0d1530"/>
+    <rect x="120" y="140" width="70" height="60" fill="#131f45"/><rect x="200" y="70" width="50" height="130" fill="#0d1530"/>
+    <rect x="260" y="110" width="90" height="90" fill="#101a3a"/><rect x="360" y="50" width="45" height="150" fill="#131f45"/>
+    <rect x="420" y="100" width="60" height="100" fill="#0d1530"/><rect x="490" y="130" width="80" height="70" fill="#101a3a"/>
+    <rect x="580" y="80" width="50" height="120" fill="#131f45"/><rect x="640" y="120" width="70" height="80" fill="#0d1530"/>
+    <rect x="720" y="60" width="55" height="140" fill="#101a3a"/>
+    <g fill="#2FF3E0" opacity="0.55">
+      <rect x="14" y="140" width="6" height="6"/><rect x="30" y="160" width="6" height="6"/><rect x="130" y="160" width="6" height="6"/>
+      <rect x="210" y="90" width="6" height="6"/><rect x="380" y="70" width="6" height="6"/><rect x="440" y="130" width="6" height="6"/>
+      <rect x="510" y="150" width="6" height="6"/><rect x="600" y="100" width="6" height="6"/><rect x="660" y="150" width="6" height="6"/>
+      <rect x="740" y="90" width="6" height="6"/>
+    </g>
+  </svg>
+  <div class="menu-col">
+    <h1 class="pixel">MATEMATRIX</h1>
+    <div class="sub pixel">O REI DA CIDADE</div>
+    <button class="menu-btn" onclick="goStudentEntry()">▶ JOGAR (ALUNOS)</button>
+    <button class="menu-btn magenta" onclick="showScreen('teacher-login')">🛠 ÁREA DO PROFESSOR</button>
+  </div>
+</div>
+
+<!-- ============ STUDENT ENTRY ============ -->
+<div class="screen" id="student-entry">
+  <span class="back-link" onclick="showScreen('title-screen')">←</span>
+  <div class="panel">
+    <h2>ENTRAR NA MISSÃO</h2>
+    <label>Código da atividade (dado pelo professor)</label>
+    <input type="text" id="inpAtivCode" placeholder="Ex: MTX-7F3K" style="text-transform:uppercase">
+    <label>Nome da equipe</label>
+    <input type="text" id="inpTeamName" placeholder="Ex: Ciborgues do 9ºA">
+    <div style="margin-top:6px;font-size:.8rem;color:var(--dim)">Sem código? Jogue o modo livre com as 10 fases completas.</div>
+    <div class="row" style="margin-top:16px;justify-content:center;">
+      <button class="menu-btn small" onclick="startWithCode()">USAR CÓDIGO</button>
+      <button class="menu-btn small magenta" onclick="startFreeMode()">MODO LIVRE</button>
+    </div>
+    <div id="entryMsg" style="color:var(--neon-red);margin-top:10px;font-size:.85rem;"></div>
+  </div>
+</div>
+
+<!-- ============ CONTROLS SELECT ============ -->
+<div class="screen" id="controls-select">
+  <span class="back-link" onclick="showScreen('student-entry')">←</span>
+  <div class="panel">
+    <h2>ESCOLHA O CONTROLE</h2>
+    <div class="row" style="justify-content:center;">
+      <div class="chip" id="ctrlKeyboard" onclick="setControlMode('keyboard')">⌨ Teclado</div>
+      <div class="chip" id="ctrlGamepad" onclick="setControlMode('gamepad')">🎮 Controle Xbox</div>
+      <div class="chip" id="ctrlTouch" onclick="setControlMode('touch')">👆 Tela (Tablet)</div>
+    </div>
+    <div class="strategy-box" style="margin-top:18px;">
+      <b>Teclado:</b> ←/→ ou A/D mover · ESPAÇO/W pular · X atirar<br><br>
+      <b>Controle Xbox:</b> Direcional/Analógico mover · A pular · X ou RB atirar<br><br>
+      <b>Tela:</b> botões de seta, pulo e tiro aparecem na tela do tablet.
+    </div>
+    <div class="strategy-box">
+      <b>Dica:</b> quando aparecer uma pergunta, plataformas com respostas surgem no cenário.
+      Pule e caia em cima da plataforma com a resposta certa para avançar!
+    </div>
+    <div class="strategy-box">
+      <b>Dica:</b> durante a fase de combate, procure o ícone dourado ⚡ flutuando no cenário — ele é um upgrade de tiro que muda a aparência e o poder do seu personagem!
+    </div>
+    <div style="text-align:center;margin-top:18px;">
+      <button class="menu-btn small" onclick="confirmControlsAndStart()">CONFIRMAR E COMEÇAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAME SCREEN ============ -->
+<div class="screen" id="game-screen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="hud">
+    <div class="hud-block" id="lives"></div>
+    <div class="hud-block" id="phaseLabel">FASE 1/10</div>
+    <div class="hud-block" id="gunLabel">🔫 NÍVEL 1</div>
+    <div class="hud-block" id="coins">🪙 0</div>
+  </div>
+  <div id="progWrap"><div id="progBar"></div></div>
+  <div id="bossLabel">CHEFE: NÚCLEO MATEMATRIX</div>
+  <div id="bossBarWrap"><div id="bossBar"></div></div>
+  <div id="toast"></div>
+  <div id="jumpBanner"><div class="tag" id="jumpTag"></div><div class="title" id="jumpTitle"></div><div class="progress" id="jumpProgress"></div></div>
+  <div id="jumpFeedback"></div>
+  <div id="touchControls">
+    <div class="tgroup"><div class="tbtn" id="btnLeft">◀</div><div class="tbtn" id="btnRight">▶</div></div>
+    <div class="tgroup"><div class="tbtn jump" id="btnJump">⤒</div><div class="tbtn action" id="btnShoot">●</div></div>
+  </div>
+  <div id="challengeOverlay"><div class="chal-panel" id="chalPanel"></div></div>
+</div>
+
+<!-- ============ RESULT SCREEN ============ -->
+<div class="screen" id="result-screen">
+  <div class="panel" style="text-align:center;">
+    <h2 id="resultTitle">FIM DE JOGO</h2>
+    <div id="resultBody" style="font-size:1.1rem;line-height:2;"></div>
+    <button class="menu-btn small" onclick="showScreen('title-screen')" style="margin-top:16px;">MENU PRINCIPAL</button>
+  </div>
+</div>
+
+<!-- ============ TEACHER LOGIN ============ -->
+<div class="screen" id="teacher-login">
+  <span class="back-link" onclick="showScreen('title-screen')">←</span>
+  <div class="panel">
+    <h2>PAINEL DO PROFESSOR</h2>
+    <label>Seu nome</label>
+    <input type="text" id="teacherName" placeholder="Ex: Prof. Ana">
+    <div style="text-align:center;margin-top:18px;">
+      <button class="menu-btn small" onclick="enterTeacherPanel()">ENTRAR</button>
+    </div>
+    <div style="font-size:.75rem;color:var(--dim);margin-top:14px;">
+      Não é necessária senha — este é um painel simplificado para uso em sala. Os dados ficam salvos neste dispositivo/navegador do jogo.
+    </div>
+  </div>
+</div>
+
+<!-- ============ TEACHER PANEL ============ -->
+<div class="screen" id="teacher-panel">
+  <span class="back-link" onclick="showScreen('title-screen')">←</span>
+  <div class="panel" style="max-width:760px;">
+    <h2>MINHAS TURMAS</h2>
+    <div id="storageNotice" style="font-size:.78rem;color:var(--dim);border:1px dashed var(--panel-border);border-radius:8px;padding:8px 10px;margin-bottom:12px;"></div>
+    <div class="row" style="margin-bottom:10px;">
+      <input type="text" id="newTurmaName" placeholder="Nome da turma (ex: 9ºA - Manhã)" style="flex:1;">
+      <button class="menu-btn small" onclick="criarTurma()">+ TURMA</button>
+    </div>
+    <div id="turmaList"></div>
+    <div id="turmaDetail" style="display:none;margin-top:20px;border-top:1px solid var(--panel-border);padding-top:16px;">
+      <h2 id="turmaDetailName" style="font-size:.85rem;"></h2>
+      <label>Nova atividade — fases incluídas</label>
+      <div class="row" id="faseChips"></div>
+      <label>Dificuldade</label>
+      <select id="dificSelect">
+        <option value="progressivo">Progressivo (recomendado)</option>
+        <option value="facil">Fácil</option>
+        <option value="dificil">Desafiador</option>
+      </select>
+      <label>Nome da atividade</label>
+      <input type="text" id="ativNome" placeholder="Ex: Sequências e Equações - Semana 3">
+      <div style="text-align:center;margin-top:12px;">
+        <button class="menu-btn small" onclick="criarAtividade()">GERAR CÓDIGO DA ATIVIDADE</button>
+      </div>
+      <div id="ativList" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ATIVIDADE RESULTADOS ============ -->
+<div class="screen" id="resultados-screen">
+  <span class="back-link" onclick="showScreen('teacher-panel')">←</span>
+  <div class="panel" style="max-width:820px;">
+    <h2 id="resAtivTitle">RESULTADOS</h2>
+    <div id="resCodeBadge" style="text-align:center;margin-bottom:14px;"></div>
+    <div style="max-height:50vh;overflow:auto;">
+      <table id="resTable"><thead><tr><th>Equipe</th><th>Pontos</th><th>Fase</th><th>Moedas</th><th>Acertos</th><th>Erros</th><th>Data</th></tr></thead><tbody></tbody></table>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <button class="menu-btn small" onclick="exportarCSV()">⬇ EXPORTAR CSV</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* ==================================================================================
+   MATEMATRIX — jogo educacional de plataforma/tiro (estilo Mega Man X / Cuphead)
+   Conteúdo: sequências figurais, sequências numéricas, generalização algébrica,
+   equações do 1º grau (múltiplas estratégias). Respostas: pule e caia sobre a
+   plataforma correta. Inimigos com IA e ataques variados. Chefão final gigante.
+   ================================================================================== */
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------------- Áudio ---------------- */
+const actx = new (window.AudioContext||window.webkitAudioContext)();
+function beep(freq=440,dur=0.09,type='square',vol=0.05){
+  try{
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type;o.frequency.value=freq;g.gain.value=vol;
+    o.connect(g);g.connect(actx.destination);
+    o.start();g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+dur);
+    o.stop(actx.currentTime+dur+0.02);
+  }catch(e){}
+}
+const SFX = {
+  shoot:()=>beep(880,0.05,'square',0.03),
+  hit:()=>beep(180,0.12,'sawtooth',0.06),
+  bigHit:()=>{beep(120,0.2,'sawtooth',0.09); setTimeout(()=>beep(90,0.25,'sawtooth',0.08),80);},
+  coin:()=>beep(1300,0.08,'square',0.04),
+  jump:()=>beep(520,0.09,'triangle',0.05),
+  correct:()=>{beep(660,0.09,'square',0.05); setTimeout(()=>beep(990,0.12,'square',0.05),90);},
+  wrong:()=>{beep(160,0.2,'sawtooth',0.07);},
+  portal:()=>{beep(300,0.1,'sine',0.05); setTimeout(()=>beep(500,0.1,'sine',0.05),100); setTimeout(()=>beep(700,0.15,'sine',0.05),200);},
+  levelup:()=>{[440,554,659,880].forEach((f,i)=>setTimeout(()=>beep(f,0.15,'square',0.05), i*120));},
+  laser:()=>beep(2200,0.25,'sawtooth',0.04),
+  sword:()=>beep(300,0.06,'triangle',0.06),
+  victory:()=>{[440,554,659,880,1108].forEach((f,i)=>setTimeout(()=>beep(f,0.22,'square',0.06), i*160));}
+};
+
+/* ---------------- Storage ---------------- */
+/* Armazenamento: usa window.storage quando disponível (preview do Claude, com sincronização
+   entre dispositivos que acessam o mesmo link do artefato). Fora desse ambiente — arquivo
+   baixado e aberto direto no navegador de cada tablet/computador — usa localStorage como
+   alternativa, para que a área do professor nunca fique "travada" sem salvar nada. */
+const hasCloudStorage = !!(window.storage && typeof window.storage.get==='function' && typeof window.storage.set==='function');
+async function sGet(key,shared=true){
+  if(hasCloudStorage){
+    try{ const r= await window.storage.get(key,shared); return r? JSON.parse(r.value): null; }catch(e){ return null; }
+  }
+  try{ const v = localStorage.getItem('mtx_'+key); return v? JSON.parse(v): null; }catch(e){ return null; }
+}
+async function sSet(key,val,shared=true){
+  if(hasCloudStorage){
+    try{ await window.storage.set(key, JSON.stringify(val), shared); return; }catch(e){ console.error(e); }
+  }
+  try{ localStorage.setItem('mtx_'+key, JSON.stringify(val)); }catch(e){ console.error(e); }
+}
+function randCode(){
+  const letters='ABCDEFGHJKLMNPQRSTUVWXYZ'; const nums='23456789'; let s='MTX-';
+  for(let i=0;i<2;i++) s+=letters[Math.floor(Math.random()*letters.length)];
+  for(let i=0;i<2;i++) s+=nums[Math.floor(Math.random()*nums.length)];
+  return s;
+}
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* =========================================================================
+   CONTEÚDO PEDAGÓGICO
+   ========================================================================= */
+function pickFiguralType(fase){
+  // tipos de figura são liberados progressivamente e sorteados (evita decoreba de "fase X = tipo Y")
+  const unlocked = fase>=7? ['linha','cruz','escada','moldura'] : fase>=4? ['linha','cruz','escada'] : fase>=2? ['linha','cruz'] : ['linha'];
+  return unlocked[Math.floor(Math.random()*unlocked.length)];
+}
+function gerarFigural(fase){
+  const tipo = pickFiguralType(fase);
+  const baseA = 1 + Math.min(3, Math.floor((fase-1)/2));
+  const targetN = 4 + Math.min(4, Math.floor(fase/2)) + Math.floor(Math.random()*2); // pequena variação a cada partida
+  let a,b, correctCount, exprCorreta;
+  if(tipo==='cruz'){
+    // cruz: 1 quadradinho central + 4 braços que crescem 1 por figura => sempre 4n-3 (fórmula fixa e coerente com o desenho)
+    a=4; b=-3; correctCount = 4*targetN-3; exprCorreta = `4n-3`;
+  } else if(tipo==='moldura'){
+    // moldura: borda de um quadrado (n+1)x(n+1) tem sempre 4n quadradinhos (fórmula fixa e coerente com o desenho)
+    a=4; b=0; correctCount = 4*targetN; exprCorreta = `4n`;
+  } else {
+    // linha e escada: crescimento linear a*n+b, com pequena variação aleatória por partida
+    a = baseA + Math.floor(Math.random()*2);
+    b = Math.floor(Math.random()*3);
+    correctCount = a*targetN + b;
+    exprCorreta = `${a}n${b>0?('+'+b):''}`;
+  }
+  const countDistr = new Set();
+  while(countDistr.size<3){
+    const d = correctCount + (Math.random()<0.5?1:-1)*(1+Math.floor(Math.random()*4));
+    if(d>0 && d!==correctCount) countDistr.add(d);
+  }
+  const countOptions = shuffle([correctCount,...countDistr]);
+  const exprDistr = new Set();
+  while(exprDistr.size<3){
+    let da = a + (Math.random()<0.5?1:-1)*(1+Math.floor(Math.random()*2));
+    let db = b + (Math.random()<0.5?1:-1)*(1+Math.floor(Math.random()*2));
+    if(da<1) da=a+1;
+    const s = `${da}n${db>0?('+'+db): (db<0? db : '')}`;
+    if(s!==exprCorreta) exprDistr.add(s);
+  }
+  const exprOptions = shuffle([exprCorreta,...exprDistr]);
+  return { tipo:'figural', figTipo:tipo, a, b, targetN, correctCount,
+    countOptions, countCorrectIndex: countOptions.indexOf(correctCount),
+    exprCorreta, exprOptions, exprCorrectIndex: exprOptions.indexOf(exprCorreta),
+    tituloCount: `QUANTOS QUADRADINHOS TERÁ A FIGURA ${targetN}?`,
+    tituloExpr: `QUAL EXPRESSÃO (EM n) REPRESENTA O PADRÃO?` };
+}
+
+function desenharFigura(ctx,x,y,cell,n,tipo,a,b,cor){
+  ctx.fillStyle = cor;
+  const count = a*n+b;
+  if(tipo==='linha'){ for(let i=0;i<count;i++) ctx.fillRect(x+i*(cell+3), y, cell, cell); }
+  else if(tipo==='cruz'){
+    // 1 quadrado central + braços que crescem 1 quadradinho por figura: total = 4n-3 (bate com a fórmula)
+    const arm = n-1;
+    const cx = x+2*(cell+3), cy=y+2*(cell+3);
+    ctx.fillRect(cx,cy,cell,cell);
+    for(let i=1;i<=arm;i++){
+      ctx.fillRect(cx-i*(cell+3),cy,cell,cell); ctx.fillRect(cx+i*(cell+3),cy,cell,cell);
+      ctx.fillRect(cx,cy-i*(cell+3),cell,cell); ctx.fillRect(cx,cy+i*(cell+3),cell,cell);
+    }
+  } else if(tipo==='escada'){
+    let placed=0, row=0;
+    while(placed<count){
+      const inRow = Math.min(row+1, count-placed);
+      for(let c=0;c<inRow;c++){ ctx.fillRect(x+c*(cell+3), y+row*(cell+3), cell, cell); placed++; }
+      row++;
+    }
+  } else if(tipo==='moldura'){
+    const side = n+1;
+    for(let r=0;r<side;r++) for(let c=0;c<side;c++)
+      if(r===0||c===0||r===side-1||c===side-1) ctx.fillRect(x+c*(cell+2), y+r*(cell+2), cell, cell);
+  }
+}
+
+function gerarNumerica(fase){
+  let seq=[], termoGeral, proximo, tipo='aritmetica';
+  if(fase<=3){
+    const a1=2+fase+Math.floor(Math.random()*3), r=3+fase+Math.floor(Math.random()*2);
+    seq=[a1,a1+r,a1+2*r,a1+3*r]; proximo=a1+4*r; termoGeral=`${r}n${(a1-r)>=0?('+'+(a1-r)):(a1-r)}`;
+  } else if(fase<=6){
+    const a1=-5+fase+Math.floor(Math.random()*4), r=4+Math.floor(fase/2)+Math.floor(Math.random()*2);
+    seq=[a1,a1+r,a1+2*r,a1+3*r]; proximo=a1+4*r; termoGeral=`${r}n${(a1-r)>=0?('+'+(a1-r)):(a1-r)}`;
+  } else if(fase<=8){
+    const a1=2+Math.floor(Math.random()*4), r=2+(fase-6)+Math.floor(Math.random()*2);
+    seq=[a1,a1+r,a1+2*r,a1+3*r]; proximo=a1+4*r; termoGeral=`${r}n${(a1-r)>=0?('+'+(a1-r)):(a1-r)}`;
+  } else {
+    const a1=2+Math.floor(Math.random()*2), r=2; tipo='geometrica';
+    seq=[a1,a1*r,a1*r*r,a1*r*r*r]; proximo=a1*Math.pow(r,4); termoGeral=`${a1}·${r}^(n-1)`;
+  }
+  const nextDistr = new Set();
+  while(nextDistr.size<3){
+    const step = seq[1]-seq[0];
+    const d = proximo + (Math.random()<0.5?1:-1)*(1+Math.floor(Math.random()*Math.max(2,Math.abs(step)/2)));
+    if(d!==proximo) nextDistr.add(d);
+  }
+  const nextOptions = shuffle([proximo,...nextDistr]);
+  const exprDistr = new Set();
+  while(exprDistr.size<3){
+    if(tipo==='aritmetica'){
+      const m = seq[1]-seq[0];
+      const dm = m + (Math.random()<0.5?1:-1)*(1+Math.floor(Math.random()*2));
+      const db = (seq[0]-m) + (Math.random()<0.5?1:-1)*(1+Math.floor(Math.random()*2));
+      const s = `${dm}n${db>=0?('+'+db):db}`;
+      if(s!==termoGeral) exprDistr.add(s);
+    } else {
+      const dr = Math.random()<0.5? 3:4;
+      const s = `2·${dr}^(n-1)`;
+      if(s!==termoGeral) exprDistr.add(s);
+    }
+  }
+  const exprOptions = shuffle([termoGeral,...exprDistr]);
+  return {tipo:'numerica', seq, proximo, termoGeral, tipoSeq:tipo,
+    nextOptions, nextCorrectIndex: nextOptions.indexOf(proximo),
+    exprOptions, exprCorrectIndex: exprOptions.indexOf(termoGeral),
+    tituloNext: `A SEQUÊNCIA É ${seq.join(', ')}, ... QUAL O PRÓXIMO NÚMERO?`,
+    tituloExpr: `QUAL EXPRESSÃO a(n) GENERALIZA ESSA SEQUÊNCIA?` };
+}
+
+function gerarEquacao(fase){
+  let a,b,c,x,a2=0,b2=0, texto;
+  x = 2+Math.floor(Math.random()*6)*(Math.random()<0.5&&fase>4?-1:1);
+  if(fase<=3){ a=1+Math.floor(Math.random()*4); b=Math.floor(Math.random()*10)-4; c=a*x+b; texto=`${a}x ${b>=0?'+':'-'} ${Math.abs(b)} = ${c}`; }
+  else if(fase<=6){ a=2+Math.floor(Math.random()*5); b=Math.floor(Math.random()*12)-6; c=a*x+b; texto=`${a}x ${b>=0?'+':'-'} ${Math.abs(b)} = ${c}`; }
+  else if(fase<=8){
+    a=2+Math.floor(Math.random()*4); b=Math.floor(Math.random()*10)-5; a2=1+Math.floor(Math.random()*2);
+    if(a===a2) a2=a+1;
+    x=1+Math.floor(Math.random()*6); b2=a*x+b-a2*x;
+    texto=`${a}x ${b>=0?'+':'-'} ${Math.abs(b)} = ${a2}x ${b2>=0?'+':'-'} ${Math.abs(b2)}`;
+  } else {
+    a=2+Math.floor(Math.random()*3); const k=1+Math.floor(Math.random()*3); x=1+Math.floor(Math.random()*6);
+    b=Math.floor(Math.random()*6)-3; c=a*(x+k)+b; texto=`${a}(x + ${k}) ${b>=0?'+':'-'} ${Math.abs(b)} = ${c}`;
+  }
+  const distr = new Set();
+  while(distr.size<3){ const d=x+(Math.random()<0.5?1:-1)*(1+Math.floor(Math.random()*4)); if(d!==x) distr.add(d); }
+  const options = shuffle([x,...distr]);
+  return {tipo:'equacao', texto, resposta:x, options, correctIndex: options.indexOf(x)};
+}
+
+function estrategiasEquacao(desafio){
+  const {resposta} = desafio;
+  return `<div class="strategy-box">
+  <b>Estratégia 1 — Operações inversas:</b> isole "x" aplicando a operação oposta dos dois lados da igualdade, até obter x sozinho.<br><br>
+  <b>Estratégia 2 — Balança de equilíbrio:</b> pense na equação como uma balança equilibrada: tudo que você faz de um lado precisa fazer do outro, para manter o equilíbrio.<br><br>
+  <b>Estratégia 3 — Tentativa e verificação:</b> teste valores para x na equação original até achar o que torna a igualdade verdadeira: x = ${resposta}.
+  </div>`;
+}
+
+/* =========================================================================
+   ESTADO
+   ========================================================================= */
+const state = {
+  ativCode:null, teamName:'Equipe Livre', fases:[1,2,3,4,5,6,7,8,9,10], dificuldade:'progressivo',
+  controlMode:'keyboard', faseAtual:0, vidas:3, moedas:0, acertos:0, erros:0, pontuacao:0, gunLevel:1,
+};
+
+function goStudentEntry(){ showScreen('student-entry'); document.getElementById('entryMsg').textContent=''; }
+
+async function startWithCode(){
+  const code = document.getElementById('inpAtivCode').value.trim().toUpperCase();
+  const team = document.getElementById('inpTeamName').value.trim() || 'Equipe';
+  if(!code){ document.getElementById('entryMsg').textContent='Digite um código de atividade.'; return; }
+  const ativ = await sGet('atividade:'+code, true);
+  if(!ativ){ document.getElementById('entryMsg').textContent='Código não encontrado. Confira com seu professor.'; return; }
+  state.ativCode = code; state.teamName = team; state.fases = ativ.fases; state.dificuldade = ativ.dificuldade;
+  showScreen('controls-select');
+}
+function startFreeMode(){
+  const team = document.getElementById('inpTeamName').value.trim() || 'Equipe Livre';
+  state.ativCode=null; state.teamName=team; state.fases=[1,2,3,4,5,6,7,8,9,10]; state.dificuldade='progressivo';
+  showScreen('controls-select');
+}
+
+let chosenControl='keyboard';
+function setControlMode(m){
+  chosenControl=m;
+  ['ctrlKeyboard','ctrlGamepad','ctrlTouch'].forEach(id=>document.getElementById(id).classList.remove('sel'));
+  document.getElementById('ctrl'+m.charAt(0).toUpperCase()+m.slice(1)).classList.add('sel');
+}
+setControlMode('keyboard');
+function confirmControlsAndStart(){
+  state.controlMode = chosenControl;
+  document.getElementById('touchControls').classList.toggle('show', chosenControl==='touch');
+  state.faseAtual=0; state.vidas=3; state.moedas=0; state.acertos=0; state.erros=0; state.pontuacao=0; state.gunLevel=1;
+  showScreen('game-screen');
+  initLevel(state.fases[0]);
+  if(!loopStarted){ loopStarted=true; requestAnimationFrame(loop); } // único ponto que inicia o laço do jogo
+}
+
+/* =========================================================================
+   MOTOR DO JOGO
+   ========================================================================= */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+function fitCanvas(){ canvas.width = canvas.clientWidth = window.innerWidth; canvas.height = canvas.clientHeight = window.innerHeight; }
+window.addEventListener('resize', fitCanvas); fitCanvas();
+
+const GRAV = 0.55;
+let keys = {};
+window.addEventListener('keydown', e=>{ keys[e.code]=true; if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
+window.addEventListener('keyup', e=>{ keys[e.code]=false; });
+
+function bindHold(id, onDown, onUp){
+  const el = document.getElementById(id);
+  el.addEventListener('touchstart', e=>{e.preventDefault(); onDown();});
+  el.addEventListener('touchend', e=>{e.preventDefault(); onUp();});
+  el.addEventListener('mousedown', onDown);
+  el.addEventListener('mouseup', onUp);
+  el.addEventListener('mouseleave', onUp);
+}
+let touchState = {left:false,right:false,jump:false,shoot:false};
+bindHold('btnLeft', ()=>touchState.left=true, ()=>touchState.left=false);
+bindHold('btnRight', ()=>touchState.right=true, ()=>touchState.right=false);
+bindHold('btnJump', ()=>touchState.jump=true, ()=>touchState.jump=false);
+bindHold('btnShoot', ()=>touchState.shoot=true, ()=>touchState.shoot=false);
+
+function pollGamepad(){
+  const gps = navigator.getGamepads? navigator.getGamepads():[];
+  const gp = gps[0];
+  if(!gp) return {left:false,right:false,jump:false,shoot:false};
+  const axis = gp.axes[0]||0;
+  return { left: axis<-0.4 || !!gp.buttons[14]?.pressed, right: axis>0.4 || !!gp.buttons[15]?.pressed,
+    jump: !!gp.buttons[0]?.pressed, shoot: !!gp.buttons[2]?.pressed || !!gp.buttons[5]?.pressed };
+}
+function readInput(){
+  const gp = state.controlMode==='gamepad'? pollGamepad() : {left:false,right:false,jump:false,shoot:false};
+  return {
+    left: keys['ArrowLeft']||keys['KeyA']||touchState.left||gp.left,
+    right: keys['ArrowRight']||keys['KeyD']||touchState.right||gp.right,
+    jump: keys['Space']||keys['ArrowUp']||keys['KeyW']||touchState.jump||gp.jump,
+    shoot: keys['KeyX']||keys['KeyK']||touchState.shoot||gp.shoot,
+  };
+}
+
+/* ---- gun colors per level ---- */
+const GUN_COLORS = ['#7FE9FF','#2FF3E0','#FFD447','#FF9E2F','#FF2E9A','#FF3B45','#B84CFF','#4CC9FF','#FFFFFF','#FFAA00'];
+const MAX_GUN_LEVEL = GUN_COLORS.length;
+function gunColor(){ return GUN_COLORS[Math.min(GUN_COLORS.length-1, state.gunLevel-1)]; }
+let upgradeFlashT=0;
+function collectUpgradeItem(){
+  level.upgradeItem.collected = true;
+  spawnParticles(level.upgradeItem.x+13, level.upgradeItem.y+13, '#FFD447');
+  if(state.gunLevel < MAX_GUN_LEVEL){
+    state.gunLevel++;
+    SFX.levelup();
+    upgradeFlashT = 50;
+    showToast(`⚡ UPGRADE! CANHÃO NÍVEL ${state.gunLevel}`);
+  } else {
+    state.pontuacao += 50; state.moedas += 15;
+    SFX.coin();
+    showToast('ARSENAL NO MÁXIMO! +50 PONTOS, +15 MOEDAS');
+  }
+  updateHUD();
+}
+
+let mode = 'run'; // 'run' | 'jump' | 'boss'
+let loopStarted=false;
+let level=null, camX=0, particles=[], shootCooldown=0, gameOver=false, frameT=0;
+let player, projectiles, enemyProjectiles, portalReached;
+
+const TYPE_UNLOCK = fase => fase>=8? ['walker','shooter','sworder','flyer'] : fase>=6? ['walker','shooter','sworder'] : fase>=3? ['walker','shooter'] : ['walker'];
+
+function buildLevelData(faseNum){
+  const nEnemies = 2+Math.ceil(faseNum/1.5); // mais inimigos por fase
+  const ROOM = 280; // espaço mínimo garantido por inimigo/parede: parede + área de combate + folga
+  const startX = 550, endBuffer = 420;
+  const width = Math.max(2700, startX + nEnemies*ROOM + endBuffer); // a pista cresce junto com o nº de inimigos
+  const platforms = [];
+  const groundSegments = [];
+  // a partir da fase 4, o chão passa a ter buracos (mais buracos e maiores nas fases avançadas)
+  if(faseNum<4){
+    groundSegments.push({x:0,y:520,w:width,h:80});
+  } else {
+    const nPits = Math.min(4, Math.floor((faseNum-2)/2));
+    const pitW = Math.min(120, 55+faseNum*6);
+    const usableStart=320, usableEnd=width-320;
+    const step = (usableEnd-usableStart)/(nPits+1);
+    let cursor=0;
+    for(let i=0;i<nPits;i++){
+      const pitX = usableStart + step*(i+1) - pitW/2;
+      groundSegments.push({x:cursor,y:520,w:pitX-cursor,h:80});
+      cursor = pitX+pitW;
+    }
+    groundSegments.push({x:cursor,y:520,w:width-cursor,h:80});
+  }
+  platforms.push(...groundSegments);
+  const nPlat = 3+Math.min(4,Math.floor(faseNum/2));
+  for(let i=0;i<nPlat;i++){
+    const px = 300 + i*(width-600)/nPlat + Math.random()*80;
+    const py = 330 + Math.random()*120;
+    platforms.push({x:px, y:py, w:120+Math.random()*60, h:20});
+  }
+  const types = TYPE_UNLOCK(faseNum);
+  const enemies = [];
+  const walls = [];
+  for(let i=0;i<nEnemies;i++){
+    // posição com espaçamento fixo garantido (ROOM) + pequena variação que nunca causa sobreposição
+    const ex = startX + i*ROOM + 90 + Math.random()*30;
+    const type = types[i % types.length];
+    const hp = Math.min(3, 1+Math.floor(faseNum/4)); // inimigos ficam mais resistentes
+    const fireRate = Math.max(32, 95-faseNum*6);      // atiradores disparam mais rápido
+    const windup = Math.max(10, 26-faseNum*1.3);      // espadachins avisam por menos tempo
+    enemies.push({x:ex, y: type==='flyer'? 260:470, w:34,h:40, alive:true, type, hp, maxHp:hp,
+      dir: Math.random()<0.5?-1:1, speed: (type==='sworder'?1.8:1.15)+faseNum*0.15, range:70+Math.random()*40,
+      baseX:ex, baseY: type==='flyer'?260:470, cooldown: fireRate+Math.random()*40, fireRate, windup,
+      state:'patrol', stateT:0, flash:0});
+    // parede protetora à frente de inimigos terrestres: bloqueia tiros à distância — só passa pulando por cima
+    if(type!=='flyer'){
+      // mais baixa e mais larga: dá para subir nela e escolher pular por cima do inimigo
+      walls.push({x: ex-105, y:520-72, w:78, h:72});
+    }
+  }
+  // item de upgrade de tiro: aparece uma vez por fase, sobre um trecho sólido de chão perto do meio do percurso
+  const midTarget = width*0.5;
+  let bestSeg = groundSegments[0];
+  groundSegments.forEach(seg=>{ if(Math.abs((seg.x+seg.w/2)-midTarget) < Math.abs((bestSeg.x+bestSeg.w/2)-midTarget)) bestSeg=seg; });
+  const margin = Math.min(60, bestSeg.w*0.25);
+  const upgradeX = bestSeg.x+margin + Math.random()*Math.max(10, bestSeg.w-margin*2);
+  const upgradeItem = {x:upgradeX, y:520-46, w:26,h:26, collected:false};
+  return {width, platforms, enemies, walls, upgradeItem, portalX:width-140, portalOpen:false, faseNum};
+}
+
+function initLevel(faseNum){
+  mode='run';
+  document.getElementById('bossBarWrap').style.display='none';
+  document.getElementById('bossLabel').style.display='none';
+  level = buildLevelData(faseNum);
+  player = {x:60,y:400,w:34,h:44,vx:0,vy:0,onGround:false,facing:1,invuln:0};
+  projectiles = []; enemyProjectiles = []; particles = [];
+  camX = 0; portalReached=false; gameOver=false;
+  document.getElementById('phaseLabel').textContent = `FASE ${state.faseAtual+1}/${state.fases.length}`;
+  document.getElementById('gunLabel').textContent = `🔫 NÍVEL ${state.gunLevel}`;
+  updateHUD();
+  showToast(`FASE ${state.faseAtual+1}: DERROTE OS INIMIGOS E ALCANCE O PORTAL`);
+}
+
+function updateHUD(){
+  document.getElementById('lives').innerHTML = '❤'.repeat(Math.max(0,state.vidas)) + '<span style="opacity:.25">'+ '❤'.repeat(Math.max(0,3-state.vidas)) +'</span>';
+  document.getElementById('coins').textContent = '🪙 '+state.moedas;
+  document.getElementById('gunLabel').textContent = `🔫 NÍVEL ${state.gunLevel}`;
+  const prog = ((state.faseAtual)/state.fases.length)*100;
+  document.getElementById('progBar').style.width = prog+'%';
+}
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function rectsOverlap(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+
+function loop(){
+  if(gameOver){ loopStarted=false; return; }
+  frameT++;
+  if(upgradeFlashT>0) upgradeFlashT--;
+  if(mode==='run') updateRun();
+  else if(mode==='jump') updateJump();
+  else if(mode==='boss') updateBoss();
+  render();
+  requestAnimationFrame(loop);
+}
+
+/* ---------------- Player physics helper (shared) ---------------- */
+function movePlayerPhysics(platforms, boundW, walls){
+  const inp = readInput();
+  const SPEED=4.2;
+  player.vx=0;
+  if(inp.left){ player.vx=-SPEED; player.facing=-1; }
+  if(inp.right){ player.vx=SPEED; player.facing=1; }
+  player.x += player.vx;
+  player.x = Math.max(0, Math.min(boundW-player.w, player.x));
+  if(walls){
+    for(const w of walls){
+      // a parede só bloqueia enquanto o jogador não pulou acima do topo dela
+      if(player.y+player.h > w.y && player.x+player.w>w.x && player.x<w.x+w.w){
+        if(player.vx>0) player.x = w.x-player.w;
+        else if(player.vx<0) player.x = w.x+w.w;
+      }
+    }
+  }
+  player.vy += GRAV; player.y += player.vy;
+  let landedOn = null;
+  player.onGround=false;
+  for(const p of platforms){
+    const feet = {x:player.x+6,y:player.y+player.h, w:player.w-12, h:8};
+    if(player.vy>=0 && rectsOverlap(feet,{x:p.x,y:p.y,w:p.w,h:p.h}) && player.y+player.h-player.vy<=p.y+2){
+      player.y = p.y-player.h; player.vy=0; player.onGround=true; landedOn = p;
+    }
+  }
+  if(inp.jump && player.onGround){ player.vy=-11.5; SFX.jump(); }
+  if(inp.shoot && shootCooldown<=0){
+    const dmg = state.gunLevel;
+    projectiles.push({x:player.x + (player.facing>0? player.w:-8), y:player.y+18, vx:player.facing*9, w:8+state.gunLevel*1.4,h:5+state.gunLevel, dmg});
+    if(state.gunLevel>=3){ // tiro extra levemente desviado (spread)
+      projectiles.push({x:player.x + (player.facing>0? player.w:-8), y:player.y+10, vx:player.facing*9, vy:-1, w:6,h:4, dmg:Math.max(1,dmg-1)});
+      projectiles.push({x:player.x + (player.facing>0? player.w:-8), y:player.y+26, vx:player.facing*9, vy:1, w:6,h:4, dmg:Math.max(1,dmg-1)});
+    }
+    shootCooldown=14; SFX.shoot();
+  }
+  shootCooldown--;
+  if(player.invuln>0) player.invuln--;
+  return landedOn;
+}
+
+/* ---------------- RUN mode ---------------- */
+function updateRun(){
+  movePlayerPhysics(level.platforms.concat(level.walls), level.width, level.walls);
+  if(player.y>700){ damagePlayer(); player.x=Math.max(0,camX+40); player.y=400; player.vy=0; }
+
+  projectiles.forEach(pr=>{ pr.x+=pr.vx; if(pr.vy) pr.y+=pr.vy; });
+  projectiles = projectiles.filter(pr=>pr.x>camX-50 && pr.x<camX+canvas.width+50
+    && !level.walls.some(w=>rectsOverlap({x:pr.x,y:pr.y,w:pr.w,h:pr.h},w)));
+  enemyProjectiles.forEach(pr=>{ pr.x+=pr.vx; pr.y+=pr.vy||0; pr.life--; });
+  enemyProjectiles = enemyProjectiles.filter(pr=>pr.life>0
+    && !level.walls.some(w=>rectsOverlap({x:pr.x,y:pr.y,w:pr.w||8,h:pr.h||8},w)));
+
+  level.enemies.forEach(en=>updateEnemyAI(en));
+
+  for(const pr of enemyProjectiles){
+    if(player.invuln<=0 && rectsOverlap(player,{x:pr.x,y:pr.y,w:pr.w||8,h:pr.h||8})){
+      damagePlayer(); pr.life=0;
+    }
+  }
+
+  if(!level.upgradeItem.collected && rectsOverlap(player, level.upgradeItem)){
+    collectUpgradeItem();
+  }
+
+  const remaining = level.enemies.filter(e=>e.alive).length;
+  level.portalOpen = remaining===0;
+  if(level.portalOpen && player.x+player.w>=level.portalX && !portalReached){
+    portalReached=true; SFX.portal(); openChallengeSequence();
+  }
+  camX = Math.max(0, Math.min(level.width-canvas.width, player.x - canvas.width/2));
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life--;});
+  particles = particles.filter(p=>p.life>0);
+}
+
+function updateEnemyAI(en){
+  if(!en.alive) return;
+  const dx = player.x-en.x, dist=Math.abs(dx);
+  en.flash = Math.max(0,en.flash-1);
+  // move o inimigo em dx, mas nunca atravessa uma parede: fica confinado entre paredes
+  function tryMove(dxMove){
+    const prevX = en.x;
+    en.x += dxMove;
+    for(const w of level.walls){
+      if(en.x+en.w>w.x && en.x<w.x+w.w && en.y+en.h>w.y){ en.x = prevX; return false; }
+    }
+    return true;
+  }
+  if(en.type==='walker'){
+    const moved = tryMove(en.dir*en.speed);
+    if(!moved || Math.abs(en.x-en.baseX)>en.range) en.dir*=-1;
+    if(dist<160) en.dir = dx>0?1:-1;
+  } else if(en.type==='shooter'){
+    en.cooldown--;
+    if(en.cooldown<=0 && dist<560){
+      enemyProjectiles.push({x:en.x+en.w/2, y:en.y+14, vx: dx>0? 6.5:-6.5, vy:0, w:9,h:9, life:180, kind:'shot'});
+      en.cooldown = en.fireRate+Math.random()*30; en.flash=8; SFX.hit();
+    }
+  } else if(en.type==='sworder'){
+    en.stateT--;
+    if(en.state==='patrol'){
+      const moved = tryMove(en.dir*en.speed);
+      if(!moved || Math.abs(en.x-en.baseX)>en.range) en.dir*=-1;
+      if(dist<150 && dist>30){ en.state='windup'; en.stateT=en.windup; en.flash=en.windup; }
+    } else if(en.state==='windup'){
+      if(en.stateT<=0){ en.state='lunge'; en.stateT=18; en.dir = dx>0?1:-1; }
+    } else if(en.state==='lunge'){
+      const moved = tryMove(en.dir*(en.speed*3.6));
+      if(player.invuln<=0 && dist<44 && Math.abs(player.y-en.y)<50){ damagePlayer(); SFX.sword(); en.state='cooldown'; en.stateT=40; }
+      if(!moved || en.stateT<=0){ en.state='cooldown'; en.stateT=30; }
+    } else if(en.state==='cooldown'){
+      if(en.stateT<=0) en.state='patrol';
+    }
+  } else if(en.type==='flyer'){
+    en.y = en.baseY + Math.sin((frameT+en.baseX)*0.05)*30;
+    en.x += en.dir*en.speed*0.7; // voa livremente, não é bloqueado por paredes
+    if(Math.abs(en.x-en.baseX)>en.range*1.5) en.dir*=-1;
+    en.stateT--;
+    if(en.state==='patrol' && en.stateT<=0 && dist<650){ en.state='charge'; en.stateT=38; en.flash=38; }
+    else if(en.state==='charge' && en.stateT<=0){
+      en.state='fire'; en.stateT=14; SFX.laser();
+      enemyProjectiles.push({x: en.dir>0? en.x+en.w:en.x-1400, y:en.y+16, vx:0, vy:0, w: en.dir>0?1400:1400, h:8, life:14, kind:'laser', laserY:en.y+16});
+    } else if(en.state==='fire' && en.stateT<=0){ en.state='patrol'; en.stateT=Math.max(45,80-(level.faseNum||0)*3); }
+  }
+  // colisão de projéteis do jogador
+  for(const pr of projectiles){
+    if(en.alive && rectsOverlap(pr,{x:en.x,y:en.y,w:en.w,h:en.h})){
+      en.hp -= (pr.dmg||1); pr.x=-9999;
+      if(en.hp<=0){ en.alive=false; SFX.hit(); spawnParticles(en.x+en.w/2, en.y+en.h/2, '#FF2E9A');
+        state.moedas+=5; state.pontuacao+=20; updateHUD(); }
+      else { en.flash=10; }
+    }
+  }
+  // contato direto
+  if(en.alive && player.invuln<=0 && rectsOverlap(player,{x:en.x,y:en.y,w:en.w,h:en.h})){
+    damagePlayer();
+  }
+}
+
+function damagePlayer(){
+  if(player.invuln>0) return;
+  state.vidas--; player.invuln=90; SFX.wrong();
+  spawnParticles(player.x+player.w/2, player.y+player.h/2, '#FF3B45');
+  updateHUD();
+  if(state.vidas<=0) endGame(false);
+}
+function spawnParticles(x,y,color){
+  for(let i=0;i<10;i++) particles.push({x,y,vx:(Math.random()-0.5)*6, vy:(Math.random()-1.5)*5, life:26, color});
+}
+
+/* ---------------- JUMP (challenge) mode ---------------- */
+let jumpArena=null, jumpResolve=null, jumpResolved=false, jumpPreview=null;
+function buildJumpArena(nOptions){
+  const w=canvas.width, h=canvas.height;
+  const margin = 40;
+  const ceilingY = Math.min(320, Math.max(280, h*0.4));   // passarela onde o personagem anda
+  const floorY   = Math.min(h-110, ceilingY+230);          // plataformas-resposta, mais abaixo
+  const usable = w - margin*2;
+  const sliceW = usable/nOptions;
+  const dropW = Math.max(90, Math.min(160, sliceW*0.55)); // largura do "buraco" por onde ele cai
+  const platforms=[];
+  const floorPlats=[];
+  let cx = margin;
+  for(let i=0;i<nOptions;i++){
+    const leadW = Math.max(20,(sliceW-dropW)/2);
+    platforms.push({x:cx, y:ceilingY, w:leadW, h:16});                 // trecho seguro da passarela (antes do vão)
+    const gapStart = cx+leadW;
+    platforms.push({x:gapStart+dropW, y:ceilingY, w:leadW, h:16});     // trecho seguro depois do vão
+    floorPlats.push({x:gapStart, y:floorY, w:dropW, h:16, optIndex:i, hit:false, gapCenterX:gapStart+dropW/2});
+    cx += sliceW;
+  }
+  const spawn = platforms[0];
+  platforms.push(...floorPlats);
+  return {platforms, floorPlats, spawn, ceilingY, floorY};
+}
+function startJumpChallenge(nOptions){
+  mode='jump';
+  jumpArena = buildJumpArena(nOptions);
+  player.x = jumpArena.spawn.x+10; player.y = jumpArena.spawn.y-player.h; player.vy=0;
+  jumpResolved=false;
+}
+function updateJump(){
+  const landedOn = movePlayerPhysics(jumpArena.platforms, canvas.width);
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life--;});
+  particles = particles.filter(p=>p.life>0);
+  if(player.y>canvas.height+100){ player.x=jumpArena.spawn.x+10; player.y=jumpArena.spawn.y-player.h; player.vy=0; }
+  if(!jumpResolved && landedOn && typeof landedOn.optIndex==='number' && !landedOn.hit){
+    landedOn.hit = true;
+    handleJumpLanding(landedOn.optIndex);
+  }
+}
+function handleJumpLanding(idx){
+  const correct = idx===jumpArena.correctIndex;
+  const fb = document.getElementById('jumpFeedback');
+  if(correct){
+    jumpResolved=true;
+    fb.className='ok'; fb.textContent='✔ CORRETO!'; SFX.correct();
+    state.acertos++; state.pontuacao+=20; state.moedas+=8; updateHUD();
+    spawnParticles(player.x+player.w/2, player.y+player.h/2, '#4CFF7B');
+    setTimeout(()=>{ fb.className=''; if(jumpResolve){ const r=jumpResolve; jumpResolve=null; r(); } }, 900);
+  } else {
+    fb.className='bad'; fb.textContent='✘ NÃO ERA ESSA... VOLTANDO PARA A PASSARELA'; SFX.wrong();
+    state.erros++; state.vidas=Math.max(0,state.vidas-1); updateHUD();
+    spawnParticles(player.x+player.w/2, player.y+player.h/2, '#FF3B45');
+    setTimeout(()=>{
+      fb.className='';
+      if(!jumpResolved){
+        jumpArena.floorPlats.find(p=>p.optIndex===idx).hit=false;
+        player.x = jumpArena.spawn.x+10; player.y = jumpArena.spawn.y-player.h; player.vy=0;
+      }
+    }, 900);
+    if(state.vidas<=0){ setTimeout(()=>endGame(false), 300); }
+  }
+}
+function jumpChallenge(tag, title, correctIndex, options, previewFn, topicIdx){
+  return new Promise(resolve=>{
+    document.getElementById('jumpTag').textContent = tag;
+    document.getElementById('jumpTitle').textContent = title;
+    document.getElementById('jumpProgress').textContent = topicIdx? `DESAFIO ${topicIdx} DE 3 NESTA FASE` : '';
+    document.getElementById('jumpBanner').classList.add('show');
+    startJumpChallenge(options.length);
+    jumpArena.correctIndex = correctIndex;
+    jumpArena.platforms.forEach(p=>{ if(typeof p.optIndex==='number') p.label = String(options[p.optIndex]); });
+    jumpPreview = previewFn || null;
+    jumpResolve = ()=>{ document.getElementById('jumpBanner').classList.remove('show'); jumpPreview=null; resolve(); };
+  });
+}
+
+/* ---------------- pré-visualizações (imagem da pergunta) ---------------- */
+function drawPreviewBox(w,h){
+  ctx.save();
+  ctx.fillStyle='#050814dd'; ctx.strokeStyle='#2a3a6b'; ctx.lineWidth=1;
+  const x = canvas.width/2 - w/2, y = 150;
+  ctx.fillRect(x,y,w,h); ctx.strokeRect(x,y,w,h);
+  ctx.restore();
+  return {x,y};
+}
+function makeFiguralPreview(fig){
+  return function(){
+    const {x,y} = drawPreviewBox(3*150+20, 120);
+    [1,2,3].forEach((n,idx)=>{
+      const px = x+16+idx*150, py = y+30;
+      ctx.fillStyle='#7C8AB5'; ctx.font='12px sans-serif';
+      ctx.fillText('Figura '+n, px, py-14);
+      desenharFigura(ctx, px, py, 14, n, fig.figTipo, fig.a, fig.b, idx%2===0? '#2FF3E0':'#FF2E9A');
+    });
+  };
+}
+function makeNumericPreview(num){
+  return function(){
+    const n = num.seq.length;
+    const boxW=64, boxGap=10;
+    const totalW = n*boxW + (n-1)*boxGap + 60;
+    const {x,y} = drawPreviewBox(totalW, 90);
+    num.seq.forEach((v,i)=>{
+      const bx = x+20+i*(boxW+boxGap), by=y+20;
+      ctx.fillStyle='#111a3a'; ctx.strokeStyle='#2FF3E0'; ctx.fillRect(bx,by,boxW,boxW*0.7); ctx.strokeRect(bx,by,boxW,boxW*0.7);
+      ctx.fillStyle='#EAF0FF'; ctx.font='bold 18px Rajdhani, sans-serif'; ctx.textAlign='center';
+      ctx.fillText(String(v), bx+boxW/2, by+boxW*0.45);
+      ctx.textAlign='left';
+    });
+    ctx.fillStyle='#FFD447'; ctx.font='bold 20px Rajdhani, sans-serif';
+    ctx.fillText('...', x+20+n*(boxW+boxGap)-boxGap+8, y+20+boxW*0.35+6);
+  };
+}
+
+/* ---------------- Challenge sequence per fase ---------------- */
+async function openChallengeSequence(){
+  const faseNum = state.fases[state.faseAtual];
+  const fig = gerarFigural(faseNum);
+  const num = gerarNumerica(faseNum);
+  const eq = gerarEquacao(faseNum);
+  const figPreview = makeFiguralPreview(fig);
+  const numPreview = makeNumericPreview(num);
+
+  // ordem dos 3 blocos sorteada a cada fase: evita que uma equipe "decore" a sequência assistindo a outra jogar
+  const figBlock = async (idx)=>{
+    await jumpChallenge('SEQUÊNCIA FIGURAL', fig.tituloCount, fig.countCorrectIndex, fig.countOptions, figPreview, idx);
+    if(gameOver) return;
+    await jumpChallenge('SEQUÊNCIA FIGURAL', fig.tituloExpr, fig.exprCorrectIndex, fig.exprOptions, figPreview, idx);
+  };
+  const numBlock = async (idx)=>{
+    await jumpChallenge('SEQUÊNCIA NUMÉRICA', num.tituloNext, num.nextCorrectIndex, num.nextOptions, numPreview, idx);
+    if(gameOver) return;
+    await jumpChallenge('SEQUÊNCIA NUMÉRICA', num.tituloExpr, num.exprCorrectIndex, num.exprOptions, numPreview, idx);
+  };
+  const eqBlock = async (idx)=>{
+    await jumpChallenge('EQUAÇÃO DO 1º GRAU', eq.texto+'  —  ache x', eq.correctIndex, eq.options, null, idx);
+    if(gameOver) return;
+    await showStrategiesPanel(eq, idx);
+  };
+  const blocks = shuffle([figBlock, numBlock, eqBlock]);
+  for(let i=0;i<blocks.length;i++){
+    if(gameOver) return;
+    await blocks[i](i+1);
+    if(gameOver) return;
+  }
+
+  const isLast = state.faseAtual===state.fases.length-1;
+  if(isLast){ startBossFight(); } else { advancePhase(); }
+}
+function showStrategiesPanel(eq, topicIdx){
+  return new Promise(resolve=>{
+    const isLastTopic = topicIdx>=3;
+    document.getElementById('chalPanel').innerHTML = `
+      <div class="chal-tag">DESAFIO ${topicIdx} DE 3 NESTA FASE · EQUAÇÃO RESOLVIDA</div>
+      <div class="chal-title">x = ${eq.resposta}</div>
+      <div class="feedback ok">✔ Muito bem! Veja diferentes formas de resolver a mesma equação:</div>
+      ${estrategiasEquacao(eq)}
+      <div style="margin-top:12px;color:var(--dim);font-size:.85rem;">
+        ${isLastTopic? '🏁 Este era o último desafio desta fase!' : `Ainda ${3-topicIdx===1? 'falta 1 desafio' : `faltam ${3-topicIdx} desafios`} nesta fase.`}
+      </div>
+      <button class="opt-btn" style="margin-top:14px;text-align:center;" onclick="document.getElementById('challengeOverlay').classList.remove('active'); window.__stratResolve();">CONTINUAR</button>
+    `;
+    document.getElementById('challengeOverlay').classList.add('active');
+    window.__stratResolve = resolve;
+  });
+}
+
+function advancePhase(){
+  state.faseAtual++;
+  updateHUD();
+  if(state.faseAtual>=state.fases.length){ endGame(true); }
+  else { SFX.levelup(); initLevel(state.fases[state.faseAtual]); }
+}
+
+/* ---------------- BOSS FIGHT ---------------- */
+let boss=null;
+function startBossFight(){
+  mode='boss';
+  document.getElementById('phaseLabel').textContent = `CHEFE FINAL`;
+  document.getElementById('bossBarWrap').style.display='block';
+  document.getElementById('bossLabel').style.display='block';
+  const bw = canvas.width*0.42, bh = canvas.height*0.72;
+  const bx = canvas.width - bw - 40, by = canvas.height - bh - 90;
+  boss = {
+    x:bx, y:by, w:bw, h:bh, bob:0,
+    turrets:[
+      {rx:0.20, ry:0.15, w:46,h:40, hp:6*state.gunLevel, maxHp:6*state.gunLevel, cooldown:70, alive:true},
+      {rx:0.45, ry:0.48, w:52,h:44, hp:8*state.gunLevel, maxHp:8*state.gunLevel, cooldown:90, alive:true},
+      {rx:0.18, ry:0.78, w:46,h:40, hp:6*state.gunLevel, maxHp:6*state.gunLevel, cooldown:60, alive:true},
+    ],
+    platforms:[
+      {x:0,y:canvas.height-70,w:canvas.width,h:70},
+      {x:120,y:canvas.height-220,w:150,h:18},
+      {x:420,y:canvas.height-320,w:150,h:18},
+    ]
+  };
+  player.x=80; player.y=canvas.height-140; player.vy=0;
+  enemyProjectiles=[]; projectiles=[]; particles=[];
+  showToast('CHEFE FINAL: DESTRUA TODAS AS FONTES DE TIRO!');
+}
+function bossTurretPos(t){ return {x: boss.x+boss.w*t.rx, y: boss.y+boss.h*t.ry+boss.bob}; }
+function updateBoss(){
+  boss.bob = Math.sin(frameT*0.03)*6;
+  movePlayerPhysics(boss.platforms, canvas.width);
+  if(player.y>canvas.height+150){ player.x=80; player.y=canvas.height-140; player.vy=0; }
+
+  projectiles.forEach(pr=>{ pr.x+=pr.vx; if(pr.vy) pr.y+=pr.vy; });
+  projectiles = projectiles.filter(pr=>pr.x>-50 && pr.x<canvas.width+50);
+  enemyProjectiles.forEach(pr=>{ pr.x+=pr.vx; pr.y+=pr.vy||0; pr.life--; });
+  enemyProjectiles = enemyProjectiles.filter(pr=>pr.life>0);
+
+  const aliveTurrets = boss.turrets.filter(t=>t.alive);
+  aliveTurrets.forEach(t=>{
+    t.cooldown--;
+    const pos = bossTurretPos(t);
+    if(t.cooldown<=0){
+      const dx=(player.x - pos.x), dy=(player.y-pos.y), d=Math.max(1,Math.hypot(dx,dy));
+      enemyProjectiles.push({x:pos.x, y:pos.y, vx:(dx/d)*6, vy:(dy/d)*6, w:10,h:10, life:200, kind:'shot'});
+      t.cooldown = Math.max(30, 80 - (3-aliveTurrets.length)*15); SFX.hit();
+    }
+    for(const pr of projectiles){
+      if(rectsOverlap(pr,{x:pos.x-t.w/2,y:pos.y-t.h/2,w:t.w,h:t.h})){
+        t.hp -= (pr.dmg||1); pr.x=-9999;
+        if(t.hp<=0 && t.alive){ t.alive=false; SFX.bigHit(); spawnParticles(pos.x,pos.y,'#FFD447'); state.pontuacao+=100; }
+      }
+    }
+  });
+  for(const pr of enemyProjectiles){
+    if(player.invuln<=0 && rectsOverlap(player,{x:pr.x-5,y:pr.y-5,w:pr.w||10,h:pr.h||10})){ damagePlayer(); pr.life=0; }
+  }
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life--;});
+  particles = particles.filter(p=>p.life>0);
+
+  const totalHp = boss.turrets.reduce((s,t)=>s+Math.max(0,t.hp),0);
+  const totalMax = boss.turrets.reduce((s,t)=>s+t.maxHp,0);
+  document.getElementById('bossBar').style.width = Math.max(0,(totalHp/totalMax)*100)+'%';
+
+  if(boss.turrets.every(t=>!t.alive) && !boss.defeated){
+    boss.defeated=true; SFX.victory();
+    for(let i=0;i<6;i++) setTimeout(()=>spawnParticles(boss.x+Math.random()*boss.w, boss.y+Math.random()*boss.h, '#FF2E9A'), i*150);
+    setTimeout(()=>endGame(true), 1600);
+  }
+}
+
+/* ---------------- RENDER ---------------- */
+function drawRobotPlayer(px,py,facing,walking,t,cx){
+  const lvl = state.gunLevel;
+  ctx.save();
+  ctx.translate(px+17-(cx||0), py);
+  // aura de energia: aparece a partir do nível 5 e fica mais forte no máximo
+  if(lvl>=5){
+    ctx.save();
+    ctx.globalAlpha = 0.25+0.1*Math.sin(t*0.2);
+    ctx.fillStyle = gunColor(); ctx.shadowColor=gunColor(); ctx.shadowBlur=18;
+    ctx.beginPath(); ctx.ellipse(0,22,22,26,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  // flash branco ao coletar upgrade
+  if(upgradeFlashT>0){
+    ctx.save(); ctx.globalAlpha = Math.min(1,upgradeFlashT/50)*0.7;
+    ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.shadowBlur=30;
+    ctx.beginPath(); ctx.ellipse(0,22,26,30,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  ctx.scale(facing,1);
+  // cor da armadura evolui com o nível
+  const torsoColor = lvl>=9? '#FFFFFF' : lvl>=7? '#B84CFF' : lvl>=5? '#FF3B45' : lvl>=3? '#FFD447' : '#2FD3F2';
+  const trimColor  = lvl>=9? '#FFAA00' : lvl>=7? '#7A2FCF' : lvl>=5? '#8f1015' : lvl>=3? '#B8902F' : '#0F7FA8';
+  ctx.fillStyle=torsoColor; ctx.fillRect(-13,10,26,26);
+  ctx.fillStyle=trimColor; ctx.fillRect(-13,10,26,8);
+  // ombreiras extras a partir do nível 2, ficam maiores com o nível
+  if(lvl>=2){
+    const padW = 6+Math.min(6,Math.floor(lvl/2));
+    ctx.fillStyle=trimColor;
+    ctx.fillRect(-13-padW+4,8,padW,10);
+    ctx.fillRect(13-4,8,padW,10);
+  }
+  ctx.fillStyle='#3FE0FF'; ctx.beginPath(); ctx.ellipse(0,4,13,10,0,0,Math.PI*2); ctx.fill();
+  // crista do capacete cresce com o nível
+  ctx.fillStyle= lvl>=7? '#FF2E9A' : '#FFD447';
+  ctx.fillRect(-4,0,8, 4+Math.min(6,Math.floor(lvl/2)));
+  const swing = walking? Math.sin(t/6)*6:0;
+  ctx.fillStyle='#1E6E90';
+  ctx.fillRect(-11,36+ (walking?Math.max(0,swing):0),9,10);
+  ctx.fillRect(2,36+ (walking?Math.max(0,-swing):0),9,10);
+  ctx.fillStyle=gunColor();
+  ctx.shadowColor= lvl>=5? gunColor():'transparent'; ctx.shadowBlur= lvl>=5? 10:0;
+  ctx.fillRect(10,16,16+lvl,9);
+  ctx.restore();
+}
+function drawEnemy(en,t,cx){
+  ctx.save();
+  ctx.translate(en.x-cx, en.y);
+  const flashOn = en.flash>0 && frameT%6<3;
+  ctx.fillStyle= flashOn? '#fff': (en.type==='sworder'?'#B23A3A': en.type==='shooter'?'#3A7CB2': en.type==='flyer'?'#B084FF':'#7C3AED');
+  ctx.fillRect(0,6,en.w,en.h-6);
+  ctx.fillStyle= flashOn? '#fff':'#B084FF';
+  ctx.beginPath(); ctx.ellipse(en.w/2,6,en.w/2-2,8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#FF3B45'; ctx.fillRect(en.w/2-6,2,4,4); ctx.fillRect(en.w/2+2,2,4,4);
+  if(en.type==='sworder'){ ctx.fillStyle='#ddd'; ctx.fillRect(en.dir>0?en.w:-14, 14, 14,5); }
+  if(en.maxHp>1){
+    ctx.fillStyle='#000a'; ctx.fillRect(0,-8,en.w,4);
+    ctx.fillStyle='#4CFF7B'; ctx.fillRect(0,-8,en.w*Math.max(0,en.hp/en.maxHp),4);
+  }
+  ctx.restore();
+}
+function drawCityBg(cx){
+  const g = ctx.createLinearGradient(0,0,0,canvas.height);
+  g.addColorStop(0,'#0a1030'); g.addColorStop(1,'#03050d');
+  ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.save(); ctx.globalAlpha=0.5;
+  for(let i=0;i<14;i++){
+    const bx = ((i*260) - cx*0.3) % (canvas.width+300) - 150;
+    ctx.fillStyle = i%2===0? '#131b3d':'#0d1330';
+    ctx.fillRect(bx, canvas.height-260-((i*53)%140), 90, 260+((i*53)%140));
+    ctx.fillStyle='#2FF3E0';
+    for(let w=0;w<4;w++) ctx.fillRect(bx+10+w*20, canvas.height-240-((i*53)%140)+ (w*30%80), 5,5);
+  }
+  ctx.restore();
+}
+
+function render(){
+  if(mode==='run') renderRun();
+  else if(mode==='jump') renderJump();
+  else if(mode==='boss') renderBoss();
+}
+
+function renderRun(){
+  drawCityBg(camX);
+  level.platforms.forEach(p=>{
+    ctx.fillStyle='#141c3f'; ctx.fillRect(p.x-camX, p.y, p.w, p.h);
+    ctx.fillStyle='#2FF3E0'; ctx.fillRect(p.x-camX, p.y, p.w, 3);
+  });
+  level.walls.forEach(w=>{
+    const wx=w.x-camX;
+    if(wx>-40 && wx<canvas.width+40){
+      ctx.fillStyle='#3a4266'; ctx.fillRect(wx,w.y,w.w,w.h);
+      ctx.fillStyle='#FFD447'; for(let s=0;s<w.h;s+=14) ctx.fillRect(wx,w.y+s,w.w,4);
+      ctx.strokeStyle='#8fa0d6'; ctx.strokeRect(wx,w.y,w.w,w.h);
+      ctx.fillStyle='#FFD447'; ctx.font='16px monospace'; ctx.textAlign='center';
+      ctx.fillText('▲', wx+w.w/2, w.y-6);
+      ctx.textAlign='left';
+    }
+  });
+  const portalColor = level.portalOpen? '#4CFF7B':'#3a3f66';
+  ctx.save(); ctx.shadowColor=portalColor; ctx.shadowBlur= level.portalOpen? 25:0;
+  ctx.fillStyle=portalColor; ctx.fillRect(level.portalX-camX, 380, 24, 140); ctx.restore();
+  ctx.fillStyle='#fff'; ctx.font='12px monospace';
+  ctx.fillText(level.portalOpen? 'PORTAL ABERTO':'DERROTE OS INIMIGOS', level.portalX-camX-60, 370);
+
+  level.enemies.forEach(en=>{ if(en.alive) drawEnemy(en, frameT, camX); });
+  if(!level.upgradeItem.collected){
+    const it = level.upgradeItem, ix=it.x-camX;
+    const bob = Math.sin(frameT*0.08)*6;
+    ctx.save();
+    ctx.shadowColor='#FFD447'; ctx.shadowBlur=18;
+    ctx.fillStyle='#FFD447';
+    ctx.beginPath(); ctx.moveTo(ix+13, it.y+bob); ctx.lineTo(ix+26, it.y+13+bob);
+    ctx.lineTo(ix+13, it.y+26+bob); ctx.lineTo(ix, it.y+13+bob); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#3a2a00'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('⚡', ix+13, it.y+18+bob);
+    ctx.textAlign='left';
+    ctx.restore();
+  }
+  enemyProjectiles.forEach(pr=>{
+    ctx.save();
+    if(pr.kind==='laser'){ ctx.fillStyle='#FF3B45cc'; ctx.shadowColor='#FF3B45'; ctx.shadowBlur=16; ctx.fillRect(pr.x-camX, pr.laserY-4, pr.w, 8); }
+    else { ctx.fillStyle='#FF3B45'; ctx.shadowColor='#FF3B45'; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(pr.x-camX,pr.y,5,0,Math.PI*2); ctx.fill(); }
+    ctx.restore();
+  });
+  projectiles.forEach(pr=>{ ctx.fillStyle=gunColor(); ctx.shadowColor=gunColor(); ctx.shadowBlur=8; ctx.fillRect(pr.x-camX,pr.y,pr.w,pr.h); ctx.shadowBlur=0; });
+  if(player.invuln%10<6) drawRobotPlayer(player.x,player.y,player.facing, Math.abs(player.vx)>0, frameT, camX);
+  particles.forEach(p=>{ ctx.fillStyle=p.color; ctx.globalAlpha=Math.max(0,p.life/26); ctx.fillRect(p.x-camX,p.y,4,4); ctx.globalAlpha=1; });
+}
+
+function renderJump(){
+  drawCityBg(0);
+  jumpArena.platforms.forEach(p=>{
+    const isOpt = typeof p.optIndex==='number';
+    ctx.fillStyle = isOpt? (p.hit? '#2a3a6b':'#1a2550') : '#141c3f';
+    ctx.fillRect(p.x,p.y,p.w,p.h);
+    ctx.fillStyle = isOpt? '#FFD447':'#2FF3E0';
+    ctx.fillRect(p.x,p.y,p.w,3);
+    if(isOpt && p.label!==undefined){
+      ctx.fillStyle='#EAF0FF'; ctx.font='bold 16px Rajdhani, sans-serif'; ctx.textAlign='center';
+      ctx.fillText(p.label, p.x+p.w/2, p.y-10);
+      ctx.textAlign='left';
+    }
+  });
+  // rótulos visíveis já na passarela, acima de cada vão, para o jogador escolher antes de cair
+  jumpArena.floorPlats.forEach(p=>{
+    ctx.fillStyle='#FFD447'; ctx.font='bold 15px Rajdhani, sans-serif'; ctx.textAlign='center';
+    ctx.fillText(p.label!==undefined? p.label:'', p.gapCenterX, jumpArena.ceilingY-10);
+    ctx.fillStyle='#FFD44799'; ctx.font='14px monospace';
+    ctx.fillText('▼', p.gapCenterX, jumpArena.ceilingY+14);
+    ctx.textAlign='left';
+  });
+  if(jumpPreview) jumpPreview();
+  if(player.invuln%10<6) drawRobotPlayer(player.x,player.y,player.facing, Math.abs(player.vx)>0, frameT, 0);
+  particles.forEach(p=>{ ctx.fillStyle=p.color; ctx.globalAlpha=Math.max(0,p.life/26); ctx.fillRect(p.x,p.y,4,4); ctx.globalAlpha=1; });
+}
+
+function renderBoss(){
+  drawCityBg(0);
+  boss.platforms.forEach(p=>{ ctx.fillStyle='#141c3f'; ctx.fillRect(p.x,p.y,p.w,p.h); ctx.fillStyle='#2FF3E0'; ctx.fillRect(p.x,p.y,p.w,3); });
+
+  // corpo do chefe
+  ctx.save();
+  ctx.translate(0, boss.bob);
+  const bg2 = ctx.createLinearGradient(boss.x,boss.y,boss.x,boss.y+boss.h);
+  bg2.addColorStop(0,'#3a1250'); bg2.addColorStop(1,'#12081f');
+  ctx.fillStyle=bg2; ctx.fillRect(boss.x,boss.y,boss.w,boss.h);
+  ctx.fillStyle='#FF2E9A55'; ctx.fillRect(boss.x,boss.y,boss.w,10);
+  ctx.fillStyle='#FF3B45'; ctx.beginPath(); ctx.arc(boss.x+boss.w*0.5, boss.y+50, 14,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  boss.turrets.forEach(t=>{
+    const pos = bossTurretPos(t);
+    if(!t.alive){
+      ctx.fillStyle='#222'; ctx.fillRect(pos.x-t.w/2,pos.y-t.h/2,t.w,t.h);
+      return;
+    }
+    ctx.save();
+    ctx.shadowColor='#FFD447'; ctx.shadowBlur=14;
+    ctx.fillStyle='#FFD447'; ctx.fillRect(pos.x-t.w/2,pos.y-t.h/2,t.w,t.h);
+    ctx.restore();
+    ctx.fillStyle='#000a'; ctx.fillRect(pos.x-t.w/2,pos.y-t.h/2-10,t.w,5);
+    ctx.fillStyle='#4CFF7B'; ctx.fillRect(pos.x-t.w/2,pos.y-t.h/2-10,t.w*Math.max(0,t.hp/t.maxHp),5);
+  });
+
+  enemyProjectiles.forEach(pr=>{ ctx.fillStyle='#FF3B45'; ctx.shadowColor='#FF3B45'; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(pr.x,pr.y,6,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0; });
+  projectiles.forEach(pr=>{ ctx.fillStyle=gunColor(); ctx.shadowColor=gunColor(); ctx.shadowBlur=8; ctx.fillRect(pr.x,pr.y,pr.w,pr.h); ctx.shadowBlur=0; });
+  if(player.invuln%10<6) drawRobotPlayer(player.x,player.y,player.facing, Math.abs(player.vx)>0, frameT, 0);
+  particles.forEach(p=>{ ctx.fillStyle=p.color; ctx.globalAlpha=Math.max(0,p.life/26); ctx.fillRect(p.x,p.y,4,4); ctx.globalAlpha=1; });
+}
+
+/* ---------------- Fim de jogo ---------------- */
+async function endGame(vitoria){
+  gameOver=true;
+  await salvarResultado();
+  document.getElementById('resultTitle').textContent = vitoria? 'VOCÊ É O REI DA MATEMATRIX! 👑' : 'GAME OVER';
+  document.getElementById('resultBody').innerHTML = `
+    Equipe: <b>${state.teamName}</b><br>
+    Pontuação: <b>${state.pontuacao}</b><br>
+    Moedas: 🪙 ${state.moedas}<br>
+    Fase alcançada: ${Math.min(state.faseAtual+1, state.fases.length)} / ${state.fases.length}<br>
+    Nível de tiro: ${state.gunLevel}<br>
+    Acertos: ${state.acertos} · Erros: ${state.erros}
+  `;
+  showScreen('result-screen');
+}
+async function salvarResultado(){
+  if(!state.ativCode) return;
+  const key = 'resultados:'+state.ativCode;
+  const atual = (await sGet(key,true)) || [];
+  atual.push({ equipe: state.teamName, pontuacao: state.pontuacao, fase: Math.min(state.faseAtual+1, state.fases.length),
+    moedas: state.moedas, acertos: state.acertos, erros: state.erros, data: new Date().toLocaleString('pt-BR') });
+  await sSet(key, atual, true);
+}
+
+/* =========================================================================
+   ÁREA DO PROFESSOR
+   ========================================================================= */
+let teacherName='';
+function enterTeacherPanel(){
+  teacherName = document.getElementById('teacherName').value.trim() || 'Professor(a)';
+  showScreen('teacher-panel');
+  const notice = document.getElementById('storageNotice');
+  notice.innerHTML = hasCloudStorage
+    ? '☁️ Armazenamento em nuvem ativo: turmas, atividades e resultados ficam disponíveis para qualquer dispositivo que abrir este mesmo link.'
+    : '💾 Este arquivo está sendo aberto localmente: turmas, atividades e resultados ficam salvos <b>somente neste navegador/dispositivo</b>. Se você criar uma atividade aqui, os alunos precisam jogar <b>a partir deste mesmo dispositivo/navegador</b> (ou você compartilha o link do artefato do Claude, em vez do arquivo baixado, para sincronizar entre aparelhos).';
+  renderTurmas();
+}
+async function criarTurma(){
+  const nome = document.getElementById('newTurmaName').value.trim();
+  if(!nome) return;
+  const id = 'T'+Date.now();
+  const turmas = (await sGet('turmas:list',true)) || [];
+  turmas.push({id, nome, criadaEm:new Date().toLocaleDateString('pt-BR')});
+  await sSet('turmas:list', turmas, true);
+  document.getElementById('newTurmaName').value=''; renderTurmas();
+}
+async function renderTurmas(){
+  const turmas = (await sGet('turmas:list',true)) || [];
+  const el = document.getElementById('turmaList');
+  if(turmas.length===0){ el.innerHTML = '<p style="color:var(--dim)">Nenhuma turma criada ainda.</p>'; return; }
+  el.innerHTML = turmas.map(t=>`
+    <div class="row" style="justify-content:space-between;align-items:center;border:1px solid var(--panel-border);padding:10px;border-radius:8px;margin-bottom:8px;">
+      <div><b>${t.nome}</b><br><span style="color:var(--dim);font-size:.8rem;">Criada em ${t.criadaEm}</span></div>
+      <button class="menu-btn small" onclick="abrirTurma('${t.id}','${t.nome.replace(/'/g,"\\'")}')">ABRIR</button>
+    </div>`).join('');
+}
+let turmaAtual=null;
+function abrirTurma(id,nome){
+  turmaAtual={id,nome};
+  document.getElementById('turmaDetail').style.display='block';
+  document.getElementById('turmaDetailName').textContent = 'TURMA: '+nome;
+  const chips = document.getElementById('faseChips'); chips.innerHTML='';
+  for(let i=1;i<=10;i++){
+    const c=document.createElement('div'); c.className='chip sel'; c.textContent='Fase '+i; c.dataset.f=i;
+    c.onclick=()=>c.classList.toggle('sel'); chips.appendChild(c);
+  }
+  renderAtividades();
+}
+async function criarAtividade(){
+  const fases = Array.from(document.querySelectorAll('#faseChips .chip.sel')).map(c=>parseInt(c.dataset.f,10));
+  if(fases.length===0){ alert('Selecione ao menos uma fase.'); return; }
+  const dificuldade = document.getElementById('dificSelect').value;
+  const nome = document.getElementById('ativNome').value.trim() || 'Atividade '+new Date().toLocaleDateString('pt-BR');
+  let code = randCode();
+  const ativ = {code, nome, turmaId:turmaAtual.id, turmaNome:turmaAtual.nome, fases, dificuldade, criadaEm:new Date().toLocaleString('pt-BR')};
+  await sSet('atividade:'+code, ativ, true);
+  const lista = (await sGet('atividades:'+turmaAtual.id,true)) || [];
+  lista.push(code);
+  await sSet('atividades:'+turmaAtual.id, lista, true);
+  document.getElementById('ativNome').value=''; renderAtividades();
+}
+async function renderAtividades(){
+  const lista = (await sGet('atividades:'+turmaAtual.id,true)) || [];
+  const el = document.getElementById('ativList');
+  if(lista.length===0){ el.innerHTML='<p style="color:var(--dim)">Nenhuma atividade criada ainda para esta turma.</p>'; return; }
+  const items = await Promise.all(lista.map(code=>sGet('atividade:'+code,true)));
+  el.innerHTML = items.filter(Boolean).map(a=>`
+    <div style="border:1px solid var(--panel-border);padding:10px;border-radius:8px;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><b>${a.nome}</b><br><span class="code-badge">${a.code}</span></div>
+        <button class="menu-btn small" onclick="verResultados('${a.code}')">RESULTADOS</button>
+      </div>
+      <div style="font-size:.8rem;color:var(--dim);margin-top:6px;">Fases: ${a.fases.join(', ')} · Dificuldade: ${a.dificuldade}</div>
+    </div>`).join('');
+}
+let ativAtualCode=null;
+async function verResultados(code){
+  ativAtualCode=code;
+  const ativ = await sGet('atividade:'+code,true);
+  document.getElementById('resAtivTitle').textContent = 'RESULTADOS · '+(ativ? ativ.nome:'');
+  document.getElementById('resCodeBadge').innerHTML = `<span class="code-badge">${code}</span>`;
+  const resultados = (await sGet('resultados:'+code,true)) || [];
+  const tbody = document.querySelector('#resTable tbody');
+  tbody.innerHTML = resultados.map(r=>`<tr><td>${r.equipe}</td><td>${r.pontuacao}</td><td>${r.fase}</td><td>${r.moedas}</td><td>${r.acertos}</td><td>${r.erros}</td><td>${r.data}</td></tr>`).join('') || '<tr><td colspan="7" style="color:var(--dim)">Nenhum resultado registrado ainda.</td></tr>';
+  showScreen('resultados-screen');
+}
+async function exportarCSV(){
+  const resultados = (await sGet('resultados:'+ativAtualCode,true)) || [];
+  let csv = 'Equipe,Pontuacao,Fase,Moedas,Acertos,Erros,Data\n';
+  resultados.forEach(r=>{ csv += `"${r.equipe}",${r.pontuacao},${r.fase},${r.moedas},${r.acertos},${r.erros},"${r.data}"\n`; });
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download = 'resultados_'+ativAtualCode+'.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

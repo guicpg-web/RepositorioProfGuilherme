@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Missão Horizonte: Setor Kepler</title>
+<style>
+  :root{
+    --bg-void:#04050c;
+    --bg-panel:#0b0f1e;
+    --bg-panel-2:#111830;
+    --line:#22335a;
+    --cyan:#4de3ff;
+    --magenta:#ff4fd8;
+    --amber:#ffcf4d;
+    --green:#5dffa0;
+    --red:#ff5470;
+    --text:#dce6ff;
+    --text-dim:#7f8cb3;
+    --font-display: 'Segoe UI', Verdana, Geneva, Tahoma, sans-serif;
+    --font-mono: 'Consolas', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    height:100dvh;
+    background:var(--bg-void);
+    color:var(--text);
+    font-family:var(--font-display);
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+  }
+  #app-root{
+    width:100%; height:100%;
+    height:100dvh;
+    display:flex; align-items:center; justify-content:center;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  #game-wrap{
+    position:relative;
+    /* Cabe com folga dentro da área realmente visível (tablets escondem/mostram barras do navegador) */
+    width:min(96vw, 170.66vh);
+    height:min(96vh, 54vw);
+    width:min(96dvw, 170.66dvh);
+    height:min(96dvh, 54dvw);
+    background:#000;
+    box-shadow: 0 0 60px rgba(77,227,255,0.08), inset 0 0 120px rgba(0,0,0,0.6);
+    border:1px solid var(--line);
+  }
+  canvas#game{
+    width:100%; height:100%; display:block;
+    image-rendering:optimizeSpeed;
+  }
+  #overlay-layer{
+    position:absolute; inset:0; pointer-events:none;
+    font-family:var(--font-display);
+  }
+  .orb-label{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    width:31%;
+    padding:6px 8px;
+    border-radius:10px;
+    border:2px solid var(--cyan);
+    background:rgba(6,12,28,0.86);
+    color:var(--text);
+    font-size:clamp(10px, 1.35vw, 15px);
+    line-height:1.25;
+    text-align:center;
+    pointer-events:none;
+    box-shadow:0 0 14px rgba(77,227,255,0.5);
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .orb-label b{ color:var(--amber); }
+  .orb-label.wrong{ border-color:var(--red); box-shadow:0 0 14px rgba(255,84,112,0.6); opacity:0.35; }
+  .orb-label.correct-flash{ border-color:var(--green); box-shadow:0 0 22px rgba(93,255,160,0.9); }
+
+  /* HUD */
+  #hud{
+    position:absolute; inset:0; pointer-events:none;
+    display:none;
+  }
+  #hud.active{ display:block; }
+  #hud-top{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:10px 14px;
+    background:linear-gradient(to bottom, rgba(0,0,0,0.65), transparent);
+  }
+  #hud-team{
+    font-size:clamp(11px,1.6vw,15px);
+    letter-spacing:0.5px;
+    color:var(--cyan);
+    font-weight:600;
+  }
+  #hud-phase{
+    font-size:clamp(10px,1.3vw,13px);
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  #hud-lives{
+    display:flex; gap:4px; margin-top:4px;
+  }
+  .life-icon{ width:14px; height:14px; }
+  #hud-right{ text-align:right; }
+  #hud-score{
+    font-family:var(--font-mono);
+    font-size:clamp(10px,1.3vw,13px);
+    color:var(--text-dim);
+  }
+  #hp-bar-wrap{
+    width:clamp(90px,18vw,180px);
+    height:10px;
+    border:1px solid var(--line);
+    border-radius:5px;
+    background:rgba(255,255,255,0.06);
+    margin-top:4px;
+    overflow:hidden;
+  }
+  #hp-bar-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--green), var(--cyan));
+    width:100%;
+    transition:width .2s;
+  }
+
+  #boss-bar-wrap{
+    position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    width:min(70%, 480px);
+    display:none;
+    flex-direction:column;
+    align-items:center;
+  }
+  #boss-bar-wrap.active{ display:flex; }
+  #boss-name{
+    font-size:clamp(10px,1.5vw,14px);
+    color:var(--magenta);
+    letter-spacing:1px;
+    margin-bottom:3px;
+    text-shadow:0 0 8px rgba(255,79,216,0.7);
+  }
+  #boss-bar-outer{
+    width:100%; height:12px;
+    border:2px solid var(--magenta);
+    border-radius:6px;
+    background:rgba(0,0,0,0.5);
+    overflow:hidden;
+  }
+  #boss-bar-inner{
+    height:100%;
+    width:100%;
+    background:linear-gradient(90deg, var(--magenta), var(--red));
+  }
+
+  #question-panel{
+    position:absolute; left:50%; top:3%;
+    transform:translateX(-50%);
+    width:min(90%, 600px);
+    max-height:24%;
+    overflow:hidden;
+    background:rgba(6,10,24,0.94);
+    border:2px solid var(--amber);
+    border-radius:10px;
+    padding:6px 14px;
+    text-align:center;
+    box-shadow:0 0 24px rgba(255,207,77,0.35);
+    display:none;
+  }
+  #question-panel.active{ display:block; }
+  #question-topic{
+    font-size:clamp(8px,1vw,10px);
+    color:var(--amber);
+    letter-spacing:1px;
+    margin-bottom:2px;
+  }
+  #question-text{
+    font-size:clamp(11px,1.6vw,15px);
+    line-height:1.24;
+    color:var(--text);
+  }
+  #question-hint{
+    margin-top:3px;
+    font-size:clamp(8px,1vw,10px);
+    color:var(--text-dim);
+  }
+  #question-progress{
+    margin-top:2px;
+    font-size:clamp(8px,1vw,10px);
+    color:var(--cyan);
+  }
+
+  #controls-hint{
+    position:absolute; bottom:6px; left:50%; transform:translateX(-50%);
+    font-size:clamp(9px,1.1vw,11px);
+    color:var(--text-dim);
+    background:rgba(0,0,0,0.4);
+    padding:3px 10px;
+    border-radius:8px;
+    white-space:nowrap;
+  }
+
+  /* Screens */
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(ellipse at 50% 30%, #0c1430 0%, #04050c 75%);
+    padding:16px;
+    overflow-y:auto;
+  }
+  .screen.hidden{ display:none; }
+  .title-main{
+    font-size:clamp(24px, 5.5vw, 46px);
+    letter-spacing:2px;
+    font-weight:800;
+    color:var(--cyan);
+    text-shadow:0 0 18px rgba(77,227,255,0.6), 0 0 40px rgba(77,227,255,0.25);
+    margin:0 0 2px 0;
+    text-align:center;
+  }
+  .title-sub{
+    font-size:clamp(12px,2vw,16px);
+    color:var(--magenta);
+    letter-spacing:3px;
+    margin-bottom:18px;
+    text-align:center;
+  }
+  .lore-box{
+    max-width:560px;
+    font-size:clamp(11px,1.6vw,14px);
+    color:var(--text-dim);
+    line-height:1.5;
+    text-align:center;
+    margin-bottom:20px;
+    padding:0 10px;
+  }
+  .field-row{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    margin-bottom:16px;
+  }
+  .field-row label{
+    font-size:12px; color:var(--text-dim); letter-spacing:1px;
+  }
+  input[type=text]{
+    font-family:var(--font-mono);
+    font-size:16px;
+    padding:8px 12px;
+    width:min(80vw,300px);
+    background:var(--bg-panel);
+    border:1px solid var(--cyan);
+    border-radius:8px;
+    color:var(--text);
+    text-align:center;
+  }
+  .btn{
+    font-family:var(--font-display);
+    font-size:clamp(13px,1.8vw,16px);
+    padding:11px 26px;
+    margin:6px;
+    background:linear-gradient(180deg, #16264d, #0c1730);
+    border:1px solid var(--cyan);
+    border-radius:10px;
+    color:var(--cyan);
+    cursor:pointer;
+    letter-spacing:0.5px;
+    pointer-events:auto;
+    transition:transform .1s, box-shadow .15s;
+  }
+  .btn:hover{ box-shadow:0 0 16px rgba(77,227,255,0.5); transform:translateY(-1px); }
+  .btn:active{ transform:translateY(1px); }
+  .btn.primary{
+    background:linear-gradient(180deg, #ffdf80, #ffb14d);
+    border-color:var(--amber);
+    color:#241300;
+    font-weight:700;
+  }
+  .btn.danger{ border-color:var(--red); color:var(--red); }
+  .btn.ghost{ background:transparent; border-color:var(--line); color:var(--text-dim); }
+  .btn.small{ font-size:12px; padding:6px 12px; margin:3px; }
+  .btn-row{ display:flex; flex-wrap:wrap; justify-content:center; }
+
+  .panel-box{
+    width:min(94%, 900px);
+    max-height:88%;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+    overflow-y:auto;
+    display:flex; flex-direction:column;
+  }
+  .panel-title{
+    font-size:18px; color:var(--cyan); margin:0 0 10px 0; letter-spacing:1px;
+  }
+  .tabs{ display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+  .tab-btn{
+    font-size:12px; padding:7px 13px; background:var(--bg-panel-2);
+    border:1px solid var(--line); border-radius:8px; color:var(--text-dim);
+    cursor:pointer; pointer-events:auto;
+  }
+  .tab-btn.active{ color:var(--cyan); border-color:var(--cyan); }
+  .tab-content{ display:none; }
+  .tab-content.active{ display:block; }
+
+  table.qtable{ width:100%; border-collapse:collapse; font-size:12px; }
+  table.qtable th, table.qtable td{
+    border:1px solid var(--line); padding:6px 7px; text-align:left; vertical-align:top;
+  }
+  table.qtable th{ background:var(--bg-panel-2); color:var(--cyan); font-size:11px; }
+  table.qtable td input, table.qtable td select, table.qtable td textarea{
+    width:100%; background:#0a1024; color:var(--text); border:1px solid var(--line);
+    border-radius:4px; font-size:12px; padding:3px 4px; font-family:var(--font-display);
+  }
+  table.qtable td textarea{ resize:vertical; min-height:32px; }
+  .opt-correct{ background:rgba(93,255,160,0.15) !important; }
+
+  #perf-summary{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
+  .stat-chip{
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:10px;
+    padding:8px 14px; font-size:12px; color:var(--text-dim); min-width:110px; text-align:center;
+  }
+  .stat-chip b{ display:block; font-size:20px; color:var(--cyan); font-family:var(--font-mono); }
+
+  .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+  .form-grid label{ font-size:11px; color:var(--text-dim); display:block; margin-bottom:2px; }
+  .form-grid input, .form-grid select, .form-grid textarea{
+    width:100%; background:#0a1024; color:var(--text); border:1px solid var(--line);
+    border-radius:6px; padding:6px 8px; font-size:13px; font-family:var(--font-display);
+  }
+  .form-grid .full{ grid-column:1 / -1; }
+
+  #transition-text{
+    font-size:clamp(20px,4vw,34px); color:var(--amber); text-shadow:0 0 16px rgba(255,207,77,0.6);
+    text-align:center;
+  }
+  #transition-sub{ color:var(--text-dim); margin-top:8px; font-size:14px; text-align:center; }
+
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+  #rotate-hint{
+    display:none;
+    position:fixed; top:0; left:0; right:0; z-index:9999;
+    background:rgba(255,207,77,0.96); color:#241300;
+    text-align:center; font-size:13px; font-weight:700;
+    padding:7px 10px;
+  }
+  @media (orientation:portrait){ #rotate-hint{ display:block; } }
+</style>
+</head>
+<body>
+<div id="rotate-hint">🔄 Gire o tablet para o modo paisagem (horizontal) para a melhor experiência de jogo.</div>
+<div id="app-root">
+  <div id="game-wrap">
+    <canvas id="game"></canvas>
+    <div id="overlay-layer"></div>
+
+    <!-- HUD -->
+    <div id="hud">
+      <div id="hud-top">
+        <div>
+          <div id="hud-team">EQUIPE</div>
+          <div id="hud-phase">Fase 1 / 10</div>
+          <div id="hud-lives"></div>
+        </div>
+        <div id="hud-right">
+          <div id="hud-score">PONTOS 0</div>
+          <button class="btn small ghost" id="btn-mute-hud" style="pointer-events:auto; padding:3px 8px; margin:3px 0 0 0;">🔊</button>
+          <div id="hp-bar-wrap"><div id="hp-bar-fill"></div></div>
+        </div>
+      </div>
+      <div id="boss-bar-wrap">
+        <div id="boss-name">ALVO</div>
+        <div id="boss-bar-outer"><div id="boss-bar-inner"></div></div>
+      </div>
+      <div id="question-panel">
+        <div id="question-topic">DESAFIO</div>
+        <div id="question-text">...</div>
+        <div id="question-progress"></div>
+        <div id="question-hint">Atire no orbe com a resposta certa usando o ataque especial (Y)</div>
+      </div>
+      <div id="controls-hint">Mover: setas/WASD &nbsp;|&nbsp; Tiro: X &nbsp;|&nbsp; Resposta: Y &nbsp;|&nbsp; Pausa: ESC</div>
+    </div>
+
+    <!-- MAIN MENU -->
+    <div class="screen" id="screen-main">
+      <h1 class="title-main">MISSÃO HORIZONTE</h1>
+      <div class="title-sub">SETOR KEPLER</div>
+      <div class="lore-box">
+        Ano 2199. A frota Horizonte atravessa o Setor Kepler em busca de um novo lar para a humanidade.
+        Sensores hostis bloqueiam a rota em 10 zonas de risco. Para avançar, a tripulação precisa
+        vencer as ameaças alienígenas <b style="color:var(--amber)">e</b> resolver os desafios de
+        escala, proporção e medidas que travam os sistemas de navegação.
+      </div>
+      <div class="field-row">
+        <label>NOME DA EQUIPE</label>
+        <input type="text" id="input-team-name" placeholder="Ex: Equipe Nébula" maxlength="24">
+      </div>
+      <div class="btn-row">
+        <button class="btn primary" id="btn-start">🚀 Iniciar Missão</button>
+        <button class="btn" id="btn-howto">Como Jogar</button>
+        <button class="btn ghost" id="btn-teacher-open">Painel do Professor</button>
+        <button class="btn ghost" id="btn-mute-menu">🔊 Som</button>
+      </div>
+    </div>
+
+    <!-- HOW TO -->
+    <div class="screen hidden" id="screen-howto">
+      <div class="panel-box" style="max-width:640px;">
+        <h2 class="panel-title">Como Jogar</h2>
+        <div style="font-size:13px; line-height:1.7; color:var(--text);">
+          <p><b style="color:var(--cyan)">Objetivo:</b> pilotar a nave através de 10 fases, destruindo ameaças e resolvendo desafios matemáticos para liberar a passagem.</p>
+          <p><b style="color:var(--cyan)">Controle Xbox:</b> analógico esquerdo / D-pad move a nave. Botão <b style="color:var(--amber)">X</b> atira nos inimigos pequenos e no chefe. Botão <b style="color:var(--amber)">Y</b> é o ataque especial, usado <u>somente</u> para atirar na resposta correta durante os desafios.</p>
+          <p><b style="color:var(--cyan)">Teclado:</b> setas ou WASD para mover. Tecla <b style="color:var(--amber)">X</b> (ou barra de espaço) para o tiro normal. Tecla <b style="color:var(--amber)">Y</b> para o ataque especial de resposta.</p>
+          <p><b style="color:var(--cyan)">Na equipe:</b> um jogador controla a nave enquanto o restante da equipe resolve o desafio em voz alta e decide qual orbe (A, B, C ou D) deve ser destruído.</p>
+          <p><b style="color:var(--cyan)">Dinâmica:</b> destrua inimigos pequenos até a nave-desafio aparecer. Leia o problema, combine a resposta com a equipe e atire no orbe certo com Y. Acertando, o chefe da fase é liberado — derrote-o para avançar. Errar um orbe elimina aquela opção, então cuidado!</p>
+          <p><b style="color:var(--cyan)">Fase 10:</b> a fase final tem 3 desafios seguidos antes do confronto com o núcleo e a cabeça do chefe supremo.</p>
+        </div>
+        <div class="btn-row"><button class="btn" id="btn-howto-back">Voltar</button></div>
+      </div>
+    </div>
+
+    <!-- PAUSE -->
+    <div class="screen hidden" id="screen-pause">
+      <div class="panel-box" style="max-width:380px; align-items:center;">
+        <h2 class="panel-title">Pausado</h2>
+        <div class="btn-row" style="flex-direction:column;">
+          <button class="btn primary" id="btn-resume">Continuar</button>
+          <button class="btn ghost ba" id="btn-pause-teacher">Painel do Professor</button>
+          <button class="btn danger" id="btn-pause-restart">Reiniciar Missão</button>
+          <button class="btn ghost" id="btn-pause-menu">Sair para o Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE TRANSITION -->
+    <div class="screen hidden" id="screen-transition">
+      <div id="transition-text">FASE CONCLUÍDA</div>
+      <div id="transition-sub"></div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div class="screen hidden" id="screen-gameover">
+      <div class="panel-box" style="max-width:460px; align-items:center; text-align:center;">
+        <h2 class="panel-title" style="color:var(--red);">A nave foi perdida...</h2>
+        <div id="gameover-stats" style="font-size:13px; color:var(--text-dim); margin-bottom:10px;"></div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-gameover-retry">Tentar Novamente</button>
+          <button class="btn ghost" id="btn-gameover-menu">Menu Principal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VICTORY -->
+    <div class="screen hidden" id="screen-victory">
+      <div class="panel-box" style="max-width:520px; align-items:center; text-align:center;">
+        <h2 class="panel-title" style="color:var(--green);">🌌 Setor Kepler Liberado!</h2>
+        <div id="victory-stats" style="font-size:13px; color:var(--text-dim); margin-bottom:10px;"></div>
+        <div class="btn-row">
+          <button class="btn primary" id="btn-victory-again">Jogar Novamente</button>
+          <button class="btn ghost" id="btn-victory-teacher">Painel do Professor</button>
+          <button class="btn ghost" id="btn-victory-menu">Menu Principal</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEACHER PANEL -->
+    <div class="screen hidden" id="screen-teacher">
+      <div class="panel-box">
+        <h2 class="panel-title">Painel do Professor — Guilherme Augusto · 9º Ano B · E.E. Abdon Dantas de Almeida</h2>
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="tab-bank">Banco de Questões</button>
+          <button class="tab-btn" data-tab="tab-gab">Gabarito</button>
+          <button class="tab-btn" data-tab="tab-perf">Desempenho</button>
+          <button class="tab-btn" data-tab="tab-config">Configurações</button>
+        </div>
+
+        <div class="tab-content active" id="tab-bank">
+          <div class="btn-row" style="justify-content:flex-start; margin-bottom:8px;">
+            <button class="btn small" id="btn-add-question">+ Nova Questão</button>
+            <button class="btn small" id="btn-export-json">Exportar JSON</button>
+            <button class="btn small" id="btn-import-json">Importar JSON</button>
+            <input type="file" id="file-import-json" accept="application/json" style="display:none;">
+            <button class="btn small danger" id="btn-reset-bank">Restaurar Banco Original</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="qtable" id="question-table">
+              <thead>
+                <tr>
+                  <th style="width:5%;">Fase</th>
+                  <th style="width:11%;">Tópico</th>
+                  <th style="width:9%;">Dificul.</th>
+                  <th style="width:26%;">Pergunta</th>
+                  <th style="width:9%;">A</th>
+                  <th style="width:9%;">B</th>
+                  <th style="width:9%;">C</th>
+                  <th style="width:9%;">D</th>
+                  <th style="width:6%;">Certa</th>
+                  <th style="width:7%;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="question-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-gab">
+          <p style="font-size:12px; color:var(--text-dim);">Lista de referência rápida com a resposta correta destacada. Ideal para conferência ou impressão (Ctrl+P).</p>
+          <div id="gabarito-list" style="font-size:12px; line-height:1.6;"></div>
+        </div>
+
+        <div class="tab-content" id="tab-perf">
+          <div id="perf-summary"></div>
+          <div class="btn-row" style="justify-content:flex-start;">
+            <button class="btn small" id="btn-export-csv">Exportar CSV do Desempenho</button>
+            <button class="btn small ghost" id="btn-clear-log">Limpar Registro</button>
+          </div>
+          <div style="overflow-x:auto; margin-top:8px;">
+            <table class="qtable" id="perf-table">
+              <thead><tr><th>Hora</th><th>Equipe</th><th>Fase</th><th>Tópico</th><th>Pergunta</th><th>Resultado</th><th>Tempo</th></tr></thead>
+              <tbody id="perf-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-config">
+          <div class="form-grid">
+            <div><label>Inimigos por onda (base, fase 1)</label><input type="number" id="cfg-enemies-base" value="6" min="2" max="20"></div>
+            <div><label>Incremento de inimigos por fase</label><input type="number" id="cfg-enemies-inc" value="1" min="0" max="5" step="0.5"></div>
+            <div><label>Multiplicador de vida dos inimigos</label><input type="number" id="cfg-enemy-hp-mult" value="1" min="0.3" max="3" step="0.1"></div>
+            <div><label>Multiplicador de velocidade dos inimigos</label><input type="number" id="cfg-enemy-speed-mult" value="1" min="0.3" max="3" step="0.1"></div>
+            <div><label>Multiplicador de vida dos chefes</label><input type="number" id="cfg-boss-hp-mult" value="1" min="0.3" max="3" step="0.1"></div>
+            <div><label>Vidas iniciais do jogador</label><input type="number" id="cfg-lives" value="3" min="1" max="9"></div>
+            <div><label>Fase inicial (para testes)</label><input type="number" id="cfg-start-phase" value="1" min="1" max="10"></div>
+          </div>
+          <div class="btn-row" style="justify-content:flex-start;">
+            <button class="btn small primary" id="btn-apply-config">Aplicar Configurações</button>
+            <button class="btn small ghost" id="btn-reset-config">Restaurar Padrão</button>
+          </div>
+          <p style="font-size:11px; color:var(--text-dim); margin-top:10px;">As alterações valem a partir do próximo início/reinício de missão ou da próxima fase.</p>
+        </div>
+
+        <div class="btn-row" style="margin-top:12px;"><button class="btn" id="btn-teacher-close">Fechar Painel</button></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* =========================================================
+   0. BANCO DE QUESTÕES
+   ========================================================= */
+const DEFAULT_BANK = [
+{id:'q1',phase:1,topic:'razao_proporcao',dificuldade:'facil',texto:'A tripulação tem 3 engenheiros para cada 5 exploradores. Se há 15 exploradores a bordo, quantos engenheiros existem?',opcoes:['6','9','10','12'],correta:1},
+{id:'q2',phase:1,topic:'razao_proporcao',dificuldade:'facil',texto:'Na nave, a razão entre módulos de carga e módulos de passageiros é 2:3. Se há 12 módulos de carga, quantos são de passageiros?',opcoes:['12','15','18','20'],correta:2},
+{id:'q3',phase:1,topic:'razao_proporcao',dificuldade:'facil',texto:'Se 4 sondas coletam 8 amostras por hora, quantas amostras 6 sondas coletam no mesmo tempo, mantendo a proporção?',opcoes:['10','12','14','16'],correta:1},
+{id:'q4',phase:1,topic:'razao_proporcao',dificuldade:'facil',texto:'A proporção de oxigênio para nitrogênio em um tanque é 1:4. Se há 20 L de nitrogênio, quantos litros de oxigênio há?',opcoes:['4','5','6','8'],correta:1},
+
+{id:'q5',phase:2,topic:'escala',dificuldade:'facil',texto:'No mapa estelar, a escala é 1:2.000.000. Uma distância de 3 cm no mapa corresponde a quantos km na realidade?',opcoes:['6 km','60 km','600 km','6.000 km'],correta:1},
+{id:'q6',phase:2,topic:'escala',dificuldade:'facil',texto:'Um planeta está a 5 cm no mapa, com escala 1:10.000.000. Qual a distância real, em km?',opcoes:['50 km','500 km','5.000 km','50.000 km'],correta:1},
+{id:'q7',phase:2,topic:'escala',dificuldade:'facil',texto:'A escala de um mapa é 1:500.000. Duas estações estão a 8 cm de distância no mapa. Qual a distância real, em km?',opcoes:['4 km','40 km','400 km','4.000 km'],correta:1},
+{id:'q8',phase:2,topic:'escala',dificuldade:'facil',texto:'Se 2 cm no mapa representam 100 km reais, qual é a escala do mapa?',opcoes:['1:1.000.000','1:5.000.000','1:2.000.000','1:500.000'],correta:1},
+
+{id:'q9',phase:3,topic:'conversao_unidades',dificuldade:'facil',texto:'A nave percorreu 4.500 metros em um corredor espacial. Quantos quilômetros ela percorreu?',opcoes:['0,45 km','4,5 km','45 km','450 km'],correta:1},
+{id:'q10',phase:3,topic:'conversao_unidades',dificuldade:'facil',texto:'Um tanque de combustível tem capacidade de 2,3 m³. Quantos litros isso representa? (1 m³ = 1.000 L)',opcoes:['23 L','230 L','2.300 L','23.000 L'],correta:2},
+{id:'q11',phase:3,topic:'conversao_unidades',dificuldade:'facil',texto:'A velocidade da nave é 7.200 km/h. Quantos km/min isso equivale?',opcoes:['12 km/min','120 km/min','1.200 km/min','7,2 km/min'],correta:1},
+{id:'q12',phase:3,topic:'conversao_unidades',dificuldade:'facil',texto:'Um robô mediu 0,75 km até a base. Quantos metros são?',opcoes:['7,5 m','75 m','750 m','7.500 m'],correta:2},
+
+{id:'q13',phase:4,topic:'regra_de_tres',dificuldade:'medio',texto:'A nave consome 60 litros de combustível para percorrer 150 km. Quantos litros consumirá para percorrer 400 km, na mesma proporção?',opcoes:['140 L','150 L','160 L','180 L'],correta:2},
+{id:'q14',phase:4,topic:'regra_de_tres',dificuldade:'medio',texto:'3 painéis solares geram 900 watts. Quantos watts geram 7 painéis iguais?',opcoes:['1.800 W','2.000 W','2.100 W','2.400 W'],correta:2},
+{id:'q15',phase:4,topic:'regra_de_tres',dificuldade:'medio',texto:'Uma impressora 3D imprime 5 peças em 2 horas. Quantas peças imprimirá em 8 horas, no mesmo ritmo?',opcoes:['16','18','20','25'],correta:2},
+{id:'q16',phase:4,topic:'regra_de_tres',dificuldade:'medio',texto:'Se 1 astronauta consome 2,5 kg de alimento por semana, quanto consumirão 6 astronautas na mesma semana?',opcoes:['12 kg','15 kg','17,5 kg','20 kg'],correta:1},
+
+{id:'q17',phase:5,topic:'ampliacao_reducao',dificuldade:'medio',texto:'Na planta da nave, um compartimento retangular mede 4 cm por 3 cm, em escala 1:50. Quais são as dimensões reais?',opcoes:['2 m x 1,5 m','4 m x 3 m','20 m x 15 m','0,2 m x 0,15 m'],correta:0},
+{id:'q18',phase:5,topic:'ampliacao_reducao',dificuldade:'medio',texto:'Uma figura foi ampliada na razão 3:1. Se o lado original media 5 cm, qual o novo lado?',opcoes:['8 cm','10 cm','15 cm','20 cm'],correta:2},
+{id:'q19',phase:5,topic:'ampliacao_reducao',dificuldade:'medio',texto:'Um desenho técnico foi reduzido na razão 1:4. Se a peça real mede 40 cm, qual o tamanho no desenho?',opcoes:['4 cm','8 cm','10 cm','16 cm'],correta:2},
+{id:'q20',phase:5,topic:'ampliacao_reducao',dificuldade:'medio',texto:'Dois módulos são semelhantes: o menor tem lado 6 cm e o maior, 18 cm. Qual a razão de semelhança do menor para o maior?',opcoes:['1:2','1:3','1:4','2:3'],correta:1},
+
+{id:'q21',phase:6,topic:'escala',dificuldade:'medio',texto:'A planta baixa do módulo de comando usa escala 1:100. Se uma parede mede 8,5 cm no desenho, qual o comprimento real, em metros?',opcoes:['0,85 m','8,5 m','85 m','850 m'],correta:1},
+{id:'q22',phase:6,topic:'escala',dificuldade:'medio',texto:'Um corredor real mede 24 metros e aparece com 6 cm na planta. Qual é a escala da planta?',opcoes:['1:40','1:400','1:4.000','1:4'],correta:1},
+{id:'q23',phase:6,topic:'escala',dificuldade:'medio',texto:'Numa planta em escala 1:250, uma sala aparece com 12 cm de comprimento e 8 cm de largura. Quais as dimensões reais?',opcoes:['30 m x 20 m','12 m x 8 m','3 m x 2 m','300 m x 200 m'],correta:0},
+{id:'q24',phase:6,topic:'escala',dificuldade:'medio',texto:'A escala de uma planta é 1:150. Uma peça mede 45 cm no desenho. Qual o valor real, em metros?',opcoes:['6,75 m','45 m','67,5 m','675 m'],correta:2},
+
+{id:'q25',phase:7,topic:'regra_de_tres',dificuldade:'dificil',texto:'3 robôs, trabalhando 4h/dia, constroem 1 painel em 2 dias. Quantos dias levarão 2 robôs trabalhando 6h/dia para construir o mesmo painel?',opcoes:['1 dia','2 dias','3 dias','4 dias'],correta:1},
+{id:'q26',phase:7,topic:'regra_de_tres',dificuldade:'dificil',texto:'5 sensores, funcionando 8h/dia, coletam dados suficientes em 3 dias. Quantos dias levarão 4 sensores funcionando 10h/dia para coletar a mesma quantidade?',opcoes:['2 dias','3 dias','4 dias','5 dias'],correta:1},
+{id:'q27',phase:7,topic:'regra_de_tres',dificuldade:'dificil',texto:'8 operários constroem uma base em 12 dias trabalhando 6h/dia. Quantos dias levarão 6 operários trabalhando 8h/dia?',opcoes:['9 dias','10 dias','12 dias','14 dias'],correta:2},
+{id:'q28',phase:7,topic:'regra_de_tres',dificuldade:'dificil',texto:'12 impressoras 3D, operando 5h/dia, produzem peças suficientes em 4 dias. Quantos dias levarão 8 impressoras operando 6h/dia?',opcoes:['4 dias','5 dias','6 dias','8 dias'],correta:1},
+
+{id:'q29',phase:8,topic:'razao_proporcao',dificuldade:'dificil',texto:'A intensidade de um sinal de rádio é inversamente proporcional à distância. A 100 km, a intensidade é 40 unidades. Qual a intensidade a 200 km?',opcoes:['10','20','40','80'],correta:1},
+{id:'q30',phase:8,topic:'razao_proporcao',dificuldade:'dificil',texto:'Quanto mais rápida a nave, menos tempo leva a viagem. A 800 km/h a viagem leva 6 horas. Quanto tempo levará a 1.200 km/h?',opcoes:['3 h','4 h','5 h','8 h'],correta:1},
+{id:'q31',phase:8,topic:'razao_proporcao',dificuldade:'dificil',texto:'5 geradores abastecem a base em 12 horas. Quantas horas levarão 3 geradores, mantendo a mesma proporção inversa?',opcoes:['15 h','18 h','20 h','24 h'],correta:2},
+{id:'q32',phase:8,topic:'razao_proporcao',dificuldade:'dificil',texto:'Em proporção direta, 6 unidades de minério rendem 18 unidades de liga metálica. Quantas unidades de liga renderão 15 unidades de minério?',opcoes:['30','40','45','50'],correta:2},
+
+{id:'q33',phase:9,topic:'escala',dificuldade:'dificil',texto:'Um mapa usa escala 1:1.500.000. A nave precisa percorrer 9 cm no mapa, viajando a 300 km/h. Quantas horas levará o percurso real?',opcoes:['0,3 h','0,45 h','0,6 h','1,5 h'],correta:1},
+{id:'q34',phase:9,topic:'escala',dificuldade:'dificil',texto:'Uma peça na planta (escala 1:20) mede 7 cm. Se o material custa R$ 50 por metro real, quanto custará o comprimento real da peça?',opcoes:['R$ 35','R$ 50','R$ 70','R$ 140'],correta:2},
+{id:'q35',phase:9,topic:'escala',dificuldade:'dificil',texto:'Na planta em escala 1:40, um corredor mede 15 cm. Se um robô percorre 0,5 m/s, quantos segundos leva para atravessar o corredor real?',opcoes:['6 s','8 s','12 s','15 s'],correta:2},
+{id:'q36',phase:9,topic:'escala',dificuldade:'dificil',texto:'Um mapa estelar tem escala 1:8.000.000. Duas bases distam 6 cm no mapa. Uma sonda viaja a 240 km/h. Quanto tempo, em horas, leva o trajeto?',opcoes:['1 h','1,5 h','2 h','2,5 h'],correta:2},
+
+{id:'q37',phase:10,topic:'misto',dificuldade:'dificil',texto:'A nave-mãe está numa planta em escala 1:250.000. A distância até o portal é 18 cm no mapa. Quantos km reais faltam?',opcoes:['25 km','35 km','45 km','60 km'],correta:2},
+{id:'q38',phase:10,topic:'misto',dificuldade:'dificil',texto:'8 motores, funcionando 5h/dia, geram energia suficiente em 6 dias. Quantos dias levarão 6 motores funcionando 10h/dia para gerar a mesma energia?',opcoes:['3 dias','4 dias','5 dias','6 dias'],correta:1},
+{id:'q39',phase:10,topic:'misto',dificuldade:'dificil',texto:'Numa planta em escala 1:600, o casco da nave mede 32 cm de comprimento. Qual o comprimento real e o tempo que um robô a 4 m/s leva para percorrê-lo?',opcoes:['192 m e 48 s','96 m e 24 s','192 m e 24 s','96 m e 48 s'],correta:0},
+{id:'q40',phase:10,topic:'misto',dificuldade:'dificil',texto:'Uma equipe de 4 técnicos conserta 1 escotilha em 3 horas. Mantendo a proporção, quanto tempo 6 técnicos levarão para consertar 2 escotilhas?',opcoes:['2 h','3 h','4 h','6 h'],correta:2},
+{id:'q41',phase:10,topic:'misto',dificuldade:'dificil',texto:'O mapa da galáxia usa escala 1:50.000.000. Duas estrelas estão a 11 cm de distância no mapa. Qual a distância real, em km?',opcoes:['550.000 km','5.500.000 km','55.000.000 km','5.500 km'],correta:1},
+];
+
+const TOPIC_LABEL = {
+  razao_proporcao:'Razão e Proporção',
+  escala:'Escala (mapas/plantas)',
+  conversao_unidades:'Conversão de Unidades',
+  regra_de_tres:'Regra de Três',
+  ampliacao_reducao:'Ampliação/Redução',
+  misto:'Desafio Final (misto)'
+};
+
+let questionBank = JSON.parse(JSON.stringify(DEFAULT_BANK));
+let usedQuestionIds = new Set();
+
+function pickQuestionsForPhase(phase, count){
+  let pool = questionBank.filter(q => q.phase === phase);
+  let fresh = pool.filter(q => !usedQuestionIds.has(q.id));
+  if(fresh.length < count){ usedQuestionIds.clear(); fresh = pool.slice(); }
+  // shuffle
+  for(let i=fresh.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [fresh[i],fresh[j]]=[fresh[j],fresh[i]]; }
+  const chosen = fresh.slice(0, Math.min(count, fresh.length));
+  chosen.forEach(q=>usedQuestionIds.add(q.id));
+  // If pool smaller than count, pad by repeating (rare edge case)
+  while(chosen.length < count && pool.length>0){ chosen.push(pool[Math.floor(Math.random()*pool.length)]); }
+  return chosen;
+}
+
+/* =========================================================
+   1. CONFIG
+   ========================================================= */
+const DEFAULT_CONFIG = {
+  enemiesBase: 6,
+  enemiesInc: 1,
+  enemyHpMult: 1,
+  enemySpeedMult: 1,
+  bossHpMult: 1,
+  startLives: 3,
+  startPhase: 1,
+};
+let CFG = Object.assign({}, DEFAULT_CONFIG);
+
+/* =========================================================
+   2. SESSION LOG (Desempenho)
+   ========================================================= */
+let sessionLog = [];
+let teamName = 'Equipe';
+
+function logAnswer(phase, topic, questionText, correct, timeMs){
+  sessionLog.push({
+    ts: new Date().toLocaleTimeString('pt-BR'),
+    team: teamName,
+    phase, topic,
+    question: questionText,
+    result: correct ? 'Acertou' : 'Errou',
+    timeMs
+  });
+}
+
+/* =========================================================
+   2.5 (removido — ver seção 4b para o módulo de áudio ativo)
+   ========================================================= */
+
+/* =========================================================
+   3. CANVAS / GAME SETUP
+   ========================================================= */
+const LOGICAL_W = 960, LOGICAL_H = 540;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  canvas.width = LOGICAL_W*dpr;
+  canvas.height = LOGICAL_H*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const overlayLayer = document.getElementById('overlay-layer');
+
+function pct(v, total){ return (v/total*100).toFixed(2)+'%'; }
+
+/* =========================================================
+   4. INPUT
+   ========================================================= */
+const keys = {};
+window.addEventListener('keydown', e=>{
+  keys[e.code]=true;
+  if(e.code==='Escape'){ togglePause(); }
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)) e.preventDefault();
+});
+window.addEventListener('keyup', e=>{ keys[e.code]=false; });
+
+function keyDown(...codes){ return codes.some(c=>keys[c]); }
+
+function getGamepad(){
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for(const p of pads){ if(p) return p; }
+  return null;
+}
+
+let prevGamepadButtons = {};
+function gamepadPressedEdge(idx){
+  const gp = getGamepad();
+  if(!gp) return false;
+  const now = !!(gp.buttons[idx] && gp.buttons[idx].pressed);
+  const was = !!prevGamepadButtons[idx];
+  return now && !was;
+}
+
+function readInput(){
+  const gp = getGamepad();
+  let mx=0,my=0, fireX=false, fireY=false, startBtn=false;
+  if(keyDown('ArrowUp','KeyW')) my-=1;
+  if(keyDown('ArrowDown','KeyS')) my+=1;
+  if(keyDown('ArrowLeft','KeyA')) mx-=1;
+  if(keyDown('ArrowRight','KeyD')) mx+=1;
+  if(keyDown('KeyX','Space')) fireX=true;
+  if(keyDown('KeyY')) fireY=true;
+  if(gp){
+    const ax0 = gp.axes[0]||0, ax1 = gp.axes[1]||0;
+    if(Math.abs(ax0)>0.2) mx += ax0;
+    if(Math.abs(ax1)>0.2) my += ax1;
+    if(gp.buttons[12] && gp.buttons[12].pressed) my-=1;
+    if(gp.buttons[13] && gp.buttons[13].pressed) my+=1;
+    if(gp.buttons[14] && gp.buttons[14].pressed) mx-=1;
+    if(gp.buttons[15] && gp.buttons[15].pressed) mx+=1;
+    if(gp.buttons[2] && gp.buttons[2].pressed) fireX=true; // X button
+    if(gp.buttons[3] && gp.buttons[3].pressed) fireY=true; // Y button
+    if((gp.buttons[9] && gp.buttons[9].pressed) || (gp.buttons[8] && gp.buttons[8].pressed)) startBtn = true;
+  }
+  const len = Math.hypot(mx,my)||1;
+  if(len>1){ mx/=len; my/=len; }
+  return {mx,my,fireX,fireY,startBtn, gp};
+}
+
+function pollGamepadPauseEdge(){
+  const gp = getGamepad();
+  if(!gp) return;
+  const startIdx = 9;
+  const now = !!(gp.buttons[startIdx] && gp.buttons[startIdx].pressed);
+  if(now && !prevGamepadButtons[startIdx]) togglePause();
+  const buttonsNow = {};
+  gp.buttons.forEach((b,i)=>{ buttonsNow[i]=b.pressed; });
+  prevGamepadButtons = buttonsNow;
+}
+
+/* =========================================================
+   4b. AUDIO (SFX sintetizados via Web Audio API)
+   ========================================================= */
+let audioEnabled = true;
+let actx = null, masterGain = null;
+
+function initAudio(){
+  if(actx) return;
+  try{
+    actx = new (window.AudioContext||window.webkitAudioContext)();
+    masterGain = actx.createGain();
+    masterGain.gain.value = audioEnabled ? 0.5 : 0;
+    masterGain.connect(actx.destination);
+  }catch(e){ /* audio indisponível neste navegador */ }
+}
+function unlockAudioOnce(){ initAudio(); }
+document.addEventListener('click', unlockAudioOnce, {once:true});
+document.addEventListener('keydown', unlockAudioOnce, {once:true});
+document.addEventListener('touchstart', unlockAudioOnce, {once:true});
+
+function ctxReady(){
+  if(!actx) return false;
+  if(actx.state==='suspended'){ actx.resume(); }
+  return true;
+}
+
+function makeNoiseBuffer(dur){
+  const bufferSize = Math.max(1, Math.floor(actx.sampleRate*dur));
+  const buffer = actx.createBuffer(1, bufferSize, actx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++){ data[i] = (Math.random()*2-1) * Math.pow(1-i/bufferSize, 1.4); }
+  return buffer;
+}
+
+// Tiro (normal X / especial Y)
+function sfxShoot(special){
+  if(!ctxReady()) return;
+  const t0 = actx.currentTime;
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type = special ? 'sawtooth' : 'square';
+  const f0 = special ? 1100 : 850, f1 = special ? 650 : 380;
+  const dur = special ? 0.15 : 0.1;
+  osc.frequency.setValueAtTime(f0, t0);
+  osc.frequency.exponentialRampToValueAtTime(f1, t0+dur*0.85);
+  gain.gain.setValueAtTime(special ? 0.15 : 0.11, t0);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.connect(gain); gain.connect(masterGain);
+  osc.start(t0); osc.stop(t0+dur+0.05);
+}
+
+// Impacto leve (jogador levou dano mas não perdeu a vida)
+function sfxHit(){
+  if(!ctxReady()) return;
+  const t0 = actx.currentTime;
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type='square';
+  osc.frequency.setValueAtTime(180,t0);
+  osc.frequency.exponentialRampToValueAtTime(90,t0+0.09);
+  gain.gain.setValueAtTime(0.16,t0);
+  gain.gain.exponentialRampToValueAtTime(0.0001,t0+0.1);
+  osc.connect(gain); gain.connect(masterGain);
+  osc.start(t0); osc.stop(t0+0.12);
+}
+
+// Nave (inimigo pequeno) explodindo
+function sfxEnemyExplode(){
+  if(!ctxReady()) return;
+  const t0 = actx.currentTime;
+  const noise = actx.createBufferSource();
+  noise.buffer = makeNoiseBuffer(0.28);
+  const filter = actx.createBiquadFilter();
+  filter.type='bandpass'; filter.frequency.value=900; filter.Q.value=0.7;
+  const gain = actx.createGain();
+  gain.gain.setValueAtTime(0.32, t0);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.28);
+  noise.connect(filter); filter.connect(gain); gain.connect(masterGain);
+  noise.start(t0); noise.stop(t0+0.3);
+
+  const osc = actx.createOscillator();
+  const og = actx.createGain();
+  osc.type='sine';
+  osc.frequency.setValueAtTime(160,t0);
+  osc.frequency.exponentialRampToValueAtTime(40,t0+0.22);
+  og.gain.setValueAtTime(0.22,t0);
+  og.gain.exponentialRampToValueAtTime(0.0001,t0+0.25);
+  osc.connect(og); og.connect(masterGain);
+  osc.start(t0); osc.stop(t0+0.3);
+}
+
+// Morte do jogador (perdeu uma vida: dano fatal ou resposta errada)
+function sfxPlayerDeath(){
+  if(!ctxReady()) return;
+  const t0 = actx.currentTime;
+  const osc = actx.createOscillator();
+  const gain = actx.createGain();
+  osc.type='triangle';
+  osc.frequency.setValueAtTime(520,t0);
+  osc.frequency.exponentialRampToValueAtTime(50,t0+0.7);
+  gain.gain.setValueAtTime(0.32,t0);
+  gain.gain.exponentialRampToValueAtTime(0.0001,t0+0.75);
+  osc.connect(gain); gain.connect(masterGain);
+  osc.start(t0); osc.stop(t0+0.8);
+
+  const noise = actx.createBufferSource();
+  noise.buffer = makeNoiseBuffer(0.5);
+  const filter = actx.createBiquadFilter();
+  filter.type='lowpass'; filter.frequency.value=1800;
+  const ng = actx.createGain();
+  ng.gain.setValueAtTime(0.38,t0);
+  ng.gain.exponentialRampToValueAtTime(0.0001, t0+0.5);
+  noise.connect(filter); filter.connect(ng); ng.connect(masterGain);
+  noise.start(t0); noise.stop(t0+0.55);
+}
+
+// Explosão do chefe (corpo, cabeça ou chefe final)
+function sfxBossExplode(){
+  if(!ctxReady()) return;
+  const t0 = actx.currentTime;
+  for(let i=0;i<4;i++){
+    const dt = i*0.14;
+    const noise = actx.createBufferSource();
+    noise.buffer = makeNoiseBuffer(0.4);
+    const filter = actx.createBiquadFilter();
+    filter.type='lowpass'; filter.frequency.value = 1400 - i*180;
+    const gain = actx.createGain();
+    gain.gain.setValueAtTime(0.38, t0+dt);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+dt+0.4);
+    noise.connect(filter); filter.connect(gain); gain.connect(masterGain);
+    noise.start(t0+dt); noise.stop(t0+dt+0.45);
+  }
+  const osc = actx.createOscillator();
+  const og = actx.createGain();
+  osc.type='sawtooth';
+  osc.frequency.setValueAtTime(220,t0);
+  osc.frequency.exponentialRampToValueAtTime(30,t0+1.1);
+  og.gain.setValueAtTime(0.26,t0);
+  og.gain.exponentialRampToValueAtTime(0.0001,t0+1.1);
+  osc.connect(og); og.connect(masterGain);
+  osc.start(t0); osc.stop(t0+1.15);
+}
+
+// Acerto de resposta correta (reforço positivo)
+function sfxCorrect(){
+  if(!ctxReady()) return;
+  const t0 = actx.currentTime;
+  [660,880,1100].forEach((f,i)=>{
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(f, t0+i*0.09);
+    gain.gain.setValueAtTime(0.001, t0+i*0.09);
+    gain.gain.exponentialRampToValueAtTime(0.22, t0+i*0.09+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+i*0.09+0.18);
+    osc.connect(gain); gain.connect(masterGain);
+    osc.start(t0+i*0.09); osc.stop(t0+i*0.09+0.2);
+  });
+}
+
+function setMute(muted){
+  audioEnabled = !muted;
+  if(masterGain) masterGain.gain.value = audioEnabled ? 0.5 : 0;
+  const icon = audioEnabled ? '🔊' : '🔇';
+  const hudBtn = document.getElementById('btn-mute-hud');
+  const menuBtn = document.getElementById('btn-mute-menu');
+  if(hudBtn) hudBtn.textContent = icon;
+  if(menuBtn) menuBtn.textContent = icon+' Som';
+}
+
+/* =========================================================
+   5. GAME STATE
+   ========================================================= */
+const STATE = { MENU:'MENU', PLAYING:'PLAYING', PAUSED:'PAUSED' };
+let gameState = STATE.MENU;
+
+const SUB = { WAVE:'WAVE', QUESTION:'QUESTION', BOSS:'BOSS', BOSS_HEAD:'BOSS_HEAD' };
+let sub = SUB.WAVE;
+
+let G = null; // active run object, created on start
+
+function phaseConfig(phaseNum){
+  const isFinal = phaseNum===10;
+  const isHard = phaseNum===8 || phaseNum===9;
+  return {
+    phaseNum,
+    enemyLevel: phaseNum,
+    enemiesRequired: Math.round(CFG.enemiesBase + CFG.enemiesInc*(phaseNum-1)),
+    enemyHp: Math.max(1, Math.round((1 + Math.floor(phaseNum/3)) * CFG.enemyHpMult)),
+    enemySpeed: (70 + phaseNum*7) * CFG.enemySpeedMult,
+    enemyFireChance: Math.min(0.02 + phaseNum*0.0035, 0.09) * (isHard||isFinal?1.6:1),
+    spawnInterval: Math.max(0.45, 1.15 - phaseNum*0.06) / (isHard||isFinal?1.35:1),
+    questionsRequired: isFinal ? 3 : 1,
+    bossHpBase: (isFinal? 260 : isHard? 170 : 90 + phaseNum*10) * CFG.bossHpMult,
+    bossName: isFinal ? 'NÚCLEO GUARDIÃO' : (isHard ? 'SENTINELA DE ELITE Mk.'+(phaseNum-7) : 'SENTINELA '+phaseNum),
+    spawnMinionsDuringBoss: isHard || isFinal,
+    minionColor: isFinal ? '#ff4fd8' : isHard ? '#ff8a4d' : (phaseNum<=3?'#4de3ff': phaseNum<=6?'#ffcf4d':'#ff6b6b'),
+  };
+}
+
+const PHASE_BG = [
+  ['#0c1430','#04050c'],['#12123a','#050514'],['#1a0f2e','#050310'],
+  ['#0c2436','#050b12'],['#241205','#0c0602'],['#12241a','#040c08'],
+  ['#241207','#0c0501'],['#1c0c24','#08030c'],['#280a18','#0c0208'],['#2a0606','#0a0101']
+];
+
+function newRun(){
+  const startPhase = Math.max(1, Math.min(10, CFG.startPhase));
+  G = {
+    teamName: teamName,
+    phase: startPhase,
+    lives: CFG.startLives,
+    hp: 100, maxHp:100,
+    score: 0,
+    invulnUntil: 0,
+    x: 130, y: LOGICAL_H/2, r: 16,
+    fireCooldown:0, specialCooldown:0,
+    bullets:[], enemyBullets:[], enemies:[], particles:[], orbs:[],
+    boss:null,
+    stars: makeStars(),
+    spawnTimer:0,
+    enemiesDefeatedInWave:0,
+    stageIndex:0, // for phase10 multi-question loop
+    currentQuestion:null,
+    questionStartTime:0,
+    shake:0,
+    time:0,
+    phaseCfg: phaseConfig(startPhase),
+    bossEnterX: LOGICAL_W*0.82,
+  };
+  sub = SUB.WAVE;
+  usedQuestionIds.clear();
+}
+
+function makeStars(){
+  const arr=[];
+  for(let i=0;i<120;i++){
+    arr.push({x:Math.random()*LOGICAL_W, y:Math.random()*LOGICAL_H, s:Math.random()*2+0.4, sp: 30+Math.random()*90});
+  }
+  return arr;
+}
+
+/* =========================================================
+   6. SCREEN MANAGEMENT
+   ========================================================= */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  if(id) document.getElementById(id).classList.remove('hidden');
+}
+function hud(active){ document.getElementById('hud').classList.toggle('active', active); }
+
+showScreen('screen-main');
+
+/* =========================================================
+   7. MAIN MENU HANDLERS
+   ========================================================= */
+document.getElementById('btn-start').addEventListener('click', ()=>{
+  const val = document.getElementById('input-team-name').value.trim();
+  teamName = val || 'Equipe Sem Nome';
+  startRun();
+});
+document.getElementById('btn-howto').addEventListener('click', ()=>showScreen('screen-howto'));
+document.getElementById('btn-howto-back').addEventListener('click', ()=>showScreen('screen-main'));
+document.getElementById('btn-teacher-open').addEventListener('click', ()=>openTeacherPanel());
+document.getElementById('btn-mute-menu').addEventListener('click', ()=>setMute(audioEnabled));
+document.getElementById('btn-mute-hud').addEventListener('click', ()=>setMute(audioEnabled));
+document.getElementById('btn-teacher-close').addEventListener('click', ()=>{
+  showScreen(gameState===STATE.PAUSED ? 'screen-pause' : 'screen-main');
+});
+document.getElementById('btn-pause-teacher').addEventListener('click', ()=>openTeacherPanel());
+
+function startRun(){
+  newRun();
+  gameState = STATE.PLAYING;
+  hud(true);
+  showScreen(null);
+  document.getElementById('hud-team').textContent = teamName.toUpperCase();
+  startWave();
+}
+
+function togglePause(){
+  if(gameState===STATE.PLAYING){ gameState=STATE.PAUSED; showScreen('screen-pause'); }
+  else if(gameState===STATE.PAUSED){ gameState=STATE.PLAYING; showScreen(null); }
+}
+document.getElementById('btn-resume').addEventListener('click', ()=>{ gameState=STATE.PLAYING; showScreen(null); });
+document.getElementById('btn-pause-restart').addEventListener('click', ()=>{ startRun(); });
+document.getElementById('btn-pause-menu').addEventListener('click', ()=>{ gameState=STATE.MENU; hud(false); clearOrbDom(); showScreen('screen-main'); });
+
+document.getElementById('btn-gameover-retry').addEventListener('click', ()=>{ startRun(); });
+document.getElementById('btn-gameover-menu').addEventListener('click', ()=>{ gameState=STATE.MENU; hud(false); showScreen('screen-main'); });
+document.getElementById('btn-victory-again').addEventListener('click', ()=>{ startRun(); });
+document.getElementById('btn-victory-menu').addEventListener('click', ()=>{ gameState=STATE.MENU; hud(false); showScreen('screen-main'); });
+document.getElementById('btn-victory-teacher').addEventListener('click', ()=>openTeacherPanel());
+
+/* =========================================================
+   8. WAVE / QUESTION / BOSS FLOW
+   ========================================================= */
+function startWave(){
+  G.phaseCfg = phaseConfig(G.phase);
+  sub = SUB.WAVE;
+  G.enemiesDefeatedInWave = 0;
+  G.spawnTimer = 0;
+  clearOrbDom();
+  document.getElementById('question-panel').classList.remove('active');
+  document.getElementById('boss-bar-wrap').classList.remove('active');
+  updateHudPhaseText();
+}
+
+function updateHudPhaseText(){
+  document.getElementById('hud-phase').textContent = 'Fase '+G.phase+' / 10';
+}
+
+function beginQuestion(){
+  sub = SUB.QUESTION;
+  const q = pickQuestionsForPhase(G.phase, 1)[0];
+  G.currentQuestion = q;
+  G.questionStartTime = performance.now();
+  const laneY = [LOGICAL_H*0.47, LOGICAL_H*0.62, LOGICAL_H*0.77, LOGICAL_H*0.91];
+  let order = [0,1,2,3];
+  for(let i=order.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    const tmp = order[i]; order[i]=order[j]; order[j]=tmp;
+  }
+  G.orbs = order.map((optIdx,i)=>({
+    x: LOGICAL_W + 60 + i*40, y: laneY[i], r:22, optIdx,
+    text:q.opcoes[optIdx], correct: optIdx===q.correta, dead:false, wrongHit:false,
+    domEl:null, vx: -46
+  }));
+  buildOrbDom();
+  const panel = document.getElementById('question-panel');
+  panel.classList.add('active');
+  document.getElementById('question-topic').textContent = (TOPIC_LABEL[q.topic]||q.topic).toUpperCase()+' · '+q.dificuldade.toUpperCase();
+  document.getElementById('question-text').textContent = q.texto;
+  const total = G.phaseCfg.questionsRequired;
+  document.getElementById('question-progress').textContent = total>1 ? ('Desafio '+(G.stageIndex+1)+' de '+total+' — resolva para liberar o combate final') : '';
+}
+
+function clearOrbDom(){
+  overlayLayer.querySelectorAll('.orb-label').forEach(el=>el.remove());
+}
+function buildOrbDom(){
+  clearOrbDom();
+  const letters=['A','B','C','D'];
+  G.orbs.forEach(o=>{
+    const el = document.createElement('div');
+    el.className='orb-label';
+    el.innerHTML = '<b>'+letters[o.optIdx]+')</b> '+o.text;
+    overlayLayer.appendChild(el);
+    o.domEl = el;
+  });
+}
+function syncOrbDom(){
+  G.orbs.forEach(o=>{
+    if(!o.domEl) return;
+    if(o.dead){ o.domEl.style.display='none'; return; }
+    o.domEl.style.left = pct(o.x, LOGICAL_W);
+    o.domEl.style.top = pct(o.y, LOGICAL_H);
+    o.domEl.classList.toggle('wrong', o.wrongHit);
+  });
+}
+
+function questionAnswered(orb){
+  const timeMs = Math.round(performance.now()-G.questionStartTime);
+  const q = G.currentQuestion;
+  logAnswer(G.phase, q.topic, q.texto, orb.correct, timeMs);
+  if(orb.correct){
+    orb.domEl && orb.domEl.classList.add('correct-flash');
+    spawnExplosion(orb.x, orb.y, '#5dffa0', 22);
+    sfxCorrect();
+    G.score += 150;
+    setTimeout(()=>{
+      clearOrbDom();
+      document.getElementById('question-panel').classList.remove('active');
+      G.orbs=[];
+      G.stageIndex++;
+      if(G.stageIndex < G.phaseCfg.questionsRequired){
+        sub = SUB.WAVE;
+        G.enemiesDefeatedInWave = 0;
+      } else {
+        startBossFight();
+      }
+    }, 350);
+  } else {
+    orb.wrongHit = true;
+    spawnExplosion(orb.x, orb.y, '#ff5470', 14);
+    spawnExplosion(G.x, G.y, '#ff5470', 26);
+    G.shake = Math.max(G.shake, 0.5);
+    loseLife();
+    setTimeout(()=>{ orb.dead=true; },250);
+  }
+}
+
+function startBossFight(){
+  sub = SUB.BOSS;
+  clearOrbDom();
+  document.getElementById('question-panel').classList.remove('active');
+  const pc = G.phaseCfg;
+  G.boss = {
+    x: LOGICAL_W+140, y: LOGICAL_H/2, targetX: G.bossEnterX,
+    hp: pc.bossHpBase, maxHp: pc.bossHpBase,
+    r: pc.phaseNum===10 ? 62 : (pc.phaseNum>=8?50:40),
+    stage: pc.phaseNum===10 ? 'body' : 'single',
+    attackTimer: 1.2, phaseTime:0,
+    hitFlash:0, entering:true,
+  };
+  const wrap = document.getElementById('boss-bar-wrap');
+  wrap.classList.add('active');
+  document.getElementById('boss-name').textContent = pc.bossName + (pc.phaseNum===10?' — NÚCLEO':'');
+}
+
+function bossDefeated(){
+  sfxBossExplode();
+  const pc = G.phaseCfg;
+  if(pc.phaseNum===10 && G.boss.stage==='body'){
+    // transition to head stage
+    spawnExplosion(G.boss.x, G.boss.y, '#ff4fd8', 40);
+    G.shake = 0.4;
+    const headHp = pc.bossHpBase*0.85;
+    G.boss = {
+      x: G.boss.x, y: G.boss.y, targetX: G.boss.x,
+      hp: headHp, maxHp: headHp, r:34,
+      stage:'head', attackTimer:0.8, phaseTime:0, hitFlash:0, entering:false,
+    };
+    document.getElementById('boss-name').textContent = 'NÚCLEO GUARDIÃO — CABEÇA';
+    return;
+  }
+  // phase truly complete
+  spawnExplosion(G.boss.x, G.boss.y, '#ffcf4d', 50);
+  G.shake = 0.5;
+  G.boss = null;
+  document.getElementById('boss-bar-wrap').classList.remove('active');
+  G.score += 300;
+  if(G.phase >= 10){
+    setTimeout(()=>doVictory(), 500);
+  } else {
+    setTimeout(()=>doPhaseTransition(), 500);
+  }
+}
+
+function doPhaseTransition(){
+  gameState = STATE.PLAYING;
+  document.getElementById('transition-sub').textContent = 'Prepare-se para a Fase '+(G.phase+1);
+  document.getElementById('transition-text').textContent = 'FASE '+G.phase+' CONCLUÍDA!';
+  showScreen('screen-transition');
+  setTimeout(()=>{
+    G.phase++;
+    G.stageIndex = 0;
+    showScreen(null);
+    startWave();
+  }, 1600);
+}
+
+function doVictory(){
+  hud(false);
+  const total = sessionLog.length;
+  const correct = sessionLog.filter(l=>l.result==='Acertou').length;
+  document.getElementById('victory-stats').innerHTML =
+    'Equipe <b style="color:var(--cyan)">'+teamName+'</b> completou o Setor Kepler!<br>'+
+    'Desafios resolvidos: '+total+' · Acertos: '+correct+' ('+(total?Math.round(correct/total*100):0)+'%)<br>'+
+    'Pontuação final: '+G.score;
+  showScreen('screen-victory');
+}
+
+function doGameOver(){
+  hud(false);
+  const total = sessionLog.length;
+  const correct = sessionLog.filter(l=>l.result==='Acertou').length;
+  document.getElementById('gameover-stats').innerHTML =
+    'Equipe <b style="color:var(--cyan)">'+teamName+'</b> alcançou a Fase '+G.phase+'.<br>'+
+    'Desafios resolvidos: '+total+' · Acertos: '+correct+'<br>Pontuação: '+G.score;
+  showScreen('screen-gameover');
+}
+
+/* =========================================================
+   9. GAMEPLAY MECHANICS
+   ========================================================= */
+function damagePlayer(amount){
+  if(performance.now() < G.invulnUntil) return;
+  G.hp -= amount;
+  G.invulnUntil = performance.now()+700;
+  G.shake = Math.max(G.shake, 0.25);
+  if(G.hp<=0){
+    loseLife();
+  } else {
+    sfxHit();
+  }
+}
+
+function loseLife(){
+  sfxPlayerDeath();
+  G.lives--;
+  if(G.lives<=0){
+    gameState = STATE.MENU; // stop updates
+    doGameOver();
+    return;
+  }
+  G.hp = G.maxHp;
+  G.invulnUntil = performance.now()+1600;
+  G.x = 130; G.y = LOGICAL_H/2;
+}
+
+function spawnExplosion(x,y,color,count){
+  for(let i=0;i<count;i++){
+    const ang = Math.random()*Math.PI*2;
+    const spd = 40+Math.random()*160;
+    G.particles.push({x,y,vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, life:0.4+Math.random()*0.5, maxLife:0.9, color, size:2+Math.random()*3});
+  }
+}
+
+function spawnEnemy(){
+  const pc = G.phaseCfg;
+  const type = Math.random()<0.5?'straight':(Math.random()<0.7?'sine':'shooter');
+  G.enemies.push({
+    x: LOGICAL_W+30, y: 40+Math.random()*(LOGICAL_H-80),
+    r:16, hp: pc.enemyHp, maxHp: pc.enemyHp,
+    speed: pc.enemySpeed*(0.85+Math.random()*0.3),
+    type, t: Math.random()*10, baseY:0, fireChance: pc.enemyFireChance,
+    color: pc.minionColor,
+  });
+}
+
+function updateEnemies(dt){
+  const pc = G.phaseCfg;
+  for(let i=G.enemies.length-1;i>=0;i--){
+    const e = G.enemies[i];
+    e.t += dt;
+    e.x -= e.speed*dt;
+    if(e.type==='sine'){ e.y += Math.sin(e.t*3)*40*dt; }
+    if(e.type==='shooter' && Math.random()<e.fireChance){
+      const ang = Math.atan2(G.y-e.y, G.x-e.x);
+      G.enemyBullets.push({x:e.x,y:e.y, vx:Math.cos(ang)*220, vy:Math.sin(ang)*220, r:5, color:'#ff8a4d'});
+    } else if(Math.random()<e.fireChance*0.6){
+      G.enemyBullets.push({x:e.x,y:e.y, vx:-190, vy:0, r:5, color:'#ff8a4d'});
+    }
+    if(e.x < -40 || e.hp<=0){
+      if(e.hp<=0){
+        spawnExplosion(e.x,e.y,e.color,10);
+        sfxEnemyExplode();
+        G.score += 10;
+        if(sub===SUB.WAVE) G.enemiesDefeatedInWave++;
+      }
+      G.enemies.splice(i,1);
+    }
+  }
+}
+
+function updateBullets(dt){
+  for(let i=G.bullets.length-1;i>=0;i--){
+    const b=G.bullets[i]; b.x += b.vx*dt;
+    if(b.x>LOGICAL_W+20) G.bullets.splice(i,1);
+  }
+  for(let i=G.enemyBullets.length-1;i>=0;i--){
+    const b=G.enemyBullets[i]; b.x+=b.vx*dt; b.y+=b.vy*dt;
+    if(b.x<-20||b.x>LOGICAL_W+20||b.y<-20||b.y>LOGICAL_H+20) G.enemyBullets.splice(i,1);
+  }
+}
+
+function updateOrbs(dt){
+  G.orbs.forEach(o=>{
+    if(o.dead) return;
+    o.x += o.vx*dt;
+    if(o.x < LOGICAL_W*0.55) o.x = LOGICAL_W*0.55;
+  });
+}
+
+function updateBoss(dt){
+  const boss = G.boss;
+  if(!boss) return;
+  boss.phaseTime += dt;
+  boss.hitFlash = Math.max(0, boss.hitFlash-dt*4);
+  if(boss.entering){
+    boss.x += (boss.targetX - boss.x)*Math.min(1, dt*1.8);
+    if(Math.abs(boss.x-boss.targetX)<2){ boss.entering=false; }
+  } else {
+    boss.y += Math.sin(boss.phaseTime*1.1)*36*dt;
+    boss.y = Math.max(60, Math.min(LOGICAL_H-60, boss.y));
+  }
+  boss.attackTimer -= dt;
+  if(boss.attackTimer<=0 && !boss.entering){
+    const pc = G.phaseCfg;
+    const hardness = pc.phaseNum===10 ? (boss.stage==='head'?2.2:1.9) : (pc.phaseNum>=8?1.5:1);
+    boss.attackTimer = Math.max(0.35, 1.1/hardness);
+    const bulletsN = Math.round(3*hardness);
+    for(let i=0;i<bulletsN;i++){
+      const spread = 0.55;
+      const baseAng = Math.atan2(G.y-boss.y, G.x-boss.x);
+      const ang = baseAng + (i-(bulletsN-1)/2)*spread/bulletsN*2;
+      G.enemyBullets.push({x:boss.x,y:boss.y, vx:Math.cos(ang)*230, vy:Math.sin(ang)*230, r:6, color:'#ff4fd8'});
+    }
+    if(pc.spawnMinionsDuringBoss && Math.random()<0.5){ spawnEnemy(); }
+  }
+  document.getElementById('boss-bar-inner').style.width = Math.max(0,(boss.hp/boss.maxHp*100))+'%';
+}
+
+function updateParticles(dt){
+  for(let i=G.particles.length-1;i>=0;i--){
+    const p=G.particles[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=0.94; p.vy*=0.94; p.life-=dt;
+    if(p.life<=0) G.particles.splice(i,1);
+  }
+}
+
+function updateSpawning(dt){
+  const pc = G.phaseCfg;
+  let allow = false;
+  if(sub===SUB.WAVE) allow = true;
+  else if(sub===SUB.QUESTION) allow = true; // keep pressure per requirement
+  else if((sub===SUB.BOSS||sub===SUB.BOSS_HEAD) && pc.spawnMinionsDuringBoss) allow = Math.random()<0.4;
+  if(!allow) return;
+  G.spawnTimer -= dt;
+  const interval = sub===SUB.QUESTION ? pc.spawnInterval*1.6 : pc.spawnInterval;
+  if(G.spawnTimer<=0 && G.enemies.length < 9){
+    G.spawnTimer = interval;
+    spawnEnemy();
+  }
+}
+
+function updatePlayer(dt, input){
+  const speed = 300;
+  G.x += input.mx*speed*dt;
+  G.y += input.my*speed*dt;
+  G.x = Math.max(24, Math.min(LOGICAL_W*0.8, G.x));
+  G.y = Math.max(24, Math.min(LOGICAL_H-24, G.y));
+
+  G.fireCooldown -= dt;
+  if(input.fireX && G.fireCooldown<=0){
+    G.fireCooldown = 0.14;
+    G.bullets.push({x:G.x+22,y:G.y-6, vx:620, r:4, special:false});
+    G.bullets.push({x:G.x+22,y:G.y+6, vx:620, r:4, special:false});
+    sfxShoot(false);
+  }
+  G.specialCooldown -= dt;
+  if(input.fireY && sub===SUB.QUESTION && G.specialCooldown<=0){
+    G.specialCooldown = 0.5;
+    G.bullets.push({x:G.x+22,y:G.y, vx:680, r:6, special:true});
+    sfxShoot(true);
+  }
+}
+
+function checkCollisions(){
+  // player bullets vs enemies
+  for(let i=G.bullets.length-1;i>=0;i--){
+    const b=G.bullets[i];
+    if(b.special){
+      // vs orbs
+      let hit=false;
+      for(const o of G.orbs){
+        if(o.dead) continue;
+        if(Math.hypot(b.x-o.x,b.y-o.y) < o.r+b.r){
+          questionAnswered(o);
+          hit=true; break;
+        }
+      }
+      if(hit){ G.bullets.splice(i,1); continue; }
+      continue; // special bullets pass through non-orb stuff
+    }
+    let consumed=false;
+    for(const e of G.enemies){
+      if(Math.hypot(b.x-e.x,b.y-e.y) < e.r+b.r){
+        e.hp--; consumed=true; break;
+      }
+    }
+    if(!consumed && G.boss && !G.boss.entering){
+      if(Math.hypot(b.x-G.boss.x,b.y-G.boss.y) < G.boss.r+b.r){
+        G.boss.hp--; G.boss.hitFlash=1; consumed=true;
+        if(G.boss.hp<=0) bossDefeated();
+      }
+    }
+    if(consumed) G.bullets.splice(i,1);
+  }
+  // enemy bullets vs player
+  for(let i=G.enemyBullets.length-1;i>=0;i--){
+    const b=G.enemyBullets[i];
+    if(Math.hypot(b.x-G.x,b.y-G.y) < G.r+b.r){
+      G.enemyBullets.splice(i,1);
+      damagePlayer(10);
+    }
+  }
+  // enemies vs player (contact)
+  for(const e of G.enemies){
+    if(Math.hypot(e.x-G.x,e.y-G.y) < e.r+G.r){
+      damagePlayer(14); e.hp=0;
+    }
+  }
+  // boss body vs player
+  if(G.boss && !G.boss.entering && Math.hypot(G.boss.x-G.x,G.boss.y-G.y) < G.boss.r+G.r){
+    damagePlayer(18);
+  }
+}
+
+function checkStateTransitions(){
+  if(sub===SUB.WAVE && G.enemiesDefeatedInWave >= G.phaseCfg.enemiesRequired){
+    beginQuestion();
+  }
+}
+
+/* =========================================================
+   10. MAIN LOOP
+   ========================================================= */
+let lastTs = performance.now();
+function frame(ts){
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.033, (ts-lastTs)/1000);
+  lastTs = ts;
+  pollGamepadPauseEdge();
+
+  if(gameState===STATE.PLAYING && G){
+    const input = readInput();
+    G.time += dt;
+    updateStars(dt);
+    updatePlayer(dt, input);
+    updateEnemies(dt);
+    updateBullets(dt);
+    if(sub===SUB.QUESTION) updateOrbs(dt);
+    if(sub===SUB.BOSS||sub===SUB.BOSS_HEAD) updateBoss(dt);
+    updateParticles(dt);
+    checkCollisions();
+    updateSpawning(dt);
+    checkStateTransitions();
+    if(G.shake>0) G.shake = Math.max(0, G.shake-dt*1.5);
+    syncOrbDom();
+    syncHud();
+  }
+  draw();
+}
+requestAnimationFrame(frame);
+
+function updateStars(dt){
+  if(!G) return;
+  G.stars.forEach(s=>{
+    s.x -= s.sp*dt;
+    if(s.x<0){ s.x = LOGICAL_W; s.y = Math.random()*LOGICAL_H; }
+  });
+}
+
+function syncHud(){
+  document.getElementById('hud-score').textContent = 'PONTOS '+G.score;
+  document.getElementById('hp-bar-fill').style.width = Math.max(0,G.hp)+'%';
+  const livesWrap = document.getElementById('hud-lives');
+  livesWrap.innerHTML='';
+  for(let i=0;i<G.lives;i++){
+    const s = document.createElement('span');
+    s.textContent='❤';
+    s.style.color='#ff5470';
+    s.style.fontSize='13px';
+    livesWrap.appendChild(s);
+  }
+}
+
+/* =========================================================
+   11. RENDER
+   ========================================================= */
+function draw(){
+  ctx.save();
+  ctx.clearRect(0,0,LOGICAL_W,LOGICAL_H);
+
+  if(!G){
+    drawStaticBg();
+    ctx.restore();
+    return;
+  }
+
+  if(G.shake>0){
+    ctx.translate((Math.random()-0.5)*10*G.shake, (Math.random()-0.5)*10*G.shake);
+  }
+
+  drawPhaseBg();
+  drawStars();
+
+  // orbs (targets) rendering (behind labels, which are DOM)
+  G.orbs.forEach(o=>{
+    if(o.dead) return;
+    ctx.beginPath();
+    ctx.arc(o.x,o.y,o.r,0,Math.PI*2);
+    ctx.fillStyle = o.wrongHit ? 'rgba(255,84,112,0.25)' : 'rgba(77,227,255,0.18)';
+    ctx.fill();
+    ctx.lineWidth=2; ctx.strokeStyle = o.wrongHit?'#ff5470':'#4de3ff'; ctx.stroke();
+  });
+
+  // enemies
+  G.enemies.forEach(drawEnemy);
+
+  // boss
+  if(G.boss) drawBoss(G.boss);
+
+  // bullets
+  G.bullets.forEach(b=>{
+    ctx.beginPath();
+    ctx.fillStyle = b.special ? '#ffcf4d' : '#4de3ff';
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = b.special?10:6;
+    ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  });
+  G.enemyBullets.forEach(b=>{
+    ctx.beginPath(); ctx.fillStyle=b.color;
+    ctx.shadowColor=b.color; ctx.shadowBlur=6;
+    ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+  });
+
+  // particles
+  G.particles.forEach(p=>{
+    ctx.globalAlpha = Math.max(0,p.life/p.maxLife);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x-p.size/2,p.y-p.size/2,p.size,p.size);
+    ctx.globalAlpha=1;
+  });
+
+  drawPlayer();
+
+  ctx.restore();
+}
+
+function drawStaticBg(){
+  const grad = ctx.createRadialGradient(LOGICAL_W/2,LOGICAL_H*0.3,10,LOGICAL_W/2,LOGICAL_H*0.3,LOGICAL_W*0.8);
+  grad.addColorStop(0,'#0c1430'); grad.addColorStop(1,'#04050c');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,LOGICAL_W,LOGICAL_H);
+}
+
+function drawPhaseBg(){
+  const pair = PHASE_BG[(G.phase-1)%PHASE_BG.length];
+  const grad = ctx.createLinearGradient(0,0,0,LOGICAL_H);
+  grad.addColorStop(0,pair[0]); grad.addColorStop(1,pair[1]);
+  ctx.fillStyle=grad; ctx.fillRect(0,0,LOGICAL_W,LOGICAL_H);
+}
+
+function drawStars(){
+  G.stars.forEach(s=>{
+    ctx.globalAlpha = 0.5+Math.min(0.5, s.s/2.4);
+    ctx.fillStyle='#dce6ff';
+    ctx.fillRect(s.x,s.y,s.s,s.s);
+  });
+  ctx.globalAlpha=1;
+}
+
+function drawPlayer(){
+  const blinking = performance.now()<G.invulnUntil && Math.floor(performance.now()/90)%2===0;
+  if(blinking) return;
+
+  // Health bar above the ship
+  const barW = 46, barH = 6, barX = G.x-barW/2, barY = G.y-30;
+  const hpFrac = Math.max(0, G.hp/G.maxHp);
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.55)';
+  ctx.fillRect(barX-1, barY-1, barW+2, barH+2);
+  ctx.fillStyle = hpFrac>0.5 ? '#5dffa0' : (hpFrac>0.25 ? '#ffcf4d' : '#ff5470');
+  ctx.fillRect(barX, barY, barW*hpFrac, barH);
+  ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=1;
+  ctx.strokeRect(barX-1, barY-1, barW+2, barH+2);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(G.x,G.y);
+  ctx.shadowColor='#4de3ff'; ctx.shadowBlur=12;
+  ctx.fillStyle='#dce6ff';
+  ctx.beginPath();
+  ctx.moveTo(24,0);
+  ctx.lineTo(-14,-13);
+  ctx.lineTo(-6,0);
+  ctx.lineTo(-14,13);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#4de3ff';
+  ctx.beginPath();
+  ctx.moveTo(-6,0); ctx.lineTo(-20,-16); ctx.lineTo(-20,-4); ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-6,0); ctx.lineTo(-20,16); ctx.lineTo(-20,4); ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#ff9d4d';
+  ctx.beginPath(); ctx.ellipse(-16,0,5+Math.random()*3,3,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawEnemy(e){
+  ctx.save();
+  ctx.translate(e.x,e.y);
+  ctx.shadowColor=e.color; ctx.shadowBlur=8;
+  ctx.fillStyle=e.color;
+  ctx.beginPath();
+  ctx.moveTo(-16,0); ctx.lineTo(0,-11); ctx.lineTo(16,0); ctx.lineTo(0,11);
+  ctx.closePath(); ctx.fill();
+  ctx.shadowBlur=0;
+  if(e.maxHp>1){
+    ctx.fillStyle='rgba(0,0,0,0.5)';
+    ctx.fillRect(-16,-18,32,4);
+    ctx.fillStyle='#5dffa0';
+    ctx.fillRect(-16,-18,32*Math.max(0,e.hp/e.maxHp),4);
+  }
+  ctx.restore();
+}
+
+function drawBoss(boss){
+  ctx.save();
+  ctx.translate(boss.x,boss.y);
+  const glow = boss.hitFlash>0 ? '#ffffff' : (boss.stage==='head' ? '#ff4fd8':'#ff8a4d');
+  ctx.shadowColor=glow; ctx.shadowBlur=18;
+  ctx.fillStyle = boss.hitFlash>0 ? '#ffffff' : (boss.stage==='head'?'#3a0d2a':'#2a1206');
+  ctx.strokeStyle = glow; ctx.lineWidth=3;
+  if(boss.stage==='head'){
+    ctx.beginPath(); ctx.arc(0,0,boss.r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#ff4fd8';
+    ctx.beginPath(); ctx.arc(-8,0,7,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(-boss.r,0);
+    ctx.lineTo(-boss.r*0.3,-boss.r);
+    ctx.lineTo(boss.r,-boss.r*0.5);
+    ctx.lineTo(boss.r*1.1,0);
+    ctx.lineTo(boss.r,boss.r*0.5);
+    ctx.lineTo(-boss.r*0.3,boss.r);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#ffcf4d';
+    ctx.beginPath(); ctx.arc(boss.r*0.2,0,8,0,Math.PI*2); ctx.fill();
+  }
+  ctx.shadowBlur=0;
+  ctx.restore();
+}
+
+/* =========================================================
+   12. TEACHER PANEL
+   ========================================================= */
+function openTeacherPanel(){
+  renderQuestionTable();
+  renderGabarito();
+  renderPerf();
+  loadConfigToForm();
+  showScreen('screen-teacher');
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+function renderQuestionTable(){
+  const tbody = document.getElementById('question-tbody');
+  tbody.innerHTML='';
+  questionBank.slice().sort((a,b)=>a.phase-b.phase).forEach(q=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="number" min="1" max="10" value="'+q.phase+'" data-f="phase"></td>'+
+      '<td><select data-f="topic">'+Object.keys(TOPIC_LABEL).map(k=>'<option value="'+k+'" '+(k===q.topic?'selected':'')+'>'+TOPIC_LABEL[k]+'</option>').join('')+'</select></td>'+
+      '<td><select data-f="dificuldade">'+['facil','medio','dificil'].map(d=>'<option value="'+d+'" '+(d===q.dificuldade?'selected':'')+'>'+d+'</option>').join('')+'</select></td>'+
+      '<td><textarea data-f="texto">'+q.texto+'</textarea></td>'+
+      '<td><input data-f="opt0" value="'+q.opcoes[0]+'"></td>'+
+      '<td><input data-f="opt1" value="'+q.opcoes[1]+'"></td>'+
+      '<td><input data-f="opt2" value="'+q.opcoes[2]+'"></td>'+
+      '<td><input data-f="opt3" value="'+q.opcoes[3]+'"></td>'+
+      '<td><select data-f="correta">'+[0,1,2,3].map(i=>'<option value="'+i+'" '+(i===q.correta?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></td>'+
+      '<td><button class="btn small danger" data-del="'+q.id+'">Excluir</button></td>';
+    tr.dataset.id = q.id;
+    tbody.appendChild(tr);
+
+    tr.querySelectorAll('[data-f]').forEach(inp=>{
+      inp.addEventListener('change', ()=>{
+        const target = questionBank.find(x=>x.id===q.id);
+        const f = inp.dataset.f;
+        if(f==='phase') target.phase = Math.max(1,Math.min(10, parseInt(inp.value)||1));
+        else if(f==='topic') target.topic = inp.value;
+        else if(f==='dificuldade') target.dificuldade = inp.value;
+        else if(f==='texto') target.texto = inp.value;
+        else if(f.startsWith('opt')) target.opcoes[parseInt(f.slice(3))] = inp.value;
+        else if(f==='correta') target.correta = parseInt(inp.value);
+        renderGabarito();
+      });
+    });
+    tr.querySelector('[data-del]').addEventListener('click', ()=>{
+      questionBank = questionBank.filter(x=>x.id!==q.id);
+      renderQuestionTable(); renderGabarito();
+    });
+  });
+}
+
+document.getElementById('btn-add-question').addEventListener('click', ()=>{
+  const id = 'q_custom_'+Date.now();
+  questionBank.push({id, phase:1, topic:'razao_proporcao', dificuldade:'facil', texto:'Nova pergunta...', opcoes:['A','B','C','D'], correta:0});
+  renderQuestionTable();
+});
+
+document.getElementById('btn-reset-bank').addEventListener('click', ()=>{
+  if(confirm('Restaurar o banco original de questões? Suas edições serão perdidas.')){
+    questionBank = JSON.parse(JSON.stringify(DEFAULT_BANK));
+    renderQuestionTable(); renderGabarito();
+  }
+});
+
+document.getElementById('btn-export-json').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(questionBank,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='banco-questoes-missao-horizonte.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('btn-import-json').addEventListener('click', ()=>document.getElementById('file-import-json').click());
+document.getElementById('file-import-json').addEventListener('change', (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(Array.isArray(data)){ questionBank = data; renderQuestionTable(); renderGabarito(); alert('Banco importado com sucesso!'); }
+      else alert('Arquivo inválido: esperado um array de questões.');
+    }catch(err){ alert('Erro ao ler o arquivo JSON.'); }
+  };
+  reader.readAsText(file);
+});
+
+function renderGabarito(){
+  const el = document.getElementById('gabarito-list');
+  const letters=['A','B','C','D'];
+  el.innerHTML = questionBank.slice().sort((a,b)=>a.phase-b.phase).map(q=>
+    '<div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--line);">'+
+    '<b style="color:var(--cyan)">Fase '+q.phase+'</b> · '+(TOPIC_LABEL[q.topic]||q.topic)+' · <span style="color:var(--text-dim)">'+q.dificuldade+'</span><br>'+
+    q.texto+'<br>'+
+    q.opcoes.map((o,i)=> '<span style="'+(i===q.correta?'color:var(--green);font-weight:700;':'color:var(--text-dim);')+'">'+letters[i]+') '+o+'</span>').join(' &nbsp; ')+
+    '</div>'
+  ).join('');
+}
+
+function renderPerf(){
+  const total = sessionLog.length;
+  const correct = sessionLog.filter(l=>l.result==='Acertou').length;
+  const pctv = total? Math.round(correct/total*100) : 0;
+  document.getElementById('perf-summary').innerHTML =
+    '<div class="stat-chip"><b>'+total+'</b>Desafios respondidos</div>'+
+    '<div class="stat-chip"><b>'+correct+'</b>Acertos</div>'+
+    '<div class="stat-chip"><b>'+pctv+'%</b>Aproveitamento</div>'+
+    '<div class="stat-chip"><b>'+(G?G.phase:'-')+'</b>Fase atual</div>';
+  const tbody = document.getElementById('perf-tbody');
+  tbody.innerHTML = sessionLog.slice().reverse().map(l=>
+    '<tr><td>'+l.ts+'</td><td>'+l.team+'</td><td>'+l.phase+'</td><td>'+(TOPIC_LABEL[l.topic]||l.topic)+'</td><td>'+l.question+'</td>'+
+    '<td style="color:'+(l.result==='Acertou'?'var(--green)':'var(--red)')+'">'+l.result+'</td><td>'+(l.timeMs/1000).toFixed(1)+'s</td></tr>'
+  ).join('');
+}
+document.getElementById('btn-export-csv').addEventListener('click', ()=>{
+  const header = 'Hora,Equipe,Fase,Topico,Pergunta,Resultado,TempoSegundos\\n';
+  const rows = sessionLog.map(l=>[l.ts,l.team,l.phase,(TOPIC_LABEL[l.topic]||l.topic),'"'+l.question.replace(/"/g,'""')+'"',l.result,(l.timeMs/1000).toFixed(1)].join(',')).join('\\n');
+  const blob = new Blob([header+rows], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='desempenho-missao-horizonte.csv'; a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('btn-clear-log').addEventListener('click', ()=>{
+  if(confirm('Limpar todo o registro de desempenho desta sessão?')){ sessionLog=[]; renderPerf(); }
+});
+
+function loadConfigToForm(){
+  document.getElementById('cfg-enemies-base').value = CFG.enemiesBase;
+  document.getElementById('cfg-enemies-inc').value = CFG.enemiesInc;
+  document.getElementById('cfg-enemy-hp-mult').value = CFG.enemyHpMult;
+  document.getElementById('cfg-enemy-speed-mult').value = CFG.enemySpeedMult;
+  document.getElementById('cfg-boss-hp-mult').value = CFG.bossHpMult;
+  document.getElementById('cfg-lives').value = CFG.startLives;
+  document.getElementById('cfg-start-phase').value = CFG.startPhase;
+}
+document.getElementById('btn-apply-config').addEventListener('click', ()=>{
+  CFG.enemiesBase = parseFloat(document.getElementById('cfg-enemies-base').value)||6;
+  CFG.enemiesInc = parseFloat(document.getElementById('cfg-enemies-inc').value)||0;
+  CFG.enemyHpMult = parseFloat(document.getElementById('cfg-enemy-hp-mult').value)||1;
+  CFG.enemySpeedMult = parseFloat(document.getElementById('cfg-enemy-speed-mult').value)||1;
+  CFG.bossHpMult = parseFloat(document.getElementById('cfg-boss-hp-mult').value)||1;
+  CFG.startLives = parseInt(document.getElementById('cfg-lives').value)||3;
+  CFG.startPhase = parseInt(document.getElementById('cfg-start-phase').value)||1;
+  alert('Configurações aplicadas! Valerão no próximo início/reinício de missão.');
+});
+document.getElementById('btn-reset-config').addEventListener('click', ()=>{
+  CFG = Object.assign({}, DEFAULT_CONFIG);
+  loadConfigToForm();
+});
+
+})();
+</script>
+</body>
+</html>

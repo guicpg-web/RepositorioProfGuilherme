@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reino das Frações — Jogo Matemático</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-sky:#EAF6FF; --bg-sky2:#D5EEFF;
+    --purple:#6C5CE7; --purple-dark:#4E3FC4;
+    --yellow:#FFC93C; --yellow-dark:#E8A800;
+    --coral:#FF6B6B; --coral-dark:#E2504F;
+    --teal:#2FCB9E; --teal-dark:#1FA57E;
+    --orange:#FF9F45; --orange-dark:#E8822A;
+    --pink:#FF4FA3; --pink-dark:#D93688;
+    --ink:#2D3047; --white:#FFFFFF; --cream:#FFFDF7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Nunito', sans-serif;
+    background:linear-gradient(180deg,var(--bg-sky) 0%, var(--bg-sky2) 100%);
+    color:var(--ink); min-height:100vh; display:flex; justify-content:center; padding:24px 12px;
+  }
+  h1,h2,h3,.display{font-family:'Fredoka',sans-serif;}
+  #app{
+    width:100%; max-width:980px; background:var(--cream); border-radius:28px;
+    box-shadow:0 18px 0 rgba(45,48,71,0.08), 0 24px 40px rgba(45,48,71,0.12);
+    overflow:hidden; position:relative; border:4px solid var(--white);
+  }
+  .hidden{display:none !important;}
+  .screen{padding:32px 36px 40px;}
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between; background:var(--purple);
+    color:var(--white); padding:14px 26px; flex-wrap:wrap; gap:10px;
+  }
+  .topbar .brand{font-family:'Fredoka'; font-weight:700; font-size:1.15rem; display:flex; align-items:center; gap:8px;}
+  .btn{
+    font-family:'Fredoka'; font-weight:600; font-size:1rem; border:none; border-radius:14px; cursor:pointer;
+    padding:12px 22px; color:var(--white); background:var(--purple); box-shadow:0 5px 0 var(--purple-dark);
+    transition:transform .08s ease;
+  }
+  .btn:active{transform:translateY(4px); box-shadow:0 1px 0 var(--purple-dark);}
+  .btn.small{padding:8px 14px; font-size:0.88rem; box-shadow:0 4px 0 var(--purple-dark);}
+  .btn.ghost{background:var(--white); color:var(--purple); box-shadow:0 5px 0 #d9d4fb; border:2px solid var(--purple);}
+  .btn.yellow{background:var(--yellow); box-shadow:0 5px 0 var(--yellow-dark); color:var(--ink);}
+  .btn.coral{background:var(--coral); box-shadow:0 5px 0 var(--coral-dark);}
+  .btn:disabled{opacity:0.45; cursor:not-allowed;}
+  #screen-start{text-align:center;}
+  .kingdom-title{font-size:2.3rem; margin:6px 0 2px; color:var(--purple-dark);}
+  .kingdom-sub{font-size:1.05rem; color:#5b5f7d; margin-bottom:22px;}
+  .emoji-row{font-size:2.2rem; margin:14px 0 24px; letter-spacing:6px;}
+  .start-card{
+    background:var(--white); border-radius:20px; padding:26px 28px; max-width:480px; margin:0 auto;
+    box-shadow:0 6px 0 #ecebf9; border:3px solid #ECE9FF;
+  }
+  .start-card label{display:block; font-weight:800; margin-bottom:8px; text-align:left;}
+  .start-card input{
+    width:100%; padding:12px 14px; border-radius:12px; border:2px solid #DCD8F7;
+    font-family:'Nunito'; font-size:1rem; margin-bottom:10px;
+  }
+  .start-card input:focus{outline:2px solid var(--purple);}
+  .teacher-link{margin-top:18px; font-size:0.9rem; color:var(--purple-dark); text-decoration:underline; cursor:pointer; background:none; border:none; font-family:'Nunito'; font-weight:800;}
+  .no-repeat-pill{
+    display:inline-block; margin:0 0 16px; background:#F1EEFF; color:var(--purple-dark);
+    font-weight:800; font-size:0.82rem; padding:6px 14px; border-radius:999px;
+  }
+  .stepper{display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:16px;}
+  .stepper span{font-family:'Fredoka'; font-size:1.4rem; font-weight:700; min-width:24px; text-align:center;}
+  .card-box{background:var(--white); border-radius:20px; padding:26px; border:3px solid #ECE9FF; box-shadow:0 5px 0 #ECE9FF;}
+  .prompt{font-size:1.15rem; font-weight:800; margin-bottom:18px; text-align:center;}
+  .strip-label{font-weight:800; color:#5b5f7d; margin:14px 0 6px; text-align:center; font-size:0.92rem;}
+  .concrete-wrap{display:flex; justify-content:center; margin:6px 0 14px;}
+  .concrete-row{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; max-width:620px;}
+  .cell{cursor:pointer; transition:transform .05s ease, background .15s ease; user-select:none; display:flex; align-items:center; justify-content:center;}
+  .cell.readonly{cursor:default;}
+  .cell.barra{width:44px; height:64px; border-radius:8px; background:#F1DFC7; border:3px solid #C9A46A;}
+  .cell.barra.selected{background:#C9773A; border-color:#8B4E22;}
+  .cell.circulos{width:42px; height:42px; border-radius:50%; background:#DDEBFF; border:3px solid #8FB8E8;}
+  .cell.circulos.selected{background:#3D8BE0; border-color:#255E9E;}
+  .cell.quadrados{width:38px; height:38px; border-radius:8px; background:#FFE0CC; border:3px solid #F0A868;}
+  .cell.quadrados.selected{background:#FF7A2E; border-color:#C4530F;}
+  .cell:hover{transform:scale(1.06);}
+  .feedback-row{display:flex; justify-content:center; margin-top:16px; gap:12px; flex-wrap:wrap;}
+  .msg{text-align:center; font-weight:800; margin-top:6px; min-height:26px; font-size:1.05rem;}
+  .msg.ok{color:var(--teal-dark);}
+  .msg.bad{color:var(--coral-dark);}
+  .options-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:6px;}
+  @media (max-width:560px){.options-grid{grid-template-columns:1fr;}}
+  .opt-btn{
+    font-family:'Nunito'; font-weight:800; font-size:1.05rem; padding:16px; border-radius:14px;
+    border:3px solid #ECE9FF; background:var(--white); cursor:pointer; transition:all .1s ease;
+  }
+  .opt-btn.visual{display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .opt-btn:hover:not(:disabled){border-color:var(--purple);}
+  .opt-btn.correct{background:#DFF7EC; border-color:var(--teal-dark); color:var(--teal-dark);}
+  .opt-btn.wrong{background:#FDE2E2; border-color:var(--coral-dark); color:var(--coral-dark);}
+  .opt-btn:disabled{cursor:default;}
+  .minibar{display:flex; gap:2px; justify-content:center;}
+  .minibar div{width:9px; height:13px; background:#E4E1F7; border-radius:2px;}
+  .minibar div.on{background:var(--teal);}
+  .chip-row{display:flex; gap:16px; justify-content:center; margin:20px 0; flex-wrap:wrap;}
+  .chip{
+    background:var(--white); border:3px solid #ECE9FF; border-radius:16px; padding:20px 26px;
+    font-family:'Fredoka'; font-size:1.3rem; font-weight:700; cursor:pointer; position:relative; min-width:100px; text-align:center;
+  }
+  .chip .order-badge{
+    position:absolute; top:-12px; right:-12px; background:var(--purple); color:#fff; border-radius:50%;
+    width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-size:0.9rem; font-family:'Nunito'; font-weight:800;
+  }
+  .chip.chosen{border-color:var(--purple); background:#F1EEFF;}
+  .order-hint{text-align:center; color:#6b6f8f; font-weight:800; margin-bottom:6px;}
+  .timer-wrap{background:#ECE9FF; border-radius:999px; height:16px; overflow:hidden; margin-bottom:16px;}
+  .timer-bar{background:linear-gradient(90deg,var(--teal),var(--yellow),var(--coral)); height:100%; width:100%; transition:width 1s linear;}
+  .team-chip{background:#F1EEFF; color:var(--purple-dark); font-weight:800; padding:6px 14px; border-radius:999px; font-size:0.85rem;}
+  .team-chip.active{background:var(--purple); color:#fff;}
+  table.board{width:100%; border-collapse:collapse; margin-top:14px;}
+  table.board th, table.board td{padding:12px 14px; text-align:left; border-bottom:2px solid #F1EFFB;}
+  table.board th{font-family:'Fredoka'; color:var(--purple-dark); font-size:0.92rem;}
+  .rank-badge{display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#ECE9FF; font-weight:800; font-size:0.85rem;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(45,48,71,0.55); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50;}
+  .modal-box{background:var(--white); border-radius:20px; padding:28px; max-width:560px; width:100%; max-height:80vh; overflow:auto;}
+  .modal-box h2{margin-top:0; color:var(--purple-dark);}
+  .modal-box ul{padding-left:20px; line-height:1.6;}
+  .close-x{float:right; background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--ink);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- START / SETUP SCREEN -->
+  <div id="screen-start" class="screen">
+    <div class="emoji-row">🍕 🍫 🥧 ⚖️ 💰 🏆</div>
+    <h1 class="kingdom-title">Reino das Frações</h1>
+    <p class="kingdom-sub">6 ilhas · 3 rodadas cada · todas as equipes avançam juntas — 9º ano, EMEIF Abdon Dantas</p>
+    <div class="start-card">
+      <span class="no-repeat-pill">🔀 Perguntas nunca se repetem entre as equipes</span>
+      <label>Quantas equipes vão jogar?</label>
+      <div class="stepper">
+        <button class="btn small ghost" onclick="changeTeamCount(-1)">➖</button>
+        <span id="team-count-display">5</span>
+        <button class="btn small ghost" onclick="changeTeamCount(1)">➕</button>
+      </div>
+      <div id="team-name-inputs"></div>
+      <button class="btn coral" style="width:100%; margin-top:8px;" onclick="beginSession()">🚀 Começar o Reino das Frações</button>
+    </div>
+    <button class="teacher-link" onclick="openTeacherModal()">📋 Guia rápido para o professor</button>
+  </div>
+
+  <!-- GAME SCREEN (rodadas, transições e resultado final) -->
+  <div id="screen-game" class="hidden">
+    <div class="topbar">
+      <div class="brand">🗺️ Reino das Frações</div>
+      <button class="btn small ghost" style="background:rgba(255,255,255,0.9);" onclick="showLiveBoardModal()">🏆 Placar ao vivo</button>
+    </div>
+    <div class="screen" id="game-content"></div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO GERAL
+   ============================================================ */
+const ISLANDS = [
+  {id:1, key:'concreto', name:'Material Concreto', icon:'🍫', desc:'Represente, complete e transforme frações com barras, fichas e blocos'},
+  {id:2, key:'equivalencia', name:'Equivalência', icon:'🧩', desc:'Descubra qual fração é equivalente à mostrada'},
+  {id:3, key:'operacoes', name:'Operações', icon:'➗', desc:'Some, subtraia, multiplique e divida frações'},
+  {id:4, key:'balanca', name:'A Balança', icon:'⚖️', desc:'Compare frações, decimais e porcentagens'},
+  {id:5, key:'tesouro', name:'O Tesouro', icon:'💰', desc:'Resolva problemas do dia a dia'},
+  {id:6, key:'revisao', name:'Revisão Final', icon:'🏆', desc:'Desafio misturando tudo que foi visto'}
+];
+const ROUNDS_PER_ISLAND = 3;
+const TURN_SECONDS = 60;
+
+let STATE = {
+  teams: [],
+  flow: {islandIdx:0, round:1, teamIdx:0},
+  sessionUsed: {g1:[], g2:[], g3:[], g4:[], g5:[], g6:[]}
+};
+let teamCount = 5;
+let turnState = {elapsed:0, interval:null};
+
+function $(sel){return document.querySelector(sel);}
+function shuffle(arr){const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a;}
+function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function gcd(a,b){a=Math.abs(a); b=Math.abs(b); return b===0?(a||1):gcd(b,a%b);}
+function simplifyFrac(n,d){ if(d<0){n=-n; d=-d;} const g=gcd(n,d); n=n/g; d=d/g; return d===1?`${n}`:`${n}/${d}`; }
+function fracValue(str){ if(str.includes('/')){const [a,b]=str.split('/').map(Number); return a/b;} return Number(str); }
+function formatDecLabel(v){ let s=v.toFixed(2); if(s.endsWith('0')) s=s.slice(0,-1); return s.replace('.',','); }
+function miniBar(n,d){ let html='<div class="minibar">'; for(let i=0;i<d;i++) html+=`<div class="${i<n?'on':''}"></div>`; html+='</div>'; return html; }
+function pickUnusedItems(pool, key, n){
+  let available = pool.filter(item=>!STATE.sessionUsed[key].includes(item.id));
+  if(available.length < n){ STATE.sessionUsed[key] = []; available = pool.slice(); }
+  const chosen = shuffle(available).slice(0,n);
+  chosen.forEach(c=>STATE.sessionUsed[key].push(c.id));
+  return chosen;
+}
+function showScreen(id){
+  ['screen-start','screen-game'].forEach(s=>$('#'+s).classList.toggle('hidden', s!==id));
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function currentIsland(){ return ISLANDS[STATE.flow.islandIdx]; }
+function currentTeam(){ return STATE.teams[STATE.flow.teamIdx]; }
+
+/* ============================================================
+   SETUP DE EQUIPES
+   ============================================================ */
+function renderTeamNameInputs(){
+  const wrap = $('#team-name-inputs');
+  const existing = [...wrap.querySelectorAll('input')].map(i=>i.value);
+  wrap.innerHTML='';
+  for(let i=0;i<teamCount;i++){
+    const inp = document.createElement('input');
+    inp.type='text'; inp.maxLength=24; inp.placeholder=`Nome da equipe ${i+1}`;
+    inp.value = existing[i]||'';
+    wrap.appendChild(inp);
+  }
+}
+function changeTeamCount(delta){
+  teamCount = Math.min(8, Math.max(2, teamCount+delta));
+  $('#team-count-display').textContent = teamCount;
+  renderTeamNameInputs();
+}
+function beginSession(){
+  const inputs = [...document.querySelectorAll('#team-name-inputs input')];
+  STATE.teams = inputs.map((inp,i)=>({name: inp.value.trim() || `Equipe ${i+1}`, score:0, byIsland:{1:0,2:0,3:0,4:0,5:0,6:0}}));
+  STATE.flow = {islandIdx:0, round:1, teamIdx:0};
+  STATE.sessionUsed = {g1:[],g2:[],g3:[],g4:[],g5:[],g6:[]};
+  showScreen('screen-game');
+  showIslandIntro(true);
+}
+function resetToSetup(){
+  STATE.teams=[]; STATE.flow={islandIdx:0,round:1,teamIdx:0}; STATE.sessionUsed={g1:[],g2:[],g3:[],g4:[],g5:[],g6:[]};
+  showScreen('screen-start');
+}
+
+/* ============================================================
+   TELAS DE TRANSIÇÃO
+   ============================================================ */
+function showIslandIntro(isFirst){
+  const isl = currentIsland();
+  let recapHtml = '';
+  if(!isFirst){
+    const prevIsl = ISLANDS[STATE.flow.islandIdx-1];
+    const rows = [...STATE.teams].sort((a,b)=>b.byIsland[prevIsl.id]-a.byIsland[prevIsl.id])
+      .map(t=>`<tr><td>${t.name}</td><td>${t.byIsland[prevIsl.id]} pts</td></tr>`).join('');
+    recapHtml = `<h3 style="margin-top:20px; margin-bottom:4px;">Pontos ganhos em ${prevIsl.icon} ${prevIsl.name}</h3><table class="board"><tbody>${rows}</tbody></table>`;
+  }
+  $('#game-content').innerHTML = `
+    <div class="card-box" style="text-align:center;">
+      ${isFirst?'':'<h2 style="margin-bottom:0;">🎉 Todas as equipes concluíram a ilha!</h2>'}
+      <div style="font-size:3rem; margin:10px 0 4px;">${isl.icon}</div>
+      <h2 style="margin:4px 0;">${isFirst?'Primeira ilha — ':'Próxima ilha — '}${isl.name}</h2>
+      <p style="color:#5b5f7d; font-weight:700; max-width:480px; margin:0 auto;">${isl.desc}</p>
+      <p style="color:#8a8ea8; font-size:0.9rem; margin-top:8px;">3 rodadas · cada equipe responde 1 pergunta por rodada · até 60s por pergunta</p>
+      ${recapHtml}
+      <button class="btn yellow" style="margin-top:18px;" onclick="startTurn()">▶ Começar Ilha</button>
+    </div>`;
+}
+function showRoundTransition(){
+  const isl = currentIsland();
+  $('#game-content').innerHTML = `
+    <div class="card-box" style="text-align:center;">
+      <h2>✅ Rodada ${STATE.flow.round-1} concluída!</h2>
+      <p style="color:#5b5f7d; font-weight:700;">Todas as equipes já responderam. Próxima: Rodada ${STATE.flow.round} de ${ROUNDS_PER_ISLAND} — ${isl.icon} ${isl.name}</p>
+      <button class="btn yellow" onclick="startTurn()">▶ Continuar</button>
+    </div>`;
+}
+function showFinalResults(){
+  const sorted = [...STATE.teams].sort((a,b)=>b.score-a.score);
+  const rows = sorted.map((t,i)=>{
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    return `<tr><td><span class="rank-badge">${medal}</span></td><td>${t.name}</td><td>${t.score} pts</td></tr>`;
+  }).join('');
+  $('#game-content').innerHTML = `
+    <div class="card-box" style="text-align:center;">
+      <div style="font-size:3rem;">🏆</div>
+      <h2>Expedição completa!</h2>
+      <p style="color:#5b5f7d; font-weight:700;">Todas as equipes concluíram as 6 ilhas do Reino das Frações.</p>
+      <table class="board"><thead><tr><th>#</th><th>Equipe</th><th>Pontos</th></tr></thead><tbody>${rows}</tbody></table>
+      <button class="btn coral" style="margin-top:18px;" onclick="resetToSetup()">🔄 Novo jogo (outra turma)</button>
+    </div>`;
+}
+function showLiveBoardModal(){
+  const sorted = [...STATE.teams].sort((a,b)=>b.score-a.score);
+  const rows = sorted.map((t,i)=>{
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+    return `<tr><td><span class="rank-badge">${medal}</span></td><td>${t.name}</td><td>${t.score} pts</td></tr>`;
+  }).join('') || '<tr><td colspan="3" style="text-align:center;color:#8a8ea8;">Jogo ainda não começou</td></tr>';
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay'; overlay.id='board-modal';
+  overlay.innerHTML = `<div class="modal-box">
+    <button class="close-x" onclick="document.getElementById('board-modal').remove()">✕</button>
+    <h2>🏆 Placar ao vivo</h2>
+    <table class="board"><thead><tr><th>#</th><th>Equipe</th><th>Pontos</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+/* ============================================================
+   MOTOR DE RODADA (timer, bônus, avanço de turno)
+   ============================================================ */
+function startTimer(){
+  turnState.elapsed = 0;
+  clearInterval(turnState.interval);
+  updateTimerUI();
+  turnState.interval = setInterval(()=>{ turnState.elapsed++; updateTimerUI(); }, 1000);
+}
+function stopTimer(){ clearInterval(turnState.interval); }
+function updateTimerUI(){
+  const bar = $('#turn-timerbar'); const hint = $('#bonus-hint');
+  if(!bar || !hint) return;
+  const timeLeft = Math.max(TURN_SECONDS - turnState.elapsed, 0);
+  bar.style.width = (timeLeft/TURN_SECONDS*100)+'%';
+  if(turnState.elapsed<=30) hint.textContent = `⏱️ ${timeLeft}s restantes — respondendo agora, ganham +20 pts de bônus!`;
+  else if(turnState.elapsed<=60) hint.textContent = `⏱️ ${timeLeft}s restantes — ainda dá tempo de +10 pts de bônus`;
+  else hint.textContent = `⏱️ Tempo esgotado — a equipe ainda pode responder, mas sem bônus extra`;
+}
+function renderTurnShell(){
+  const isl = currentIsland(), team = currentTeam();
+  const chips = STATE.teams.map((t,i)=>`<span class="team-chip${i===STATE.flow.teamIdx?' active':''}">${t.name}: ${t.score}</span>`).join(' ');
+  $('#game-content').innerHTML = `
+    <div style="text-align:center; margin-bottom:6px;">
+      <div style="font-size:0.85rem; color:#8a8ea8; font-weight:800;">${isl.icon} ${isl.name} · Rodada ${STATE.flow.round} de ${ROUNDS_PER_ISLAND}</div>
+      <div style="font-family:'Fredoka'; font-size:1.35rem; color:var(--purple-dark); margin:4px 0;">🎮 Vez da equipe: ${team.name}</div>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:16px;">${chips}</div>
+    <div class="card-box">
+      <p class="order-hint" id="bonus-hint">⏱️ ${TURN_SECONDS}s restantes</p>
+      <div class="timer-wrap"><div class="timer-bar" id="turn-timerbar"></div></div>
+      <div id="turn-content"></div>
+    </div>`;
+}
+function submitAnswer(correct, basePoints){
+  stopTimer();
+  let bonus = 0;
+  if(correct){
+    if(turnState.elapsed<=30) bonus = 20;
+    else if(turnState.elapsed<=TURN_SECONDS) bonus = 10;
+    else bonus = 0;
+  }
+  const pts = correct ? basePoints+bonus : 0;
+  const team = currentTeam();
+  team.score += pts;
+  team.byIsland[currentIsland().id] += pts;
+  showTurnFeedback(correct, pts, basePoints, bonus);
+}
+function showTurnFeedback(correct, pts, basePoints, bonus){
+  const content = $('#turn-content');
+  const box = document.createElement('div');
+  box.style.marginTop = '14px';
+  box.style.textAlign = 'center';
+  box.innerHTML = `
+    <p class="msg ${correct?'ok':'bad'}">${correct? '✅ Resposta correta!' : '❌ Resposta incorreta.'}</p>
+    <p style="font-weight:800; color:var(--purple-dark); margin-top:-6px;">${correct? `+${pts} pts &nbsp;(${basePoints} base${bonus>0?' + '+bonus+' bônus ⚡':''})` : '+0 pts'}</p>
+    <button class="btn yellow" id="next-turn-btn">➡ Próxima equipe</button>`;
+  content.appendChild(box);
+  $('#next-turn-btn').onclick = advanceTurn;
+  box.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+function advanceTurn(){
+  stopTimer();
+  STATE.flow.teamIdx++;
+  if(STATE.flow.teamIdx >= STATE.teams.length){
+    STATE.flow.teamIdx = 0;
+    STATE.flow.round++;
+    if(STATE.flow.round > ROUNDS_PER_ISLAND){
+      STATE.flow.round = 1;
+      STATE.flow.islandIdx++;
+      if(STATE.flow.islandIdx >= ISLANDS.length){ showFinalResults(); return; }
+      showIslandIntro(false);
+      return;
+    }
+    showRoundTransition();
+    return;
+  }
+  startTurn();
+}
+function startTurn(){
+  renderTurnShell();
+  switch(currentIsland().key){
+    case 'concreto': renderG1Turn(); break;
+    case 'equivalencia': renderG2Turn(); break;
+    case 'operacoes': renderG3Turn(); break;
+    case 'balanca': renderG4Turn(); break;
+    case 'tesouro': renderG5Turn(); break;
+    case 'revisao': renderG6Turn(); break;
+  }
+}
+
+/* Grade de opções reutilizável para os jogos tipo quiz */
+function renderOptionsGrid(containerId, items, onPick, visual){
+  const wrap = $(containerId);
+  const entries = items.map(item=>{
+    const b = document.createElement('button');
+    b.className = 'opt-btn'+(visual?' visual':'');
+    b.innerHTML = item.html || item.label;
+    wrap.appendChild(b);
+    return {b, item};
+  });
+  entries.forEach(({b,item})=>{
+    b.onclick = ()=>{
+      entries.forEach(x=>x.b.disabled=true);
+      if(item.correct) b.classList.add('correct');
+      else{ b.classList.add('wrong'); const c=entries.find(x=>x.item.correct); if(c) c.b.classList.add('correct'); }
+      onPick(item.correct);
+    };
+  });
+}
+
+/* ============================================================
+   ILHA 1 — MATERIAL CONCRETO (4 tipos de desafio)
+   ============================================================ */
+const POINTS_BY_TYPE = {1:15, 2:25, 3:20, 4:30};
+const VISUALS = ['barra','circulos','quadrados'];
+function generateG1Round(){
+  let attempt=0;
+  while(attempt<50){
+    attempt++;
+    const type = randInt(1,4);
+    const visual = VISUALS[randInt(0,2)];
+    let round=null;
+    if(type===1){ const den=randInt(4,12); const num=randInt(1,den-1); round={type,den,num,visual,sig:`t1-${num}-${den}-${visual}`}; }
+    else if(type===2){ const den=randInt(3,6); const num=randInt(1,den-1); const k=randInt(2,3); const den2=den*k; round={type,den,num,den2,num2target:num*k,visual,sig:`t2-${num}-${den}-${k}-${visual}`}; }
+    else if(type===3){ const den=randInt(4,10); const num=randInt(1,den-1); round={type,den,num,complement:den-num,visual,sig:`t3-${num}-${den}-${visual}`}; }
+    else{ const den=randInt(3,8); const num=randInt(1,den-1); round={type,den,num,visual,sig:`t4-${num}-${den}-${visual}`}; }
+    if(!STATE.sessionUsed.g1.includes(round.sig)){ STATE.sessionUsed.g1.push(round.sig); return round; }
+  }
+  const den=randInt(4,12), num=randInt(1,den-1);
+  return {type:1, den, num, visual:'barra', sig:'fallback-'+Math.random()};
+}
+function buildStrip(den, visual, opts={}){
+  const wrap = document.createElement('div'); wrap.className='concrete-row';
+  let selected = new Set();
+  for(let i=0;i<den;i++){
+    const c = document.createElement('div');
+    c.className = 'cell '+visual+(opts.readonly?' readonly':'');
+    if(opts.readonly){ if(i<opts.presetCount){ c.classList.add('selected'); selected.add(i); } }
+    else{ c.onclick = ()=>{ if(selected.has(i)){selected.delete(i); c.classList.remove('selected');} else{selected.add(i); c.classList.add('selected');} }; }
+    wrap.appendChild(c);
+  }
+  return {el:wrap, getCount:()=>selected.size};
+}
+function renderG1Turn(){
+  const r = generateG1Round();
+  let promptText='', labelA='', labelB='', showB=false;
+  if(r.type===1){ promptText = `Represente a fração <strong>${r.num}/${r.den}</strong> clicando nas partes`; }
+  else if(r.type===2){ promptText = `A barra A mostra <strong>${r.num}/${r.den}</strong>. Pinte na barra B, dividida em <strong>${r.den2}</strong> partes, a fração equivalente.`; labelA='Barra A (exemplo)'; labelB=`Barra B — sua vez (${r.den2} partes)`; showB=true; }
+  else if(r.type===3){ promptText = `A barra A já mostra <strong>${r.num}/${r.den}</strong> pintado. Pinte na barra B o que falta para completar 1 inteiro.`; labelA='Barra A (exemplo)'; labelB='Barra B — o que falta'; showB=true; }
+  else{ promptText = `Represente o número misto <strong>1 inteiro e ${r.num}/${r.den}</strong>: pinte a barra A por inteiro e a barra B com ${r.num}/${r.den}.`; labelA='Barra A — inteiro'; labelB='Barra B — fração'; showB=true; }
+  const content = $('#turn-content');
+  content.innerHTML = `
+    <p class="prompt">${promptText}</p>
+    <div id="g1-blockA"></div>
+    <div id="g1-blockB" class="${showB?'':'hidden'}"></div>
+    <div class="feedback-row"><button class="btn coral" id="g1-check">✅ Conferir</button></div>`;
+  const blockA=$('#g1-blockA'), blockB=$('#g1-blockB');
+  let stripA, stripB;
+  if(r.type===1){ blockA.innerHTML=`<div class="concrete-wrap" id="g1-wrapA"></div>`; stripA=buildStrip(r.den,r.visual,{}); $('#g1-wrapA').appendChild(stripA.el); }
+  else if(r.type===2 || r.type===3){
+    blockA.innerHTML=`<p class="strip-label">${labelA}</p><div class="concrete-wrap" id="g1-wrapA"></div>`;
+    stripA=buildStrip(r.den,r.visual,{readonly:true,presetCount:r.num}); $('#g1-wrapA').appendChild(stripA.el);
+    const bDen = r.type===2 ? r.den2 : r.den;
+    blockB.innerHTML=`<p class="strip-label">${labelB}</p><div class="concrete-wrap" id="g1-wrapB"></div>`;
+    stripB=buildStrip(bDen,r.visual,{}); $('#g1-wrapB').appendChild(stripB.el);
+  } else {
+    blockA.innerHTML=`<p class="strip-label">${labelA}</p><div class="concrete-wrap" id="g1-wrapA"></div>`;
+    stripA=buildStrip(r.den,r.visual,{}); $('#g1-wrapA').appendChild(stripA.el);
+    blockB.innerHTML=`<p class="strip-label">${labelB}</p><div class="concrete-wrap" id="g1-wrapB"></div>`;
+    stripB=buildStrip(r.den,r.visual,{}); $('#g1-wrapB').appendChild(stripB.el);
+  }
+  $('#g1-check').onclick = ()=>{
+    let ok=false;
+    if(r.type===1) ok = stripA.getCount()===r.num;
+    else if(r.type===2) ok = stripB.getCount()===r.num2target;
+    else if(r.type===3) ok = stripB.getCount()===r.complement;
+    else ok = stripA.getCount()===r.den && stripB.getCount()===r.num;
+    $('#g1-check').disabled = true;
+    submitAnswer(ok, POINTS_BY_TYPE[r.type]);
+  };
+  startTimer();
+}
+
+/* ============================================================
+   ILHA 2 — EQUIVALÊNCIA (quiz visual, gerado na hora)
+   ============================================================ */
+function generateG2Question(){
+  let attempt=0;
+  while(attempt<60){
+    attempt++;
+    const den=randInt(2,9); const num=randInt(1,den-1);
+    const k=randInt(2,4); const den2=den*k;
+    if(den2>24) continue;
+    const correctNum = num*k;
+    const correctStr = `${correctNum}/${den2}`;
+    const sig = `${num}-${den}-${k}`;
+    if(STATE.sessionUsed.g2.includes(sig)) continue;
+    const correctVal = num/den;
+    const distractors = new Set();
+    const s1 = `${num}/${den2}`;
+    if(Math.abs(fracValue(s1)-correctVal)>0.01) distractors.add(s1);
+    const offNum = correctNum + (Math.random()<0.5?1:-1);
+    if(offNum>0){ const s2=`${offNum}/${den2}`; if(Math.abs(fracValue(s2)-correctVal)>0.01) distractors.add(s2); }
+    let guard=0;
+    while(distractors.size<3 && guard<80){
+      guard++;
+      const dd=randInt(2,20); const nn=randInt(1,dd-1);
+      const val=nn/dd; if(Math.abs(val-correctVal)<0.02) continue;
+      const str=`${nn}/${dd}`; if(str===correctStr) continue;
+      let dup=false; distractors.forEach(s=>{ if(Math.abs(fracValue(s)-val)<0.02) dup=true; });
+      if(dup) continue;
+      distractors.add(str);
+    }
+    if(distractors.size<3) continue;
+    STATE.sessionUsed.g2.push(sig);
+    return {promptFrac:{n:num,d:den}, correctStr, opts:shuffle([correctStr,...Array.from(distractors)]).slice(0,4)};
+  }
+  STATE.sessionUsed.g2 = [];
+  return {promptFrac:{n:1,d:2}, correctStr:'2/4', opts:['2/4','1/3','3/5','1/5']};
+}
+function renderG2Turn(){
+  const q = generateG2Question();
+  const content = $('#turn-content');
+  content.innerHTML = `
+    <p class="prompt">🧩 Qual fração é equivalente a <strong>${q.promptFrac.n}/${q.promptFrac.d}</strong>?</p>
+    <div class="concrete-wrap">${miniBar(q.promptFrac.n,q.promptFrac.d)}</div>
+    <div class="options-grid" id="turn-opts"></div>`;
+  const items = q.opts.map(t=>{
+    const [n,d] = t.split('/').map(Number);
+    return {html:`<div>${t}</div>${miniBar(n,d)}`, correct: t===q.correctStr};
+  });
+  renderOptionsGrid('#turn-opts', items, (correct)=>submitAnswer(correct,20), true);
+  startTimer();
+}
+
+/* ============================================================
+   ILHA 3 — OPERAÇÕES (perguntas geradas dinamicamente)
+   ============================================================ */
+function generateG3Question(){
+  let attempt=0;
+  while(attempt<60){
+    attempt++;
+    const op = ['+','-','×','÷'][randInt(0,3)];
+    let den1=randInt(2,10), den2=randInt(2,10);
+    let num1=randInt(1,den1-1), num2=randInt(1,den2-1);
+    if(op==='-' && (num1/den1) < (num2/den2)){ [num1,num2]=[num2,num1]; [den1,den2]=[den2,den1]; }
+    let rn, rd;
+    if(op==='+'){ rn=num1*den2+num2*den1; rd=den1*den2; }
+    else if(op==='-'){ rn=num1*den2-num2*den1; rd=den1*den2; }
+    else if(op==='×'){ rn=num1*num2; rd=den1*den2; }
+    else{ rn=num1*den2; rd=den1*num2; }
+    if(!rd || rn<0) continue;
+    const correctStr = simplifyFrac(rn,rd);
+    const correctVal = rn/rd;
+    const sig = `${op}-${num1}-${den1}-${num2}-${den2}`;
+    if(STATE.sessionUsed.g3.includes(sig)) continue;
+    const distractors = new Set();
+    let wrongStr=null;
+    if(op==='+') wrongStr = simplifyFrac(num1+num2, den1+den2);
+    else if(op==='-') wrongStr = simplifyFrac(Math.abs(num1-num2), Math.abs(den1-den2)||(den1+den2));
+    else if(op==='×') wrongStr = simplifyFrac(num1+num2, den1+den2);
+    else wrongStr = simplifyFrac(num1*num2, den1*den2);
+    if(wrongStr && wrongStr!==correctStr) distractors.add(wrongStr);
+    let guard=0;
+    while(distractors.size<3 && guard<60){
+      guard++;
+      const dd=randInt(2,12); const nn=randInt(1,dd*2);
+      const val=nn/dd; if(Math.abs(val-correctVal)<0.02) continue;
+      const str=simplifyFrac(nn,dd);
+      let dup=false; distractors.forEach(s=>{ if(Math.abs(fracValue(s)-val)<0.02) dup=true; });
+      if(dup) continue;
+      distractors.add(str);
+    }
+    if(distractors.size<3) continue;
+    STATE.sessionUsed.g3.push(sig);
+    return {q:`${num1}/${den1} ${op} ${num2}/${den2} = ?`, opts:shuffle([correctStr,...Array.from(distractors)]), correctAnswer:correctStr};
+  }
+  STATE.sessionUsed.g3 = [];
+  return {q:'1/2 + 1/4 = ?', opts:shuffle(['3/4','2/6','1/6','2/4']), correctAnswer:'3/4'};
+}
+function renderG3Turn(){
+  const q = generateG3Question();
+  const content = $('#turn-content');
+  content.innerHTML = `<p class="prompt">➗ ${q.q}</p><div class="options-grid" id="turn-opts"></div>`;
+  const items = q.opts.map(t=>({label:t, correct:t===q.correctAnswer}));
+  renderOptionsGrid('#turn-opts', items, (correct)=>submitAnswer(correct,20), false);
+  startTimer();
+}
+
+/* ============================================================
+   ILHA 4 — A BALANÇA (comparação, trios gerados dinamicamente)
+   ============================================================ */
+function generateG4Round(){
+  let attempt=0;
+  while(attempt<60){
+    attempt++;
+    const den=randInt(2,10); const num=randInt(1,den-1);
+    const fracV=num/den;
+    const decV=randInt(5,95)/100;
+    const pct=randInt(5,95); const pctV=pct/100;
+    const vals=[fracV,decV,pctV].sort((a,b)=>a-b);
+    if(vals[1]-vals[0]<0.03 || vals[2]-vals[1]<0.03) continue;
+    const sig = `${num}-${den}-${decV}-${pct}`;
+    if(STATE.sessionUsed.g4.includes(sig)) continue;
+    STATE.sessionUsed.g4.push(sig);
+    return shuffle([{l:`${num}/${den}`,v:fracV},{l:formatDecLabel(decV),v:decV},{l:`${pct}%`,v:pctV}]);
+  }
+  STATE.sessionUsed.g4 = [];
+  return shuffle([{l:'1/4',v:0.25},{l:'0,4',v:0.4},{l:'60%',v:0.6}]);
+}
+function renderG4Turn(){
+  const r = generateG4Round();
+  let choice = [];
+  const content = $('#turn-content');
+  content.innerHTML = `
+    <p class="prompt">⚖️ Clique nos valores do MENOR para o MAIOR</p>
+    <p class="order-hint" id="g4-hint">Nenhum valor escolhido ainda</p>
+    <div class="chip-row" id="g4-chips"></div>`;
+  const wrap = $('#g4-chips');
+  r.forEach(item=>{
+    const chip = document.createElement('div');
+    chip.className='chip'; chip.textContent=item.l;
+    chip.onclick = ()=>{
+      if(chip.classList.contains('chosen')) return;
+      chip.classList.add('chosen');
+      const badge=document.createElement('span'); badge.className='order-badge'; badge.textContent=choice.length+1; chip.appendChild(badge);
+      choice.push(item.v);
+      $('#g4-hint').textContent = choice.length+' de '+r.length+' escolhidos';
+      if(choice.length===r.length){
+        [...wrap.children].forEach(c=>c.style.pointerEvents='none');
+        const sorted=[...r].map(x=>x.v).sort((a,b)=>a-b);
+        const ok = JSON.stringify(sorted)===JSON.stringify(choice);
+        submitAnswer(ok, 20);
+      }
+    };
+    wrap.appendChild(chip);
+  });
+  startTimer();
+}
+
+/* ============================================================
+   ILHA 5 — O TESOURO (banco de 24 problemas)
+   ============================================================ */
+const G5_POOL = [
+  {id:0, q:'Uma pizza foi dividida em 8 pedaços iguais. Ana comeu 3 pedaços e Bia comeu 2 pedaços. Que fração da pizza sobrou?', opts:['3/8','5/8','1/8','6/8']},
+  {id:1, q:'Uma receita usa 3/4 de xícara de açúcar. Fazendo metade da receita, quanto de açúcar é necessário?', opts:['3/8','1/2','3/4','1/8']},
+  {id:2, q:'Uma loja deu 25% de desconto em um produto de R$ 80. Qual foi o valor do desconto?', opts:['R$ 20','R$ 25','R$ 15','R$ 60']},
+  {id:3, q:'Em uma turma de 30 alunos, 2/5 são meninos. Quantos meninos há na turma?', opts:['12','15','10','18']},
+  {id:4, q:'Pedro andou 3/5 do caminho até a escola e parou para descansar. Que fração do caminho ainda falta?', opts:['2/5','3/5','1/5','4/5']},
+  {id:5, q:'Um tanque de combustível tem capacidade de 60 litros e está com 3/4 cheio. Quantos litros faltam para encher?', opts:['15','45','20','30']},
+  {id:6, q:'Em um pote com 40 balas, 1/4 são de morango. Quantas balas de morango há no pote?', opts:['10','8','12','15']},
+  {id:7, q:'Maria leu 2/5 de um livro de 150 páginas. Quantas páginas ela ainda precisa ler?', opts:['90','60','100','75']},
+  {id:8, q:'Um terreno de 200 m² foi dividido em 5 partes iguais para plantio. Que fração do terreno corresponde a 2 dessas partes?', opts:['2/5','1/5','3/5','2/3']},
+  {id:9, q:'Numa promoção, um produto teve 10% de aumento sobre R$ 50. Qual o novo preço?', opts:['R$ 55','R$ 60','R$ 51','R$ 45']},
+  {id:10, q:'Um aquário tem 24 peixes, sendo 3/8 deles peixinhos-dourados. Quantos peixinhos-dourados há no aquário?', opts:['9','8','6','12']},
+  {id:11, q:'Uma equipe venceu 7 de 10 jogos disputados. Que porcentagem de vitórias ela teve?', opts:['70%','60%','75%','65%']},
+  {id:12, q:'Uma jarra tem 2 litros de suco e 3/4 já foram bebidos. Quantos litros ainda restam?', opts:['0,5','1','1,5','0,25']},
+  {id:13, q:'Em uma maratona de 40 km, um corredor já percorreu 3/8 do percurso. Quantos km faltam?', opts:['25','15','20','30']},
+  {id:14, q:'Uma biblioteca emprestou 120 livros em um mês; 1/3 eram de matemática. Quantos livros de matemática foram emprestados?', opts:['40','30','45','60']},
+  {id:15, q:'Um pacote de doces custa R$ 12 e está com 15% de desconto. Qual o valor do desconto?', opts:['R$ 1,80','R$ 2,00','R$ 1,50','R$ 3,00']},
+  {id:16, q:'Numa viagem de 300 km, o carro já rodou 2/3 do caminho. Quantos km ainda faltam?', opts:['100','150','200','120']},
+  {id:17, q:'Uma horta tem 48 plantas, sendo 5/6 delas de hortaliças. Quantas plantas de hortaliças há na horta?', opts:['40','36','42','44']},
+  {id:18, q:'Se 1/4 dos 28 alunos de uma turma foram à excursão, quantos alunos foram?', opts:['7','8','6','9']},
+  {id:19, q:'Uma mistura de tinta usa 2/5 de tinta azul e o restante de tinta branca, em um balde de 20 litros. Quantos litros são de tinta branca?', opts:['12','8','10','14']},
+  {id:20, q:'Um salário de R$ 1.200 teve um aumento de 8%. Qual foi o valor do aumento?', opts:['R$ 96','R$ 100','R$ 80','R$ 120']},
+  {id:21, q:'De um total de 90 minutos de aula, 2/3 foram usados em uma atividade prática. Quantos minutos restaram?', opts:['30','40','20','45']},
+  {id:22, q:'Uma caixa d\'água de 500 litros está com 3/10 de sua capacidade. Quantos litros de água há na caixa?', opts:['150','100','200','250']},
+  {id:23, q:'Em uma loja, 60% dos 40 produtos vendidos hoje foram roupas. Quantos produtos vendidos foram roupas?', opts:['24','20','28','30']}
+];
+function renderG5Turn(){
+  const q = pickUnusedItems(G5_POOL,'g5',1)[0];
+  const content = $('#turn-content');
+  content.innerHTML = `<p class="prompt">💰 ${q.q}</p><div class="options-grid" id="turn-opts"></div>`;
+  const items = shuffle(q.opts.map((t,i)=>({label:t, correct:i===0})));
+  renderOptionsGrid('#turn-opts', items, (correct)=>submitAnswer(correct,20), false);
+  startTimer();
+}
+
+/* ============================================================
+   ILHA 6 — REVISÃO FINAL (banco de 30 questões)
+   ============================================================ */
+const G6_POOL = [
+  {id:0, q:'1/2 + 1/4 = ?', opts:['3/4','2/6','1/6','2/4']},
+  {id:1, q:'0,5 é igual a qual fração?', opts:['1/2','1/4','1/5','2/3']},
+  {id:2, q:'3/6 simplificada é?', opts:['1/2','1/3','2/3','3/4']},
+  {id:3, q:'25% é igual a qual fração?', opts:['1/4','1/2','1/5','3/4']},
+  {id:4, q:'2/3 × 1/2 = ?', opts:['1/3','2/5','3/6','5/6']},
+  {id:5, q:'Qual é maior: 3/4 ou 60%?', opts:['3/4','60%','são iguais','não dá para saber']},
+  {id:6, q:'4/8 simplificada é?', opts:['1/2','1/4','1/8','3/4']},
+  {id:7, q:'1 − 1/3 = ?', opts:['2/3','1/3','3/3','1/2']},
+  {id:8, q:'0,75 é igual a quantos por cento?', opts:['75%','7,5%','57%','750%']},
+  {id:9, q:'5/10 é igual a?', opts:['1/2','1/5','2/5','5/1']},
+  {id:10, q:'3/4 ÷ 1/2 = ?', opts:['3/2','3/8','1/2','2/3']},
+  {id:11, q:'Metade de 2/3 é?', opts:['1/3','3/4','4/3','1/6']},
+  {id:12, q:'40% de 50 é?', opts:['20','40','10','25']},
+  {id:13, q:'1/5 + 2/5 = ?', opts:['3/5','3/10','2/10','1/10']},
+  {id:14, q:'0,2 em porcentagem é?', opts:['20%','2%','200%','0,2%']},
+  {id:15, q:'3/8 + 1/8 = ?', opts:['1/2','1/4','3/4','2/3']},
+  {id:16, q:'7/10 − 2/10 = ?', opts:['1/2','1/10','3/5','9/10']},
+  {id:17, q:'1/6 + 1/6 = ?', opts:['1/3','1/12','5/6','2/3']},
+  {id:18, q:'50% de 80 é?', opts:['40','45','35','50']},
+  {id:19, q:'3/4 é igual a quantos por cento?', opts:['75%','25%','50%','80%']},
+  {id:20, q:'0,6 é igual a qual fração simplificada?', opts:['3/5','5/6','2/3','3/4']},
+  {id:21, q:'2/9 + 4/9 = ?', opts:['2/3','1/9','1/3','5/9']},
+  {id:22, q:'1 − 3/8 = ?', opts:['5/8','3/8','1/8','7/8']},
+  {id:23, q:'10% de 250 é?', opts:['25','20','30','35']},
+  {id:24, q:'4/5 − 2/5 = ?', opts:['2/5','1/5','3/5','4/5']},
+  {id:25, q:'1/2 × 1/2 = ?', opts:['1/4','2/5','3/4','1/3']},
+  {id:26, q:'0,25 em porcentagem é?', opts:['25%','2,5%','52%','250%']},
+  {id:27, q:'3/10 + 2/10 = ?', opts:['1/2','1/5','3/5','2/5']},
+  {id:28, q:'5/8 é maior, menor ou igual a 60%?', opts:['maior','menor','igual','impossível saber']},
+  {id:29, q:'20% de 150 é?', opts:['30','25','35','20']}
+];
+function renderG6Turn(){
+  const q = pickUnusedItems(G6_POOL,'g6',1)[0];
+  const content = $('#turn-content');
+  content.innerHTML = `<p class="prompt">🏆 ${q.q}</p><div class="options-grid" id="turn-opts"></div>`;
+  const items = shuffle(q.opts.map((t,i)=>({label:t, correct:i===0})));
+  renderOptionsGrid('#turn-opts', items, (correct)=>submitAnswer(correct,20), false);
+  startTimer();
+}
+
+/* ============================================================
+   GUIA DO PROFESSOR
+   ============================================================ */
+function openTeacherModal(){
+  const overlay = document.createElement('div');
+  overlay.className='modal-overlay'; overlay.id='teacher-modal';
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <button class="close-x" onclick="document.getElementById('teacher-modal').remove()">✕</button>
+      <h2>📋 Guia rápido — Reino das Frações</h2>
+      <p><strong>Turma:</strong> 9º ano, EMEIF Abdon Dantas &nbsp;|&nbsp; <strong>Duração estimada:</strong> 60-70 min (2 aulas)</p>
+      <p><strong>Formato:</strong> um tablet só, projetado para a turma. As equipes jogam <em>sincronizadas</em>: todas respondem a Rodada 1 de uma ilha (uma de cada vez, passando o tablet), depois todas fazem a Rodada 2, depois a Rodada 3 — só então o jogo libera a próxima ilha. São 3 rodadas por ilha × 6 ilhas.</p>
+      <p><strong>Cronômetro:</strong> cada pergunta tem até 60s.</p>
+      <ul>
+        <li>Responder <strong>corretamente nos primeiros 30s</strong> → +20 pontos de bônus</li>
+        <li>Responder <strong>corretamente entre 30s e 60s</strong> → +10 pontos de bônus</li>
+        <li>Depois de 60s a equipe <strong>ainda pode responder normalmente</strong>, mas sem bônus de tempo</li>
+      </ul>
+      <p><strong>Perguntas sem repetição:</strong> o jogo lembra o que já apareceu na sessão — nenhuma equipe verá uma pergunta repetida enquanto houver combinações novas disponíveis.</p>
+      <ul>
+        <li><strong>Ilha 1 – Material Concreto:</strong> 4 tipos de desafio sorteados — representar, montar equivalente numa 2ª barra, completar o inteiro, ou montar número misto com duas barras.</li>
+        <li><strong>Ilha 2 – Equivalência:</strong> "qual fração é equivalente a X/Y?", com barrinhas visuais em cada opção.</li>
+        <li><strong>Ilha 3 – Operações:</strong> +, −, × e ÷ de frações, com distratores de erros comuns.</li>
+        <li><strong>Ilha 4 – A Balança:</strong> ordenar 3 valores (fração, decimal, porcentagem) do menor ao maior.</li>
+        <li><strong>Ilha 5 – O Tesouro:</strong> problemas contextualizados (banco de 24).</li>
+        <li><strong>Ilha 6 – Revisão Final:</strong> mistura geral (banco de 30).</li>
+      </ul>
+      <p>O placar ao vivo fica sempre disponível no botão "🏆 Placar ao vivo" no topo da tela.</p>
+      <p style="color:#8a8ea8; font-size:0.85rem;">O jogo roda só na memória da aba (sem internet nem login). Recarregar a página reinicia tudo — ideal começar uma sessão nova por turma/aula.</p>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+/* ============================================================
+   INICIALIZAÇÃO
+   ============================================================ */
+renderTeamNameInputs();
+</script>
+</body>
+</html>
