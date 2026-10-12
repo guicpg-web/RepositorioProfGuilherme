@@ -1,0 +1,2943 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repositório do Prof. Guilherme</title>
+  
+  <!-- Estilos base e sistema de design -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat.cdn.min.css">
+  <style>
+/* Skip artifact shell — fixed styles served beside every artifact.
+   Complements basecoat; artifacts override --accent for their own identity. */
+:root {
+  color-scheme: light dark;
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --accent-text: color-mix(in srgb, var(--accent) 72%, #000);
+  --bg: #f8f9fb;
+  --surface: #ffffff;
+  --text: #14171f;
+  --text-muted: #5b6472;
+  --border: rgba(20, 23, 31, 0.10);
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(20, 23, 31, 0.08);
+  --space: 16px;
+}
+/* Theme resolution. Without data-theme the viewer's system preference decides,
+   as it always did. With it, the artifact's own choice wins in BOTH directions:
+   a page that hardcodes one palette must not be handed the opposite set of
+   tokens by the machine it happens to be opened on. The dark values appear
+   twice because a media query cannot be folded into a selector list.
+   The attribute sits inside :where() so these blocks keep the specificity of a
+   bare :root — the page's own <style> is linked after this file and must go on
+   overriding any token it wants, exactly as it could before. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --accent-text: color-mix(in srgb, var(--accent) 78%, #fff);
+    --bg: #101318;
+    --surface: #181c23;
+    --text: #eef1f6;
+    --text-muted: #9aa4b2;
+    --border: rgba(238, 241, 246, 0.12);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+:root:where([data-theme="dark"]) {
+  color-scheme: dark;
+  --accent-text: color-mix(in srgb, var(--accent) 78%, #fff);
+  --bg: #101318;
+  --surface: #181c23;
+  --text: #eef1f6;
+  --text-muted: #9aa4b2;
+  --border: rgba(238, 241, 246, 0.12);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+:root:where([data-theme="light"]) { color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+
+.shell-container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+.shell-section { padding: calc(var(--space) * 2) 0; }
+.shell-grid { display: grid; gap: var(--space); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.shell-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: var(--space); }
+.shell-footer { padding: 24px 0 40px; color: var(--text-muted); font-size: 13px; }
+
+.shell-hero { padding: calc(var(--space) * 3) 0 calc(var(--space) * 2); }
+.shell-hero h1 { font-size: clamp(26px, 4vw, 40px); line-height: 1.15; margin: 0 0 10px; text-wrap: balance; }
+.shell-hero p { color: var(--text-muted); max-width: 60ch; margin: 0; }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space);
+}
+
+.kpi { display: flex; flex-direction: column; gap: 4px; }
+.kpi .kpi-value { font-size: 28px; font-weight: 650; line-height: 1.1; }
+.kpi .kpi-label { font-size: 13px; color: var(--text-muted); }
+.kpi .kpi-delta { font-size: 12.5px; font-weight: 600; }
+.kpi .kpi-delta.up { color: #0a8f3c; }
+.kpi .kpi-delta.down { color: #cf3131; }
+
+table.shell-table { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.shell-table th {
+  text-align: left; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-muted); font-weight: 600;
+}
+table.shell-table th, table.shell-table td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--border); }
+table.shell-table td.num, table.shell-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+
+.chart-box { width: 100%; min-height: 220px; }
+.chart-box svg { width: 100%; height: auto; display: block; }
+
+.muted { color: var(--text-muted); }
+.accent { color: var(--accent-text); }
+.shell-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shell-fade { animation: shell-fade 400ms ease both; }
+  @keyframes shell-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+}
+
+</style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+
+  <style>
+    :root {
+      --accent: #8b5cf6;
+      --accent-neon: #22d3ee;
+      --accent-pink: #ec4899;
+      --bg-dark: #090d16;
+      --bg-card: rgba(17, 24, 39, 0.85);
+      --border-glow: rgba(139, 92, 246, 0.25);
+      --glow-cyan: rgba(34, 211, 238, 0.25);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(34, 211, 238, 0.08) 0%, transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header e Navegação */
+    .top-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      background: rgba(9, 13, 22, 0.85);
+      border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #8b5cf6, #22d3ee);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.5);
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+      color: #f8fafc;
+    }
+
+    .brand-subtitle {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      display: block;
+      line-height: 1.1;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 0.5rem;
+      background: rgba(17, 24, 39, 0.6);
+      padding: 0.3rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-tab-btn {
+      padding: 0.5rem 1.15rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .nav-tab-btn:hover {
+      color: #fff;
+    }
+
+    .nav-tab-btn.active {
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(139, 92, 246, 0.4);
+    }
+
+    .nav-tab-btn.admin-btn {
+      border: 1px solid rgba(236, 72, 153, 0.35);
+      background: rgba(236, 72, 153, 0.08);
+      color: #f472b6;
+    }
+
+    .nav-tab-btn.admin-btn:hover {
+      background: rgba(236, 72, 153, 0.2);
+      color: #fff;
+    }
+
+    .nav-tab-btn.admin-btn.logged-in {
+      background: linear-gradient(135deg, #ec4899, #8b5cf6);
+      color: #fff;
+      box-shadow: 0 0 14px rgba(236, 72, 153, 0.4);
+    }
+
+    /* Hero */
+    .hero-box {
+      text-align: center;
+      padding: 4.5rem 1.5rem 3rem;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.9rem;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #c4b5fd;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.25rem;
+      color: #fff;
+    }
+
+    .hero-title span {
+      background: linear-gradient(135deg, #a78bfa, #22d3ee, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-desc {
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: #94a3b8;
+      max-width: 680px;
+      margin: 0 auto 2.25rem;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-gamer {
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: #fff;
+      font-weight: 700;
+      padding: 0.85rem 1.75rem;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+    }
+
+    .btn-gamer:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(139, 92, 246, 0.6);
+    }
+
+    .btn-gamer-outline {
+      background: rgba(17, 24, 39, 0.7);
+      color: #e2e8f0;
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      font-weight: 600;
+      padding: 0.85rem 1.75rem;
+      border-radius: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s ease;
+    }
+
+    .btn-gamer-outline:hover {
+      background: rgba(139, 92, 246, 0.15);
+      border-color: #a78bfa;
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .btn-download-gamer {
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(16, 185, 129, 0.2));
+      border: 1px solid rgba(34, 211, 238, 0.5);
+      color: #67e8f9;
+      font-weight: 700;
+      padding: 0.65rem 0.95rem;
+      border-radius: 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      font-size: 0.88rem;
+      transition: all 0.25s ease;
+      text-decoration: none;
+      box-shadow: 0 2px 10px rgba(34, 211, 238, 0.15);
+    }
+
+    .btn-download-gamer:hover {
+      background: linear-gradient(135deg, #06b6d4, #10b981);
+      border-color: #22d3ee;
+      color: #041019;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 18px rgba(34, 211, 238, 0.45);
+    }
+
+    .card-actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+      margin-top: auto;
+      width: 100%;
+    }
+
+    @media (max-width: 480px) {
+      .card-actions-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Cards Glow */
+    .glow-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glow-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #8b5cf6, #22d3ee);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .glow-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(139, 92, 246, 0.4);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(139, 92, 246, 0.15);
+    }
+
+    .glow-card:hover::before {
+      opacity: 1;
+    }
+
+    /* Status Pills */
+    .pill {
+      font-size: 0.72rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .pill-purple { background: rgba(139, 92, 246, 0.18); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.3); }
+    .pill-cyan { background: rgba(34, 211, 238, 0.15); color: #67e8f9; border: 1px solid rgba(34, 211, 238, 0.3); }
+    .pill-green { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .pill-amber { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .pill-pink { background: rgba(236, 72, 153, 0.15); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .pill-blue { background: rgba(59, 130, 246, 0.15); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+    
+    .pill-placeholder {
+      background: rgba(100, 116, 139, 0.2);
+      color: #94a3b8;
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      font-size: 0.68rem;
+    }
+
+    /* Card de Jogo Visual */
+    .game-card-cover {
+      width: 100%;
+      height: 160px;
+      border-radius: 12px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1e1b4b, #0f172a);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .game-card-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.35s ease;
+    }
+
+    .glow-card:hover .game-card-cover img {
+      transform: scale(1.05);
+    }
+
+    .game-card-cover .cover-fallback {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: #cbd5e1;
+    }
+
+    .game-card-cover .cover-badge {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      z-index: 2;
+    }
+
+    /* Estilos do Modo Administrador */
+    .admin-banner {
+      background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid rgba(236, 72, 153, 0.4);
+      border-radius: 16px;
+      padding: 1.25rem 1.75rem;
+      margin-bottom: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .admin-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .admin-form-group label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.9rem;
+    }
+
+    .admin-table th {
+      background: rgba(17, 24, 39, 0.9);
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: left;
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .admin-table td {
+      padding: 0.95rem 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+    }
+
+    .admin-table tr:hover td {
+      background: rgba(139, 92, 246, 0.05);
+    }
+
+    .btn-danger-outline {
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .btn-danger-outline:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #fff;
+    }
+
+    .btn-edit-outline {
+      background: rgba(34, 211, 238, 0.12);
+      border: 1px solid rgba(34, 211, 238, 0.35);
+      color: #67e8f9;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .btn-edit-outline:hover {
+      background: rgba(34, 211, 238, 0.25);
+      color: #fff;
+    }
+
+    .file-drop-area {
+      border: 2px dashed rgba(139, 92, 246, 0.35);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+      background: rgba(9, 13, 22, 0.5);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .file-drop-area:hover {
+      border-color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.08);
+    }
+
+    /* Seções e Visibilidade */
+    .tab-section {
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .tab-section.active-section {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Filtros e Inputs */
+    .filter-input {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      color: #fff;
+      padding: 0.7rem 1.1rem;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .filter-input:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 14px rgba(139, 92, 246, 0.3);
+    }
+
+    .subject-pill-btn {
+      background: rgba(17, 24, 39, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #94a3b8;
+      padding: 0.45rem 1rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .subject-pill-btn:hover {
+      border-color: #8b5cf6;
+      color: #fff;
+    }
+
+    .subject-pill-btn.active {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: #8b5cf6;
+      color: #e9d5ff;
+      font-weight: 600;
+    }
+
+    /* Prompt Box */
+    .prompt-code-box {
+      background: #060911;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 12px;
+      padding: 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 380px;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .prompt-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.25s ease;
+    }
+
+    .prompt-card:hover {
+      border-color: rgba(34, 211, 238, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .prompt-snippet {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      color: #cbd5e1;
+      background: rgba(9, 13, 22, 0.7);
+      padding: 0.9rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      line-height: 1.5;
+      margin: 1rem 0;
+      flex-grow: 1;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .btn-copy {
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #c4b5fd;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+      width: fit-content;
+    }
+
+    .btn-copy:hover {
+      background: rgba(139, 92, 246, 0.4);
+      color: #fff;
+    }
+
+    .btn-copy.copied {
+      background: rgba(34, 197, 94, 0.25) !important;
+      border-color: #22c55e !important;
+      color: #86efac !important;
+    }
+
+    /* Modal Mini-Demo */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #111827;
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 30px rgba(139, 92, 246, 0.2);
+      border-radius: 20px;
+      max-width: 580px;
+      width: 100%;
+      padding: 2rem;
+      position: relative;
+    }
+
+    /* Toast Flutuante */
+    .toast-notice {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #1e1b4b;
+      border: 1px solid #6366f1;
+      color: #e0e7ff;
+      padding: 0.85rem 1.4rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transform: translateY(100px);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 120;
+    }
+
+    .toast-notice.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Responsividade */
+    @media (max-width: 768px) {
+      .nav-container {
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+      .nav-links {
+        width: 100%;
+        justify-content: space-around;
+      }
+      .nav-tab-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+      }
+      .hero-box {
+        padding: 2.5rem 1rem 1.75rem;
+      }
+      .prompt-form-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPO / NAVEGAÇÃO -->
+  <header class="top-header">
+    <div class="nav-container">
+      <a href="#" class="logo-brand" onclick="navigateTab('home'); return false;">
+        <div class="brand-icon">🎮</div>
+        <div>
+          <span class="brand-title">Prof. Guilherme</span>
+          <span class="brand-subtitle">Repositório Educativo & Prompts</span>
+        </div>
+      </a>
+
+      <nav class="nav-links" aria-label="Navegação Principal">
+        <button class="nav-tab-btn active" data-tab="home" onclick="navigateTab('home')">
+          <span>🏠</span> Início
+        </button>
+        <button class="nav-tab-btn" data-tab="games" onclick="navigateTab('games')">
+          <span>🕹️</span> Jogos
+        </button>
+        <button class="nav-tab-btn" data-tab="prompts" onclick="navigateTab('prompts')">
+          <span>⚡</span> Prompts
+        </button>
+        <button id="navAdminBtn" class="nav-tab-btn admin-btn" data-tab="admin" onclick="handleAdminTabClick()">
+          <span id="navAdminIcon">⚙️</span> <span id="navAdminText">Área do Professor</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- CONTEÚDO PRINCIPAL (SPA) -->
+  <main style="flex: 1;">
+
+    <!-- ========================================== -->
+    <!-- 1. PÁGINA: INÍCIO                          -->
+    <!-- ========================================== -->
+    <section id="tab-home" class="tab-section active-section">
+      <div class="shell-container">
+        
+        <!-- Hero Section -->
+        <div class="hero-box">
+          <div class="hero-badge">
+            <span>✨</span> Ambiente Didático Gamer & Inteligência Artificial
+          </div>
+          <h1 class="hero-title">
+            Repositório do<br><span>Prof. Guilherme</span>
+          </h1>
+          <p class="hero-desc">
+            Jogos educativos leves em HTML offline e gerador profissional de prompts pedagógicos com inteligência artificial para inspirar e transformar suas aulas.
+          </p>
+          <div class="hero-actions">
+            <button class="btn-gamer" onclick="navigateTab('games')">
+              <span>🎮</span> Explorar Jogos
+            </button>
+            <button class="btn-gamer-outline" onclick="navigateTab('prompts')">
+              <span>🤖</span> Ver Prompts de IA
+            </button>
+          </div>
+        </div>
+
+        <!-- Seção: O que você encontra aqui -->
+        <div style="margin-top: 2.5rem; margin-bottom: 4rem;">
+          <div style="text-align: center; margin-bottom: 2.5rem;">
+            <span class="pill pill-cyan">RECURSOS PEDAGÓGICOS</span>
+            <h2 style="font-size: 1.85rem; font-weight: 700; margin-top: 0.6rem; color: #fff;">O que você encontra por aqui</h2>
+            <p style="color: #94a3b8; max-width: 580px; margin: 0.3rem auto 0;">Recursos pensados para a rotina dinâmica e real de sala de aula.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+            <!-- Card 1 -->
+            <div class="glow-card">
+              <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(139, 92, 246, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.25rem; border: 1px solid rgba(139, 92, 246, 0.4);">
+                🕹️
+              </div>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Jogos Interativos</h3>
+              <p style="color: #94a3b8; font-size: 0.93rem; line-height: 1.6;">
+                Jogos leves autocontidos em HTML, CSS e JavaScript. Fáceis de hospedar, sem anúncios e com foco direto na fixação de conteúdos curriculares.
+              </p>
+              <div style="margin-top: 1.25rem;">
+                <a href="#games" onclick="navigateTab('games'); return false;" style="color: #a78bfa; font-size: 0.88rem; font-weight: 600; text-decoration: none;">Ver catálogo de jogos →</a>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="glow-card">
+              <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(34, 211, 238, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.25rem; border: 1px solid rgba(34, 211, 238, 0.4);">
+                🧠
+              </div>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Prompts para Professores</h3>
+              <p style="color: #94a3b8; font-size: 0.93rem; line-height: 1.6;">
+                Instruções prontas e testadas para alimentar o ChatGPT, Claude ou Gemini com parâmetros de BNCC, adaptação curricular e atividades lúdicas.
+              </p>
+              <div style="margin-top: 1.25rem;">
+                <a href="#prompts" onclick="navigateTab('prompts'); return false;" style="color: #67e8f9; font-size: 0.88rem; font-weight: 600; text-decoration: none;">Abrir gerador de prompts →</a>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="glow-card">
+              <div style="width: 50px; height: 50px; border-radius: 12px; background: rgba(236, 72, 153, 0.2); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin-bottom: 1.25rem; border: 1px solid rgba(236, 72, 153, 0.4);">
+                ⚡
+              </div>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">Fácil de Usar & Copiar</h3>
+              <p style="color: #94a3b8; font-size: 0.93rem; line-height: 1.6;">
+                Design intuitivo com botão de cópia instantânea em um clique e códigos limpos para qualquer professor adaptar diretamente às suas turmas.
+              </p>
+              <div style="margin-top: 1.25rem;">
+                <span class="pill pill-green">Sem cadastro necessário</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estatísticas e Diferenciais -->
+        <div style="background: rgba(17, 24, 39, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; padding: 2.5rem; margin-bottom: 4rem;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; text-align: center;">
+            <div>
+              <div style="font-size: 2.2rem; font-weight: 800; color: #a78bfa; margin-bottom: 0.25rem;">100%</div>
+              <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">Offline & Leve</div>
+              <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.2rem;">Roda em qualquer computador ou pen drive sem internet</div>
+            </div>
+
+            <div>
+              <div style="font-size: 2.2rem; font-weight: 800; color: #22d3ee; margin-bottom: 0.25rem;">Pronto</div>
+              <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">Para Sala de Aula</div>
+              <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.2rem;">Ideal para projetor, lousa digital e laboratórios de informática</div>
+            </div>
+
+            <div>
+              <div style="font-size: 2.2rem; font-weight: 800; color: #ec4899; margin-bottom: 0.25rem;">Docente</div>
+              <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">Feito por Professor</div>
+              <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.2rem;">Construído com respeito à rotina e desafios reais dos educadores</div>
+            </div>
+
+            <div>
+              <div style="font-size: 2.2rem; font-weight: 800; color: #4ade80; margin-bottom: 0.25rem;">BNCC</div>
+              <div style="font-size: 0.95rem; font-weight: 600; color: #fff;">Alinhado à Pedagogia</div>
+              <div style="font-size: 0.82rem; color: #94a3b8; margin-top: 0.2rem;">Prompts com comandos para habilidades e competências curriculares</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 2. PÁGINA: JOGOS                           -->
+    <!-- ========================================== -->
+    <section id="tab-games" class="tab-section">
+      <div class="shell-container" style="padding-top: 2rem; padding-bottom: 4rem;">
+        
+        <!-- Cabeçalho da Seção (Modo Visitante) -->
+        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 2rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <span class="pill pill-purple">CATÁLOGO INTERATIVO • MODO VISITANTE</span>
+              <h1 style="font-size: 2rem; font-weight: 800; color: #fff; margin-top: 0.4rem;">Jogos Educativos</h1>
+            </div>
+            <div id="gamesCounterBadge" style="font-size: 0.85rem; color: #67e8f9; background: rgba(34, 211, 238, 0.08); padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid rgba(34, 211, 238, 0.25);">
+              🎮 6 jogos disponíveis
+            </div>
+          </div>
+          <p style="color: #94a3b8; font-size: 0.95rem; max-width: 700px;">
+            Explore e jogue as atividades pedagógicas criadas e organizadas pelo Prof. Guilherme. Filtre por matéria ou busque pelo nome.
+          </p>
+        </div>
+
+        <!-- Filtros e Barra de Busca -->
+        <div style="background: rgba(17, 24, 39, 0.8); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 1.25rem; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 240px;">
+              <input type="text" id="gameSearchInput" class="filter-input" placeholder="🔍 Buscar por título, matéria ou descrição..." oninput="filterGames()">
+            </div>
+          </div>
+
+          <!-- Pílulas de filtro por matéria -->
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;" id="subjectFilterPills">
+            <span style="font-size: 0.82rem; color: #94a3b8; font-weight: 600; margin-right: 0.25rem;">Matéria:</span>
+            <button class="subject-pill-btn active" data-subject="all" onclick="setGameSubject('all')">Todas</button>
+            <button class="subject-pill-btn" data-subject="Matemática" onclick="setGameSubject('Matemática')">📐 Matemática</button>
+            <button class="subject-pill-btn" data-subject="Português" onclick="setGameSubject('Português')">📚 Português</button>
+            <button class="subject-pill-btn" data-subject="Ciências" onclick="setGameSubject('Ciências')">🔬 Ciências</button>
+            <button class="subject-pill-btn" data-subject="História" onclick="setGameSubject('História')">🏛️ História</button>
+            <button class="subject-pill-btn" data-subject="Geografia" onclick="setGameSubject('Geografia')">🌍 Geografia</button>
+            <button class="subject-pill-btn" data-subject="Outros" onclick="setGameSubject('Outros')">✨ Outros</button>
+          </div>
+        </div>
+
+        <!-- Grid Dinâmico de Cards de Jogos (Renderizado via JS) -->
+        <div id="gamesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+          <!-- Injetado dinamicamente por renderizarJogos() -->
+        </div>
+
+        <!-- Alerta de nenhum jogo encontrado -->
+        <div id="noGamesFound" style="display: none; text-align: center; padding: 3rem 1rem;">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔍</div>
+          <h3 style="color: #fff; font-size: 1.2rem; margin-bottom: 0.25rem;">Nenhum jogo encontrado com esse filtro</h3>
+          <p style="color: #94a3b8; font-size: 0.9rem;">Tente buscar com outro termo ou selecionar "Todas" as matérias.</p>
+        </div>
+
+        <!-- Chamada sutil para a Área do Professor -->
+        <div style="margin-top: 3.5rem; background: rgba(139, 92, 246, 0.08); border: 1px dashed rgba(139, 92, 246, 0.35); border-radius: 16px; padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.25rem;">
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <div style="font-size: 2rem;">👑</div>
+            <div>
+              <h4 style="font-size: 1.05rem; font-weight: 700; color: #fff; margin-bottom: 0.2rem;">É o Prof. Guilherme?</h4>
+              <p style="color: #cbd5e1; font-size: 0.88rem; margin: 0;">
+                Acesse a Área do Professor para adicionar novos jogos, editar links, trocar imagens ou gerenciar o repositório.
+              </p>
+            </div>
+          </div>
+          <button class="btn-gamer-outline" onclick="handleAdminTabClick()">
+            <span>⚙️</span> Acessar Painel do Professor
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 2.5. PÁGINA: ÁREA DO PROFESSOR (ADMIN)     -->
+    <!-- ========================================== -->
+    <section id="tab-admin" class="tab-section">
+      <div class="shell-container" style="padding-top: 2rem; padding-bottom: 4rem;">
+
+        <!-- Banner de Status de Autenticação -->
+        <div class="admin-banner">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: linear-gradient(135deg, #ec4899, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+              👑
+            </div>
+            <div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #fff;">Painel Administrativo do Prof. Guilherme</div>
+              <div style="font-size: 0.82rem; color: #f472b6;">Sessão ativa • Gerencie todos os jogos em tempo real com salvamento automático</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+            <button class="btn-gamer-outline" style="font-size: 0.85rem; padding: 0.5rem 1rem;" onclick="navigateTab('games')">
+              <span>👀</span> Ver como Visitante
+            </button>
+            <button class="btn-danger-outline" style="font-size: 0.85rem; padding: 0.5rem 1rem;" onclick="logoutAdmin()">
+              <span>🚪</span> Sair da Área do Prof.
+            </button>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 2rem; margin-bottom: 3rem;" class="admin-layout-grid">
+          
+          <!-- FORMULÁRIO DE CADASTRO / EDIÇÃO DE JOGO -->
+          <div class="glow-card" style="border-color: rgba(236, 72, 153, 0.35);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.85rem;">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span id="formActionIcon" style="font-size: 1.4rem;">➕</span>
+                <h2 id="formActionTitle" style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">Adicionar Novo Jogo</h2>
+              </div>
+              <span id="formModeBadge" class="pill pill-pink">Novo Jogo</span>
+            </div>
+
+            <form id="adminGameForm" onsubmit="salvarJogo(event)">
+              <input type="hidden" id="gameEditId" value="">
+
+              <div style="display: flex; flex-direction: column; gap: 1.1rem;">
+                
+                <!-- Nome do Jogo -->
+                <div class="admin-form-group">
+                  <label for="gameTitleInput">Nome do Jogo *</label>
+                  <input type="text" id="gameTitleInput" class="filter-input" placeholder="Ex: Quiz de Frações Gamer" required>
+                </div>
+
+                <!-- Link do Jogo -->
+                <div class="admin-form-group">
+                  <label for="gameLinkInput">Link para Jogar (URL ou arquivo HTML) *</label>
+                  <input type="text" id="gameLinkInput" class="filter-input" placeholder="Ex: jogos/quiz.html ou https://meujogo.com" required>
+                  <small style="color: #94a3b8; font-size: 0.76rem;">Link aberto pelo botão "Jogar" (pode ser link web, GitHub Pages, caminho local ou <code>#</code> para demonstração).</small>
+                </div>
+
+                <!-- Link de Download (Opcional) -->
+                <div class="admin-form-group">
+                  <label for="gameDownloadUrlInput">Link de Download do Arquivo (Opcional)</label>
+                  <input type="text" id="gameDownloadUrlInput" class="filter-input" placeholder="Ex: https://raw.githubusercontent.com/.../jogo.html ou jogos/quiz.html">
+                  <small style="color: #94a3b8; font-size: 0.76rem;">Se preenchido, o botão "Baixar" usará este link específico. Se deixado vazio, utilizará o link de jogar.</small>
+                </div>
+
+                <!-- Matéria e Nível -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                  <div class="admin-form-group">
+                    <label for="gameSubjectSelect">Matéria / Disciplina *</label>
+                    <select id="gameSubjectSelect" class="filter-input" style="cursor: pointer;" required>
+                      <option value="Matemática">📐 Matemática</option>
+                      <option value="Português">📚 Português</option>
+                      <option value="Ciências">🔬 Ciências</option>
+                      <option value="História">🏛️ História</option>
+                      <option value="Geografia">🌍 Geografia</option>
+                      <option value="Outros">✨ Outros</option>
+                    </select>
+                  </div>
+
+                  <div class="admin-form-group">
+                    <label for="gameLevelSelect">Nível Escolar *</label>
+                    <select id="gameLevelSelect" class="filter-input" style="cursor: pointer;" required>
+                      <option value="Fundamental I">Fundamental I</option>
+                      <option value="Fundamental II">Fundamental II</option>
+                      <option value="Médio">Ensino Médio</option>
+                      <option value="Todos">Todos os Níveis</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Descrição Curta -->
+                <div class="admin-form-group">
+                  <label for="gameDescInput">Descrição Curta *</label>
+                  <textarea id="gameDescInput" class="filter-input" rows="3" placeholder="Breve resumo pedagógico das regras ou tema trabalhado..." required style="resize: vertical;"></textarea>
+                </div>
+
+                <!-- Imagem do Jogo: URL ou Arquivo local -->
+                <div class="admin-form-group">
+                  <label>Imagem do Jogo (URL externa ou Enviar do Computador)</label>
+                  
+                  <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <button type="button" id="btnImgUrlMode" class="subject-pill-btn active" onclick="switchImageInputMode('url')">Link de Imagem (URL)</button>
+                    <button type="button" id="btnImgUploadMode" class="subject-pill-btn" onclick="switchImageInputMode('file')">Upload do Computador</button>
+                  </div>
+
+                  <!-- Campo 1: URL -->
+                  <div id="imageInputUrlContainer">
+                    <input type="text" id="gameImageUrlInput" class="filter-input" placeholder="https://exemplo.com/imagem-do-jogo.jpg" oninput="previewImageFromInput()">
+                  </div>
+
+                  <!-- Campo 2: Upload de arquivo (Base64) -->
+                  <div id="imageInputFileContainer" style="display: none;">
+                    <div class="file-drop-area" onclick="document.getElementById('gameFileInput').click()">
+                      <div style="font-size: 1.8rem; margin-bottom: 0.3rem;">📁</div>
+                      <div style="font-size: 0.88rem; font-weight: 600; color: #cbd5e1;">Clique para escolher um arquivo do seu computador</div>
+                      <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.2rem;">PNG, JPG, GIF ou WEBP (salvo automaticamente em base64)</div>
+                    </div>
+                    <input type="file" id="gameFileInput" accept="image/*" style="display: none;" onchange="handleFileUpload(event)">
+                  </div>
+
+                  <!-- Miniatura de Prévia -->
+                  <div id="imagePreviewBox" style="margin-top: 0.75rem; display: none; align-items: center; gap: 1rem; background: rgba(9, 13, 22, 0.6); padding: 0.6rem; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                    <img id="imagePreviewImg" src="" alt="Prévia" style="width: 70px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #8b5cf6;">
+                    <div style="flex: 1; font-size: 0.8rem; color: #94a3b8;">
+                      <span id="imagePreviewText" style="color: #67e8f9; font-weight: 600;">Imagem selecionada</span>
+                    </div>
+                    <button type="button" onclick="clearSelectedImage()" style="background: none; border: none; color: #ef4444; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">Remover Imagem</button>
+                  </div>
+                </div>
+
+                <!-- Botões de Ação do Formulário -->
+                <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem; align-items: center; flex-wrap: wrap;">
+                  <button type="submit" id="btnSubmitGame" class="btn-gamer" style="flex: 1; justify-content: center;">
+                    <span id="btnSubmitIcon">💾</span> <span id="btnSubmitLabel">Salvar Jogo</span>
+                  </button>
+                  <button type="button" id="btnCancelEdit" class="btn-gamer-outline" style="display: none;" onclick="cancelarEdicao()">
+                    Cancelar
+                  </button>
+                </div>
+
+              </div>
+            </form>
+          </div>
+
+          <!-- PAINEL LATERAL: DICAS & AÇÕES GERAIS -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            
+            <div class="glow-card" style="border-color: rgba(34, 211, 238, 0.25);">
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff; margin-bottom: 0.85rem; display: flex; align-items: center; gap: 0.5rem;">
+                <span>🛠️</span> Gerenciamento de Armazenamento
+              </h3>
+              <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.25rem;">
+                Todos os dados são persistidos localmente no seu navegador através do <code>localStorage</code>. Suas edições ficam salvas mesmo após fechar a aba ou reiniciar a máquina.
+              </p>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button type="button" class="btn-gamer-outline" style="justify-content: center; font-size: 0.85rem; padding: 0.65rem;" onclick="restaurarExemplosPadrao()">
+                  <span>🔄</span> Restaurar 6 Jogos de Exemplo
+                </button>
+                <button type="button" class="btn-danger-outline" style="justify-content: center; font-size: 0.85rem; padding: 0.65rem;" onclick="limparTodosOsJogos()">
+                  <span>🗑️</span> Limpar Todos os Jogos
+                </button>
+              </div>
+            </div>
+
+            <!-- Dica do Professor -->
+            <div class="glow-card" style="background: rgba(139, 92, 246, 0.08); border-color: rgba(139, 92, 246, 0.3);">
+              <h4 style="font-size: 1rem; font-weight: 700; color: #c4b5fd; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                <span>💡</span> Dica do Prof. Guilherme
+              </h4>
+              <p style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.6; margin-bottom: 0.5rem;">
+                • Se você colocar jogos HTML na mesma pasta do repositório, basta colocar o nome do arquivo (ex.: <code>tabuada.html</code>).
+              </p>
+              <p style="color: #cbd5e1; font-size: 0.85rem; line-height: 1.6; margin-bottom: 0;">
+                • As imagens carregadas do computador ficam salvas como Base64 offline, funcionando perfeitamente sem precisar subir para servidores.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- TABELA DE JOGOS CADASTRADOS (ADMIN) -->
+        <div class="glow-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff;">Jogos Cadastrados no Repositório</h3>
+              <p style="color: #94a3b8; font-size: 0.85rem; margin: 0.2rem 0 0;">Total de jogos no sistema: <strong id="adminGamesCount" style="color: #22d3ee;">0</strong></p>
+            </div>
+            <div>
+              <button class="btn-gamer" style="font-size: 0.85rem; padding: 0.5rem 1rem;" onclick="focarFormularioNovo()">
+                <span>➕</span> Cadastrar Outro Jogo
+              </button>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 70px;">Mídia</th>
+                  <th>Nome do Jogo</th>
+                  <th>Matéria</th>
+                  <th>Nível</th>
+                  <th>Links (Jogar / Baixar)</th>
+                  <th style="text-align: right; width: 190px;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="adminGamesTableBody">
+                <!-- Injetado por renderizarTabelaAdmin() -->
+              </tbody>
+            </table>
+          </div>
+
+          <div id="adminEmptyTableNotice" style="display: none; text-align: center; padding: 3rem 1rem; color: #94a3b8;">
+            <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📭</div>
+            <p>Nenhum jogo cadastrado no momento. Preencha o formulário acima ou restaure os exemplos padrão.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- 3. PÁGINA: PROMPTS                        -->
+    <!-- ========================================== -->
+    <section id="tab-prompts" class="tab-section">
+      <div class="shell-container" style="padding-top: 2rem; padding-bottom: 4rem;">
+        
+        <div style="margin-bottom: 2.5rem;">
+          <span class="pill pill-cyan">INTELIGÊNCIA ARTIFICIAL PARA EDUCADORES</span>
+          <h1 style="font-size: 2rem; font-weight: 800; color: #fff; margin-top: 0.4rem;">Gerador & Galeria de Prompts</h1>
+          <p style="color: #94a3b8; font-size: 0.95rem; max-width: 720px;">
+            Construa prompts pedagógicos estruturados para ChatGPT, Claude ou Gemini. Obtenha jogos em HTML, quizzes e planos com base na BNCC em segundos.
+          </p>
+        </div>
+
+        <!-- GERADOR INTERATIVO -->
+        <div class="glow-card" style="margin-bottom: 3.5rem; border-color: rgba(139, 92, 246, 0.35);">
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+            <div style="font-size: 1.6rem; width: 44px; height: 44px; border-radius: 10px; background: rgba(139, 92, 246, 0.25); display: flex; align-items: center; justify-content: center;">
+              ⚡
+            </div>
+            <div>
+              <h2 style="font-size: 1.35rem; font-weight: 700; color: #fff;">Gerador de Prompt Personalizado</h2>
+              <p style="color: #94a3b8; font-size: 0.85rem;">Preencha os campos abaixo para montar a instrução ideal para a IA:</p>
+            </div>
+          </div>
+
+          <form id="promptGeneratorForm" onsubmit="generateCustomPrompt(event)">
+            <div class="prompt-form-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.25rem;">
+              
+              <!-- Tipo de Atividade -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.4rem;">
+                  Tipo de Atividade:
+                </label>
+                <select id="pType" class="filter-input" style="cursor: pointer;">
+                  <option value="Jogo Educativo em arquivo HTML único">Jogo Educativo (HTML autocontido)</option>
+                  <option value="Quiz Interativo com pontuação e feedback">Quiz Interativo com Gabarito</option>
+                  <option value="Plano de Aula Gamificado">Plano de Aula Gamificado</option>
+                  <option value="Atividade de Fixação e Avaliação">Atividade de Fixação Impressa</option>
+                  <option value="Sequência Didática Investigativa">Sequência Didática Investigativa</option>
+                </select>
+              </div>
+
+              <!-- Matéria / Disciplina -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.4rem;">
+                  Disciplina:
+                </label>
+                <select id="pSubject" class="filter-input" style="cursor: pointer;">
+                  <option value="Matemática">Matemática</option>
+                  <option value="Língua Portuguesa">Língua Portuguesa</option>
+                  <option value="Ciências da Natureza">Ciências da Natureza</option>
+                  <option value="História">História</option>
+                  <option value="Geografia">Geografia</option>
+                  <option value="Artes">Artes</option>
+                  <option value="Língua Inglesa">Língua Inglesa</option>
+                  <option value="Interdisciplinar">Interdisciplinar</option>
+                </select>
+              </div>
+
+              <!-- Série / Ano Escolar -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.4rem;">
+                  Etapa / Ano:
+                </label>
+                <select id="pGrade" class="filter-input" style="cursor: pointer;">
+                  <option value="1º ao 3º ano do Ensino Fundamental I (Ciclo de Alfabetização)">1º ao 3º ano (Fund I)</option>
+                  <option value="4º e 5º ano do Ensino Fundamental I">4º e 5º ano (Fund I)</option>
+                  <option value="6º e 7º ano do Ensino Fundamental II" selected>6º e 7º ano (Fund II)</option>
+                  <option value="8º e 9º ano do Ensino Fundamental II">8º e 9º ano (Fund II)</option>
+                  <option value="Ensino Médio">Ensino Médio</option>
+                </select>
+              </div>
+
+            </div>
+
+            <div class="prompt-form-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem;">
+              
+              <!-- Tema / Conteúdo -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.4rem;">
+                  Conteúdo / Tema Específico:
+                </label>
+                <input type="text" id="pTopic" class="filter-input" placeholder="Ex: Frações e números decimais na culinária" value="Frações equivalentes e porcentagem básica" required>
+              </div>
+
+              <!-- Quantidade de Itens / Questões -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.4rem;">
+                  Qtd. de Questões / Fases:
+                </label>
+                <select id="pQuantity" class="filter-input" style="cursor: pointer;">
+                  <option value="5">5 itens / fases</option>
+                  <option value="10" selected>10 itens / fases</option>
+                  <option value="15">15 itens / fases</option>
+                </select>
+              </div>
+
+              <!-- Estilo / Metodologia -->
+              <div>
+                <label style="display: block; font-size: 0.82rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.4rem;">
+                  Estilo Pedagógico:
+                </label>
+                <select id="pStyle" class="filter-input" style="cursor: pointer;">
+                  <option value="Gamificado e Lúdico com storytelling envolvente">Gamificado & Lúdico</option>
+                  <option value="Tradicional estruturado com rigor conceitual">Tradicional & Rigoroso</option>
+                  <option value="Inclusivo com adaptação para estudantes com DI">Inclusivo (Acessível / DI)</option>
+                  <option value="Investigativo baseado em situações-problema reais">Investigativo / Casos</option>
+                </select>
+              </div>
+
+            </div>
+
+            <!-- Botão de Ação -->
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+              <button type="submit" class="btn-gamer">
+                <span>⚡</span> Gerar Prompt Pronto
+              </button>
+              <span style="font-size: 0.85rem; color: #94a3b8;">
+                O prompt inclui estrutura pedagógica, papel de especialista e comandos anti-alucinação.
+              </span>
+            </div>
+          </form>
+
+          <!-- Saída do Prompt Gerado -->
+          <div id="generatedPromptContainer" style="margin-top: 1.75rem; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span style="font-size: 0.85rem; font-weight: 700; color: #22d3ee; display: flex; align-items: center; gap: 0.4rem;">
+                📋 Prompt Gerado (Pronto para copiar):
+              </span>
+              <button id="btnCopyGenerated" class="btn-copy" onclick="copyText('generatedPromptText', this)">
+                <span>📋</span> Copiar Prompt
+              </button>
+            </div>
+            <div id="generatedPromptText" class="prompt-code-box"></div>
+          </div>
+        </div>
+
+        <!-- GALERIA DE PROMPTS PRONTOS -->
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <span class="pill pill-purple">COLEÇÃO PRONTA</span>
+              <h2 style="font-size: 1.5rem; font-weight: 700; color: #fff; margin-top: 0.35rem;">Galeria de Prompts Testados</h2>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.85rem;">Prompts de alta eficácia estruturados para diversas situações escolares.</p>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 1.5rem;">
+            
+            <!-- Prompt 1 -->
+            <div class="prompt-card">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <span class="pill pill-purple">Matemática</span>
+                  <span class="pill pill-cyan">Quiz & Jogo</span>
+                </div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Criar Quiz de Matemática Interativo</h3>
+                <div class="prompt-snippet" id="prompt-p1">Atue como um professor especialista em gamificação e desenvolva um Quiz de Matemática para o 6º ano sobre "Operações com Frações e Números Decimais".
+O quiz deve conter 8 perguntas contextualizadas em compras de mercado. Forneça 4 alternativas (A a D) para cada questão, marque o gabarito correto e elabore uma justificativa pedagógica passo a passo para orientar o estudante quando ele errar.</div>
+              </div>
+              <button class="btn-copy" onclick="copyText('prompt-p1', this)">
+                <span>📋</span> Copiar Prompt
+              </button>
+            </div>
+
+            <!-- Prompt 2 -->
+            <div class="prompt-card">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <span class="pill pill-cyan">Língua Portuguesa</span>
+                  <span class="pill pill-amber">Ortografia</span>
+                </div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Gerar Caça-Palavras em Markdown</h3>
+                <div class="prompt-snippet" id="prompt-p2">Atue como professor de Língua Portuguesa dos anos iniciais. Gere uma atividade de Caça-Palavras em formato de tabela Markdown (12x12 letras) com 8 palavras ocultas focadas na ortografia das letras "X" e "CH".
+Abaixo da grade, liste as palavras a serem encontradas com dicas conceituais para que o aluno deduza a palavra antes de procurá-la. Inclua a lista de coordenadas exatas de resolução para o gabarito do professor.</div>
+              </div>
+              <button class="btn-copy" onclick="copyText('prompt-p2', this)">
+                <span>📋</span> Copiar Prompt
+              </button>
+            </div>
+
+            <!-- Prompt 3 -->
+            <div class="prompt-card">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <span class="pill pill-green">Metodologia</span>
+                  <span class="pill pill-purple">Gamificação</span>
+                </div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Plano de Aula Gamificado (BNCC)</h3>
+                <div class="prompt-snippet" id="prompt-p3">Atue como coordenador pedagógico e desenhe um Plano de Aula Gamificado completo (50 minutos) para o 8º ano sobre "A Revolução Industrial e os Impactos Socioambientais".
+Estruture em:
+1. Habilidade BNCC correspondente;
+2. Missão/Narrativa gamer para os alunos (divididos em equipes de inventores e operários);
+3. Dinâmica das 3 fases da aula;
+4. Sistema de pontos e conquistas (badges);
+5. Critérios de avaliação formativa.</div>
+              </div>
+              <button class="btn-copy" onclick="copyText('prompt-p3', this)">
+                <span>📋</span> Copiar Prompt
+              </button>
+            </div>
+
+            <!-- Prompt 4 -->
+            <div class="prompt-card">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <span class="pill pill-pink">Educação Inclusiva</span>
+                  <span class="pill pill-green">Acessibilidade</span>
+                </div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Adaptação para Alunos com DI</h3>
+                <div class="prompt-snippet" id="prompt-p4">Atue como especialista em Educação Especial e Atendimento Educacional Especializado (AEE).
+Vou fornecer um texto de Ciências sobre "O Ciclo da Água na Natureza".
+Reescreva e adapte este conteúdo para um estudante do 5º ano com Deficiência Intelectual (DI), aplicando:
+- Linguagem simples e direta com frases curtas;
+- Apoios visuais descritivos e analogias concretas do cotidiano;
+- 3 questões práticas com alternativas ilustrativas em formato de verdadeiro ou falso simplificado;
+- Orientações de mediação para o professor em sala.</div>
+              </div>
+              <button class="btn-copy" onclick="copyText('prompt-p4', this)">
+                <span>📋</span> Copiar Prompt
+              </button>
+            </div>
+
+            <!-- Prompt 5 -->
+            <div class="prompt-card">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <span class="pill pill-amber">Ciências / História</span>
+                  <span class="pill pill-cyan">Associação</span>
+                </div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Criar Jogo de Associação / Memória</h3>
+                <div class="prompt-snippet" id="prompt-p5">Atue como designer instrucional lúdico. Crie uma dinâmica de "Jogo de Associação em Pares" sobre os "Biomas Brasileiros (Amazônia, Cerrado, Caatinga, Mata Atlântica, Pantanal e Pampa)".
+Produza uma tabela com 10 pares exatos:
+Coluna A (Nome do Bioma e Característica marcante) e Coluna B (Espécie símbolo de fauna/flora com pista de adaptação ecológica).
+Inclua regras simples para jogar em duplas utilizando cartões recortáveis.</div>
+              </div>
+              <button class="btn-copy" onclick="copyText('prompt-p5', this)">
+                <span>📋</span> Copiar Prompt
+              </button>
+            </div>
+
+            <!-- Prompt 6 -->
+            <div class="prompt-card">
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <span class="pill pill-purple">Artes / Anos Iniciais</span>
+                  <span class="pill pill-pink">Criatividade</span>
+                </div>
+                <h3 style="font-size: 1.15rem; font-weight: 700; color: #fff;">Atividade de Desenho & Storytelling</h3>
+                <div class="prompt-snippet" id="prompt-p6">Atue como professor de Artes e Literatura Infantil. Crie uma proposta de atividade integradora de desenho e narrativa para o 3º ano do Ensino Fundamental intitulada "Crie Seu Próprio Guardião da Floresta".
+A atividade deve conter:
+1. Roteiro narrativo guiado para o professor ler em voz alta (3 minutos);
+2. Folha de desafios com 4 comandos específicos de desenho (textura, cores complementares e elementos naturais);
+3. Espaço para o aluno escrever uma ficha de poderes do personagem.</div>
+              </div>
+              <button class="btn-copy" onclick="copyText('prompt-p6', this)">
+                <span>📋</span> Copiar Prompt
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DE TESTE / DEMONSTRAÇÃO DO JOGO -->
+  <div id="gameModal" class="modal-backdrop" onclick="closeGameModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.5rem;">🎮</span>
+          <h3 id="modalGameTitle" style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">Título do Jogo</h3>
+        </div>
+        <button onclick="closeGameModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">✕</button>
+      </div>
+
+      <div style="background: rgba(139, 92, 246, 0.1); border: 1px dashed rgba(139, 92, 246, 0.35); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #c4b5fd;">
+        <strong>📌 Aviso ao Professor:</strong> Este é um demonstrador interativo simulado. Quando você colocar o seu arquivo HTML real, o botão abrirá diretamente a página do seu jogo.
+      </div>
+
+      <!-- Mini Jogo Interativo Instantâneo -->
+      <div style="background: #090d16; border-radius: 12px; padding: 1.5rem; text-align: center; border: 1px solid rgba(255, 255, 255, 0.08);">
+        <div style="font-size: 0.8rem; color: #38bdf8; font-weight: 600; margin-bottom: 0.5rem;" id="modalSubjectBadge">TESTE RÁPIDO</div>
+        <div id="modalQuestion" style="font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 1.25rem;">Quanto é 7 x 8?</div>
+        
+        <div id="modalOptions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+          <!-- botões gerados dinamicamente -->
+        </div>
+
+        <div id="modalFeedback" style="font-size: 0.9rem; font-weight: 600; min-height: 24px;"></div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+        <button class="btn-gamer-outline" onclick="closeGameModal()">Fechar Janela</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE AUTENTICAÇÃO DO ADMINISTRADOR -->
+  <div id="adminAuthModal" class="modal-backdrop" onclick="closeAdminAuthModal(event)">
+    <div class="modal-card" style="max-width: 440px;" onclick="event.stopPropagation()">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.5rem;">🔒</span>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0;">Área do Professor</h3>
+        </div>
+        <button onclick="closeAdminAuthModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer;">✕</button>
+      </div>
+
+      <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.25rem;">
+        Acesso restrito para o <strong>Prof. Guilherme</strong> gerenciar o catálogo de jogos pedagógicos.
+      </p>
+
+      <form onsubmit="verificarSenhaAdmin(event)">
+        <div class="admin-form-group" style="margin-bottom: 1.25rem;">
+          <label for="adminPasswordInput">Senha de Acesso</label>
+          <input type="password" id="adminPasswordInput" class="filter-input" placeholder="Digite a senha..." autocomplete="current-password" required>
+          <div id="authErrorMessage" style="color: #f87171; font-size: 0.8rem; margin-top: 0.35rem; display: none;">
+            ❌ Senha incorreta! Tente novamente.
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+          <button type="button" class="btn-gamer-outline" onclick="closeAdminAuthModal()">Cancelar</button>
+          <button type="submit" class="btn-gamer">
+            <span>🔓</span> Entrar no Painel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST DE NOTIFICAÇÃO -->
+  <div id="toastNotification" class="toast-notice">
+    <span id="toastIcon">✅</span>
+    <span id="toastMessage">Texto copiado para a área de transferência!</span>
+  </div>
+
+  <!-- RODAPÉ -->
+  <footer style="background: #060911; border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 2.5rem 1.25rem; margin-top: auto;">
+    <div class="shell-container" style="display: flex; flex-direction: column; gap: 1.5rem; text-align: center;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 0.6rem;">
+        <span style="font-size: 1.4rem;">🎮</span>
+        <span style="font-weight: 800; font-size: 1.1rem; color: #fff;">Repositório do Prof. Guilherme</span>
+      </div>
+      <p style="color: #94a3b8; font-size: 0.88rem; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+        Desenvolvido com carinho para valorizar a prática docente, a gamificação pedagógica e o uso ético e eficiente da Inteligência Artificial em sala de aula.
+      </p>
+
+      <!-- Botão Discreto de Acesso do Professor no Rodapé -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <button onclick="handleAdminTabClick()" style="background: none; border: 1px dashed rgba(139, 92, 246, 0.4); color: #c4b5fd; font-size: 0.82rem; padding: 0.35rem 0.85rem; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: all 0.2s ease;">
+          <span>⚙️</span> Área do Professor (Acesso Restrito)
+        </button>
+      </div>
+
+      <div style="font-size: 0.8rem; color: #64748b;">
+        © <span id="currentYear"></span> Prof. Guilherme • Todos os direitos reservados. Totalmente livre para uso educacional não comercial.
+      </div>
+    </div>
+  </footer>
+
+  
+  <script>
+    /**
+     * =========================================================================
+     * CONFIGURAÇÃO E AUTENTICAÇÃO DO ADMINISTRADOR
+     * =========================================================================
+     * Senha padrão para o Prof. Guilherme acessar o painel:
+     * O professor pode alterar esta constante abaixo para a senha desejada.
+     */
+    const SENHA_ADMIN_CORRETA = "prof2026"; // <-- Troque aqui a senha se desejar!
+    const STORAGE_KEY_JOGOS = "prof_guilherme_jogos_db_v1";
+    const STORAGE_KEY_AUTH = "prof_guilherme_is_authenticated";
+
+    // Estado da Aplicação
+    let listaJogos = [];
+    let isAdminLogado = false;
+    let imagemAtualBase64OuUrl = "";
+    let currentSubjectFilter = "all";
+
+    // Dados Iniciais Padrão (6 Jogos Pedagógicos)
+    const JOGOS_PADRAO = [
+      {
+        id: "game_tabuada_1",
+        title: "Quiz de Tabuada",
+        url: "#tabuada",
+        desc: "Desafio gamificado contra o tempo para exercitar o raciocínio rápido e a memorização divertida das tabuadas do 1 ao 10.",
+        image: "https://img.usecurling.com/p/600/340?q=math%20multiplication&color=purple",
+        subject: "Matemática",
+        level: "Fundamental I e II",
+        icon: "✖️"
+      },
+      {
+        id: "game_caca_palavras_2",
+        title: "Caça-Palavras Ortográfico",
+        url: "#caca-palavras",
+        desc: "Grade interativa com detecção de letras para fixar regras ortográficas (S/SS, Ç, R/RR e dígrafos) com cronômetro.",
+        image: "https://img.usecurling.com/p/600/340?q=words%20letters&color=cyan",
+        subject: "Português",
+        level: "Fundamental I",
+        icon: "🔤"
+      },
+      {
+        id: "game_sistema_solar_3",
+        title: "Quiz do Sistema Solar & Ecologia",
+        url: "#sistema-solar",
+        desc: "Perguntas ilustradas sobre planetas, gravidade e ecologia com feedback imediato de acertos e pontuação em estrelas.",
+        image: "https://img.usecurling.com/p/600/340?q=solar%20system%20space&color=green",
+        subject: "Ciências",
+        level: "Fundamental II",
+        icon: "🪐"
+      },
+      {
+        id: "game_memoria_4",
+        title: "Memória da Linha do Tempo",
+        url: "#memoria-historica",
+        desc: "Associe eventos históricos com suas respectivas épocas virando cartas digitais com efeitos sonoros e pontuação.",
+        image: "https://img.usecurling.com/p/600/340?q=history%20ancient%20monument&color=yellow",
+        subject: "História",
+        level: "Fundamental II",
+        icon: "🏛️"
+      },
+      {
+        id: "game_forca_5",
+        title: "Forca dos Sinônimos e Antônimos",
+        url: "#forca-sinonimos",
+        desc: "Descubra a palavra oculta utilizando dicas semânticas. Ideal para projeção coletiva e participação em grupo da turma.",
+        image: "https://img.usecurling.com/p/600/340?q=vocabulary%20target&color=pink",
+        subject: "Português",
+        level: "Fundamental I e II",
+        icon: "🎯"
+      },
+      {
+        id: "game_soma_6",
+        title: "Desafio Soma Rápida Gamer",
+        url: "#soma-rapida",
+        desc: "Treine adições de 2 a 3 dígitos sob pressão de tempo com barra de progresso em neon e pontuações cumulativas.",
+        image: "https://img.usecurling.com/p/600/340?q=speed%20lightning%20game&color=blue",
+        subject: "Matemática",
+        level: "Fundamental I",
+        icon: "⚡"
+      }
+    ];
+
+    // =========================================================================
+    // INICIALIZAÇÃO
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+      // Checa se o professor já estava logado na sessão anterior
+      isAdminLogado = sessionStorage.getItem(STORAGE_KEY_AUTH) === "true";
+      atualizarEstadoVisualAdmin();
+
+      // Carrega jogos do localStorage ou define os padrões
+      carregarDoStorage();
+
+      // Renderiza ambas as visões
+      renderizarJogos();
+      renderizarTabelaAdmin();
+
+      // Inicializa o gerador de prompts
+      updatePromptOutput();
+    });
+
+    // =========================================================================
+    // PERSISTÊNCIA (localStorage)
+    // =========================================================================
+    function carregarDoStorage() {
+      try {
+        const salvo = localStorage.getItem(STORAGE_KEY_JOGOS);
+        if (salvo) {
+          listaJogos = JSON.parse(salvo);
+        } else {
+          // Conteúdo inicial padrão
+          listaJogos = [...JOGOS_PADRAO];
+          salvarNoStorage();
+        }
+      } catch (err) {
+        console.error("Erro ao ler localStorage:", err);
+        listaJogos = [...JOGOS_PADRAO];
+      }
+    }
+
+    function salvarNoStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY_JOGOS, JSON.stringify(listaJogos));
+      } catch (err) {
+        showToast("⚠️ Espaço insuficiente no navegador para imagens grandes!", "alert");
+      }
+    }
+
+    // =========================================================================
+    // CONTROLE DE NAVEGAÇÃO ENTRE ABAS (SPA)
+    // =========================================================================
+    function navigateTab(tabKey) {
+      const buttons = document.querySelectorAll('.nav-tab-btn');
+      buttons.forEach(btn => {
+        if (btn.getAttribute('data-tab') === tabKey) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      const sections = document.querySelectorAll('.tab-section');
+      sections.forEach(sec => sec.classList.remove('active-section'));
+
+      const targetSection = document.getElementById('tab-' + tabKey);
+      if (targetSection) {
+        targetSection.classList.add('active-section');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Se navegou para a aba de jogos, re-filtra
+      if (tabKey === 'games') {
+        filterGames();
+      }
+    }
+
+    // =========================================================================
+    // AUTENTICAÇÃO DO ADMINISTRADOR
+    // =========================================================================
+    function handleAdminTabClick() {
+      if (isAdminLogado) {
+        navigateTab('admin');
+      } else {
+        abrirModalAuthAdmin();
+      }
+    }
+
+    function abrirModalAuthAdmin() {
+      const modal = document.getElementById('adminAuthModal');
+      const passInput = document.getElementById('adminPasswordInput');
+      const errorMsg = document.getElementById('authErrorMessage');
+      if (errorMsg) errorMsg.style.display = 'none';
+      if (passInput) passInput.value = '';
+      modal.classList.add('open');
+      setTimeout(() => passInput && passInput.focus(), 100);
+    }
+
+    function closeAdminAuthModal(e) {
+      if (!e || e.target.id === 'adminAuthModal') {
+        document.getElementById('adminAuthModal').classList.remove('open');
+      }
+    }
+
+    function verificarSenhaAdmin(e) {
+      if (e) e.preventDefault();
+      const inputPass = document.getElementById('adminPasswordInput').value;
+      const errorMsg = document.getElementById('authErrorMessage');
+
+      if (inputPass === SENHA_ADMIN_CORRETA) {
+        isAdminLogado = true;
+        sessionStorage.setItem(STORAGE_KEY_AUTH, "true");
+        closeAdminAuthModal();
+        atualizarEstadoVisualAdmin();
+        navigateTab('admin');
+        showToast("👑 Acesso concedido! Bem-vindo, Prof. Guilherme.", "success");
+      } else {
+        errorMsg.style.display = 'block';
+        showToast("❌ Senha incorreta!", "error");
+      }
+    }
+
+    function logoutAdmin() {
+      isAdminLogado = false;
+      sessionStorage.removeItem(STORAGE_KEY_AUTH);
+      atualizarEstadoVisualAdmin();
+      navigateTab('games');
+      showToast("Você saiu da Área do Professor.", "info");
+    }
+
+    function atualizarEstadoVisualAdmin() {
+      const navBtn = document.getElementById('navAdminBtn');
+      const navIcon = document.getElementById('navAdminIcon');
+      const navText = document.getElementById('navAdminText');
+
+      if (isAdminLogado) {
+        navBtn.classList.add('logged-in');
+        navIcon.textContent = '👑';
+        navText.textContent = 'Painel Admin';
+      } else {
+        navBtn.classList.remove('logged-in');
+        navIcon.textContent = '⚙️';
+        navText.textContent = 'Área do Professor';
+      }
+    }
+
+    // =========================================================================
+    // MODO VISITANTE: RENDERIZAÇÃO E FILTRAGEM DE JOGOS
+    // =========================================================================
+    function getSubjectBadgeClass(subject) {
+      switch (subject) {
+        case 'Matemática': return 'pill-purple';
+        case 'Português': return 'pill-cyan';
+        case 'Ciências': return 'pill-green';
+        case 'História': return 'pill-amber';
+        case 'Geografia': return 'pill-blue';
+        default: return 'pill-pink';
+      }
+    }
+
+    function getSubjectIcon(subject) {
+      switch (subject) {
+        case 'Matemática': return '📐';
+        case 'Português': return '📚';
+        case 'Ciências': return '🔬';
+        case 'História': return '🏛️';
+        case 'Geografia': return '🌍';
+        default: return '✨';
+      }
+    }
+
+    function renderizarJogos() {
+      const grid = document.getElementById('gamesGrid');
+      const counterBadge = document.getElementById('gamesCounterBadge');
+      if (counterBadge) {
+        counterBadge.textContent = `🎮 ${listaJogos.length} jogo${listaJogos.length !== 1 ? 's' : ''} disponível${listaJogos.length !== 1 ? 'is' : ''}`;
+      }
+
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      listaJogos.forEach(jogo => {
+        const badgeClass = getSubjectBadgeClass(jogo.subject);
+        const subjectIcon = getSubjectIcon(jogo.subject);
+        const hasCustomImage = jogo.image && jogo.image.trim().length > 0;
+
+        const card = document.createElement('div');
+        card.className = 'glow-card game-card';
+        card.setAttribute('data-subject', jogo.subject || '');
+        card.setAttribute('data-title', jogo.title || '');
+        card.setAttribute('data-desc', jogo.desc || '');
+
+        // Capa Visual do Card
+        let coverHtml = '';
+        if (hasCustomImage) {
+          coverHtml = `
+            <div class="game-card-cover">
+              <span class="pill ${badgeClass} cover-badge">${escapeHtml(jogo.subject)}</span>
+              <img src="${jogo.image}" alt="${escapeHtml(jogo.title)}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'cover-fallback\\'><span style=\\'font-size:2.8rem;\\'>${subjectIcon}</span><span style=\\'font-size:0.85rem; font-weight:600;\\'>${escapeHtml(jogo.subject)}</span></div>';">
+            </div>
+          `;
+        } else {
+          coverHtml = `
+            <div class="game-card-cover">
+              <span class="pill ${badgeClass} cover-badge">${escapeHtml(jogo.subject)}</span>
+              <div class="cover-fallback">
+                <span style="font-size: 3rem;">${subjectIcon}</span>
+                <span style="font-size: 0.85rem; font-weight: 600; color: #cbd5e1;">${escapeHtml(jogo.subject)}</span>
+              </div>
+            </div>
+          `;
+        }
+
+        // Determina ação do botão Jogar
+        const isInternalSample = jogo.url && (jogo.url.startsWith('#') || jogo.url.trim() === '');
+        let playButtonHtml = '';
+        if (isInternalSample) {
+          playButtonHtml = `
+            <button class="btn-gamer" style="justify-content: center; padding: 0.65rem 0.85rem; font-size: 0.88rem;" onclick="openGameModal('${escapeHtml(jogo.title)}', '${escapeHtml(jogo.subject)}')">
+              ▶ Jogar
+            </button>
+          `;
+        } else {
+          playButtonHtml = `
+            <a href="${escapeHtml(jogo.url)}" target="_blank" rel="noopener noreferrer" class="btn-gamer" style="justify-content: center; text-decoration: none; padding: 0.65rem 0.85rem; font-size: 0.88rem;">
+              ▶ Jogar ↗
+            </a>
+          `;
+        }
+
+        // Botão de Download
+        const downloadButtonHtml = `
+          <button class="btn-download-gamer" onclick="acionarDownloadJogo('${jogo.id}')" title="Baixar arquivo do jogo para uso offline">
+            <span>⬇️</span> Baixar
+          </button>
+        `;
+
+        card.innerHTML = `
+          ${coverHtml}
+          <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.35rem; gap: 0.5rem;">
+            <h3 style="font-size: 1.2rem; font-weight: 700; color: #fff; margin: 0; line-height: 1.3;">${escapeHtml(jogo.title)}</h3>
+          </div>
+          <div style="font-size: 0.8rem; color: #38bdf8; font-weight: 600; margin-bottom: 0.65rem;">
+            🎯 ${escapeHtml(jogo.level || 'Todos os Níveis')}
+          </div>
+          <p style="color: #94a3b8; font-size: 0.88rem; line-height: 1.5; margin-bottom: 1.25rem; flex-grow: 1; min-height: 48px;">
+            ${escapeHtml(jogo.desc)}
+          </p>
+          <div class="card-actions-row">
+            ${playButtonHtml}
+            ${downloadButtonHtml}
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+
+      filterGames();
+    }
+
+    function setGameSubject(subject) {
+      currentSubjectFilter = subject;
+      const pills = document.querySelectorAll('#subjectFilterPills .subject-pill-btn');
+      pills.forEach(p => {
+        if (p.getAttribute('data-subject') === subject) {
+          p.classList.add('active');
+        } else {
+          p.classList.remove('active');
+        }
+      });
+      filterGames();
+    }
+
+    function filterGames() {
+      const query = (document.getElementById('gameSearchInput').value || '').toLowerCase().trim();
+      const cards = document.querySelectorAll('#gamesGrid .game-card');
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const subject = card.getAttribute('data-subject') || '';
+        const title = (card.getAttribute('data-title') || '').toLowerCase();
+        const desc = (card.getAttribute('data-desc') || '').toLowerCase();
+
+        const matchesSubject = (currentSubjectFilter === 'all') || (subject === currentSubjectFilter);
+        const matchesQuery = query === '' || title.includes(query) || desc.includes(query);
+
+        if (matchesSubject && matchesQuery) {
+          card.style.display = 'flex';
+          card.style.flexDirection = 'column';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      const noFoundAlert = document.getElementById('noGamesFound');
+      if (noFoundAlert) {
+        noFoundAlert.style.display = (visibleCount === 0) ? 'block' : 'none';
+      }
+    }
+
+    // =========================================================================
+    // MODO ADMINISTRADOR: FORMULÁRIO, UPLOAD E CRUD
+    // =========================================================================
+    function switchImageInputMode(mode) {
+      const btnUrl = document.getElementById('btnImgUrlMode');
+      const btnFile = document.getElementById('btnImgUploadMode');
+      const containerUrl = document.getElementById('imageInputUrlContainer');
+      const containerFile = document.getElementById('imageInputFileContainer');
+
+      if (mode === 'url') {
+        btnUrl.classList.add('active');
+        btnFile.classList.remove('active');
+        containerUrl.style.display = 'block';
+        containerFile.style.display = 'none';
+      } else {
+        btnFile.classList.add('active');
+        btnUrl.classList.remove('active');
+        containerFile.style.display = 'block';
+        containerUrl.style.display = 'none';
+      }
+    }
+
+    function previewImageFromInput() {
+      const url = document.getElementById('gameImageUrlInput').value.trim();
+      if (url) {
+        imagemAtualBase64OuUrl = url;
+        mostrarPreviewImagem(url, 'Link de Imagem');
+      } else {
+        imagemAtualBase64OuUrl = '';
+        ocultarPreviewImagem();
+      }
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      // Limite preventivo de tamanho para não estourar o localStorage (ex.: máx 2.5MB)
+      if (file.size > 2.5 * 1024 * 1024) {
+        showToast("⚠️ Arquivo muito grande! Escolha uma imagem de até 2.5MB.", "alert");
+        event.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64String = e.target.result;
+        imagemAtualBase64OuUrl = base64String;
+        mostrarPreviewImagem(base64String, `Arquivo: ${file.name}`);
+        showToast(`Imagem "${file.name}" carregada com sucesso!`, "success");
+      };
+      reader.onerror = function() {
+        showToast("Erro ao ler o arquivo de imagem.", "error");
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function mostrarPreviewImagem(src, text) {
+      const previewBox = document.getElementById('imagePreviewBox');
+      const previewImg = document.getElementById('imagePreviewImg');
+      const previewText = document.getElementById('imagePreviewText');
+      previewImg.src = src;
+      previewText.textContent = text || 'Imagem Pronta';
+      previewBox.style.display = 'flex';
+    }
+
+    function ocultarPreviewImagem() {
+      document.getElementById('imagePreviewBox').style.display = 'none';
+      document.getElementById('imagePreviewImg').src = '';
+    }
+
+    function clearSelectedImage() {
+      imagemAtualBase64OuUrl = '';
+      document.getElementById('gameImageUrlInput').value = '';
+      const fileInput = document.getElementById('gameFileInput');
+      if (fileInput) fileInput.value = '';
+      ocultarPreviewImagem();
+      showToast("Imagem desvinculada.", "info");
+    }
+
+    function salvarJogo(event) {
+      if (event) event.preventDefault();
+
+      const editId = document.getElementById('gameEditId').value;
+      const title = document.getElementById('gameTitleInput').value.trim();
+      const url = document.getElementById('gameLinkInput').value.trim();
+      const downloadUrl = (document.getElementById('gameDownloadUrlInput').value || '').trim();
+      const subject = document.getElementById('gameSubjectSelect').value;
+      const level = document.getElementById('gameLevelSelect').value;
+      const desc = document.getElementById('gameDescInput').value.trim();
+      
+      // Se tiver valor no campo de URL mas não salvou no estado
+      const manualUrlInput = document.getElementById('gameImageUrlInput').value.trim();
+      if (!imagemAtualBase64OuUrl && manualUrlInput) {
+        imagemAtualBase64OuUrl = manualUrlInput;
+      }
+
+      if (!title || !url || !desc) {
+        showToast("Por favor, preencha todos os campos obrigatórios.", "alert");
+        return;
+      }
+
+      if (editId) {
+        // Atualização de jogo existente
+        const index = listaJogos.findIndex(j => j.id === editId);
+        if (index !== -1) {
+          listaJogos[index] = {
+            ...listaJogos[index],
+            title,
+            url,
+            downloadUrl: downloadUrl || '',
+            subject,
+            level,
+            desc,
+            image: imagemAtualBase64OuUrl || ''
+          };
+          showToast(`Jogo "${title}" atualizado com sucesso!`, "success");
+        }
+      } else {
+        // Novo Jogo
+        const novoJogo = {
+          id: 'game_' + Date.now(),
+          title,
+          url,
+          downloadUrl: downloadUrl || '',
+          subject,
+          level,
+          desc,
+          image: imagemAtualBase64OuUrl || '',
+          icon: getSubjectIcon(subject)
+        };
+        listaJogos.unshift(novoJogo);
+        showToast(`Jogo "${title}" adicionado ao repositório!`, "success");
+      }
+
+      // Persiste e atualiza as duas interfaces
+      salvarNoStorage();
+      renderizarJogos();
+      renderizarTabelaAdmin();
+      resetarFormularioAdmin();
+    }
+
+    function editarJogo(id) {
+      const jogo = listaJogos.find(j => j.id === id);
+      if (!jogo) return;
+
+      document.getElementById('gameEditId').value = jogo.id;
+      document.getElementById('gameTitleInput').value = jogo.title;
+      document.getElementById('gameLinkInput').value = jogo.url;
+      document.getElementById('gameDownloadUrlInput').value = jogo.downloadUrl || '';
+      document.getElementById('gameSubjectSelect').value = jogo.subject;
+      document.getElementById('gameLevelSelect').value = jogo.level;
+      document.getElementById('gameDescInput').value = jogo.desc;
+
+      imagemAtualBase64OuUrl = jogo.image || '';
+      if (jogo.image) {
+        document.getElementById('gameImageUrlInput').value = jogo.image.startsWith('data:') ? '' : jogo.image;
+        mostrarPreviewImagem(jogo.image, 'Imagem Atual');
+      } else {
+        document.getElementById('gameImageUrlInput').value = '';
+        ocultarPreviewImagem();
+      }
+
+      // Altera o formulário para modo "Edição"
+      document.getElementById('formActionIcon').textContent = '✏️';
+      document.getElementById('formActionTitle').textContent = 'Editar Jogo';
+      document.getElementById('formModeBadge').textContent = 'Modo Edição';
+      document.getElementById('btnSubmitIcon').textContent = '🔄';
+      document.getElementById('btnSubmitLabel').textContent = 'Atualizar Alterações';
+      document.getElementById('btnCancelEdit').style.display = 'inline-flex';
+
+      // Rola suavemente até o formulário
+      document.getElementById('adminGameForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('gameTitleInput').focus();
+    }
+
+    function removerJogo(id) {
+      const jogo = listaJogos.find(j => j.id === id);
+      if (!jogo) return;
+
+      const confirmar = window.confirm(`Tem certeza que deseja remover o jogo "${jogo.title}"? Esta ação não pode ser desfeita.`);
+      if (!confirmar) return;
+
+      listaJogos = listaJogos.filter(j => j.id !== id);
+      salvarNoStorage();
+      renderizarJogos();
+      renderizarTabelaAdmin();
+
+      // Se estava editando o mesmo jogo, cancela edição
+      if (document.getElementById('gameEditId').value === id) {
+        cancelarEdicao();
+      }
+
+      showToast(`Jogo "${jogo.title}" removido com sucesso.`, "info");
+    }
+
+    function cancelarEdicao() {
+      resetarFormularioAdmin();
+      showToast("Edição cancelada.", "info");
+    }
+
+    function resetarFormularioAdmin() {
+      document.getElementById('adminGameForm').reset();
+      document.getElementById('gameEditId').value = '';
+      document.getElementById('gameDownloadUrlInput').value = '';
+      imagemAtualBase64OuUrl = '';
+      ocultarPreviewImagem();
+
+      document.getElementById('formActionIcon').textContent = '➕';
+      document.getElementById('formActionTitle').textContent = 'Adicionar Novo Jogo';
+      document.getElementById('formModeBadge').textContent = 'Novo Jogo';
+      document.getElementById('btnSubmitIcon').textContent = '💾';
+      document.getElementById('btnSubmitLabel').textContent = 'Salvar Jogo';
+      document.getElementById('btnCancelEdit').style.display = 'none';
+      switchImageInputMode('url');
+    }
+
+    function focarFormularioNovo() {
+      resetarFormularioAdmin();
+      document.getElementById('adminGameForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.getElementById('gameTitleInput').focus();
+    }
+
+    function restaurarExemplosPadrao() {
+      const confirmar = window.confirm("Deseja restaurar os 6 jogos de exemplo padrão? Os jogos atuais serão substituídos pelos originais.");
+      if (!confirmar) return;
+
+      listaJogos = [...JOGOS_PADRAO];
+      salvarNoStorage();
+      renderizarJogos();
+      renderizarTabelaAdmin();
+      resetarFormularioAdmin();
+      showToast("6 jogos padrão restaurados com sucesso!", "success");
+    }
+
+    function limparTodosOsJogos() {
+      const confirmar = window.confirm("⚠️ ATENÇÃO: Tem certeza que deseja apagar TODOS os jogos cadastrados? Esta ação deixará o repositório vazio.");
+      if (!confirmar) return;
+
+      listaJogos = [];
+      salvarNoStorage();
+      renderizarJogos();
+      renderizarTabelaAdmin();
+      resetarFormularioAdmin();
+      showToast("Todos os jogos foram apagados.", "info");
+    }
+
+    function renderizarTabelaAdmin() {
+      const tbody = document.getElementById('adminGamesTableBody');
+      const counter = document.getElementById('adminGamesCount');
+      const emptyNotice = document.getElementById('adminEmptyTableNotice');
+
+      if (counter) counter.textContent = listaJogos.length;
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+
+      if (listaJogos.length === 0) {
+        emptyNotice.style.display = 'block';
+        return;
+      }
+      emptyNotice.style.display = 'none';
+
+      listaJogos.forEach(jogo => {
+        const badgeClass = getSubjectBadgeClass(jogo.subject);
+        const tr = document.createElement('tr');
+
+        // Mídia miniatura
+        let mediaHtml = '';
+        if (jogo.image) {
+          mediaHtml = `<img src="${jogo.image}" alt="" style="width: 48px; height: 36px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);" onerror="this.outerHTML='<span style=\\'font-size:1.4rem;\\'>${getSubjectIcon(jogo.subject)}</span>'">`;
+        } else {
+          mediaHtml = `<span style="font-size: 1.5rem;">${getSubjectIcon(jogo.subject)}</span>`;
+        }
+
+        // Links encurtados
+        const displayLink = (jogo.url && jogo.url.length > 22) ? jogo.url.substring(0, 22) + '...' : (jogo.url || '#');
+        const hasCustomDownload = Boolean(jogo.downloadUrl && jogo.downloadUrl.trim());
+        const displayDownloadLink = hasCustomDownload ? (jogo.downloadUrl.length > 20 ? jogo.downloadUrl.substring(0, 20) + '...' : jogo.downloadUrl) : '';
+
+        tr.innerHTML = `
+          <td>${mediaHtml}</td>
+          <td>
+            <strong style="color: #fff; font-size: 0.95rem;">${escapeHtml(jogo.title)}</strong>
+            <div style="font-size: 0.78rem; color: #94a3b8; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${escapeHtml(jogo.desc)}
+            </div>
+          </td>
+          <td><span class="pill ${badgeClass}">${escapeHtml(jogo.subject)}</span></td>
+          <td><span style="font-size: 0.82rem; color: #cbd5e1;">${escapeHtml(jogo.level || 'Todos')}</span></td>
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+              <a href="${escapeHtml(jogo.url)}" target="_blank" rel="noopener noreferrer" style="color: #67e8f9; font-size: 0.8rem; text-decoration: none;">
+                ▶ Jogar: <code>${escapeHtml(displayLink)}</code>
+              </a>
+              ${hasCustomDownload ? `
+                <span style="font-size: 0.76rem; color: #86efac;">
+                  ⬇️ Baixar: <code>${escapeHtml(displayDownloadLink)}</code>
+                </span>
+              ` : `
+                <span style="font-size: 0.74rem; color: #94a3b8;">
+                  ⬇️ Baixar: (usa link principal)
+                </span>
+              `}
+            </div>
+          </td>
+          <td style="text-align: right;">
+            <div style="display: inline-flex; gap: 0.35rem; align-items: center;">
+              <button class="btn-download-gamer" style="padding: 0.38rem 0.65rem; font-size: 0.78rem;" onclick="acionarDownloadJogo('${jogo.id}')" title="Baixar este jogo">
+                <span>⬇️</span>
+              </button>
+              <button class="btn-edit-outline" onclick="editarJogo('${jogo.id}')" title="Editar este jogo">
+                <span>✏️</span> Editar
+              </button>
+              <button class="btn-danger-outline" onclick="removerJogo('${jogo.id}')" title="Excluir este jogo">
+                <span>🗑️</span> Remover
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Função utilitária para escapar caracteres HTML
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * =========================================================================
+     * FUNÇÃO DE DOWNLOAD DE JOGOS PEDAGÓGICOS (HTML OFFLINE)
+     * =========================================================================
+     * Esta função gerencia o download de um jogo individual para uso offline.
+     * Ela dá preferência ao campo 'downloadUrl' (se configurado pelo professor),
+     * utilizando o 'url' principal como alternativa.
+     *
+     * Fluxo:
+     * 1. Sanitiza e gera o nome do arquivo (ex.: 'quiz-de-tabuada.html').
+     * 2. Se for link hashtag (#) ou demonstrador local, gera automaticamente
+     *    um arquivo HTML completo, autocontido e offline pronto para aula.
+     * 3. Se for URL externa/arquivo .html, tenta buscar o conteúdo via fetch(),
+     *    cria um Blob e dispara o download via link temporário.
+     * 4. Se o fetch falhar (ex.: CORS ou restrição de servidor), aciona fallback:
+     *    abre o link em nova aba e avisa o usuário com toast informativo.
+     */
+    function acionarDownloadJogo(jogoId) {
+      const jogo = listaJogos.find(j => j.id === jogoId);
+      if (!jogo) {
+        showToast("Jogo não encontrado para download.", "error");
+        return;
+      }
+      baixarJogo(jogo);
+    }
+
+    /**
+     * Gera o código HTML completo e offline de demonstração para jogos marcados com hash (#)
+     */
+    function gerarHtmlOfflineDoJogo(jogo) {
+      const tituloSeguro = escapeHtml(jogo.title || 'Jogo Pedagógico');
+      const materiaSegura = escapeHtml(jogo.subject || 'Geral');
+      const descSegura = escapeHtml(jogo.desc || 'Atividade educativa interativa.');
+      const nivelSeguro = escapeHtml(jogo.level || 'Todos os níveis');
+
+      return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${tituloSeguro} - Prof. Guilherme</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: #090d16;
+      color: #f1f5f9;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .game-box {
+      max-width: 620px;
+      width: 100%;
+      background: #111827;
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 25px rgba(139, 92, 246, 0.2);
+      border-radius: 18px;
+      padding: 2rem;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      background: rgba(34, 211, 238, 0.15);
+      color: #22d3ee;
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      margin-bottom: 1rem;
+    }
+    h1 { font-size: 1.85rem; margin-bottom: 0.5rem; color: #fff; }
+    p.desc { color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem; line-height: 1.5; }
+    .interactive-board {
+      background: #060911;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .question { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.25rem; color: #e2e8f0; }
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+    button.opt {
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #fff;
+      padding: 0.85rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    button.opt:hover { background: rgba(139, 92, 246, 0.25); border-color: #8b5cf6; }
+    .status { font-weight: 700; font-size: 1rem; min-height: 28px; }
+    .status.win { color: #4ade80; }
+    .status.fail { color: #f87171; }
+    .score-bar {
+      display: flex;
+      justify-content: space-between;
+      color: #94a3b8;
+      font-size: 0.85rem;
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .footer-note { font-size: 0.78rem; color: #64748b; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="game-box">
+    <div class="badge">🎮 ${materiaSegura} • ${nivelSeguro}</div>
+    <h1>${tituloSeguro}</h1>
+    <p class="desc">${descSegura}</p>
+
+    <div class="interactive-board">
+      <div id="qText" class="question">Carregando desafio pedagógico...</div>
+      <div id="optionsContainer" class="options"></div>
+      <div id="feedbackText" class="status"></div>
+    </div>
+
+    <div class="score-bar">
+      <span>Pontuação: <b id="scoreNum" style="color: #22d3ee;">0</b> acertos</span>
+      <span>Repositório do Prof. Guilherme</span>
+    </div>
+    <div class="footer-note">Este arquivo funciona totalmente OFFLINE em qualquer navegador.</div>
+  </div>
+
+  <script>
+    const quizData = [
+      { q: "Qual o resultado de 9 x 8?", opts: ["64", "72", "81", "70"], ans: 1 },
+      { q: "Qual o valor de 7 x 7?", opts: ["42", "48", "49", "54"], ans: 2 },
+      { q: "Quanto é 6 x 8?", opts: ["48", "46", "52", "40"], ans: 0 },
+      { q: "Quanto é 12 x 4?", opts: ["44", "48", "36", "52"], ans: 1 }
+    ];
+    let currentIndex = 0;
+    let score = 0;
+
+    function renderQuestion() {
+      const item = quizData[currentIndex % quizData.length];
+      document.getElementById('qText').textContent = item.q;
+      const optsBox = document.getElementById('optionsContainer');
+      optsBox.innerHTML = '';
+      const feedback = document.getElementById('feedbackText');
+      feedback.textContent = '';
+      feedback.className = 'status';
+
+      item.opts.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'opt';
+        btn.textContent = opt;
+        btn.onclick = () => {
+          if (idx === item.ans) {
+            feedback.textContent = '🎉 Excelente! Resposta correta!';
+            feedback.className = 'status win';
+            score++;
+            document.getElementById('scoreNum').textContent = score;
+            setTimeout(() => {
+              currentIndex++;
+              renderQuestion();
+            }, 1200);
+          } else {
+            feedback.textContent = '❌ Quase! Tente novamente.';
+            feedback.className = 'status fail';
+          }
+        };
+        optsBox.appendChild(btn);
+      });
+    }
+
+    renderQuestion();
+  <\/script>
+</body>
+</html>`;
+    }
+
+    /**
+     * Sanitiza uma string para criar um nome de arquivo válido .html
+     */
+    function gerarNomeArquivoSeguro(titulo) {
+      if (!titulo) return 'jogo.html';
+      const slug = titulo
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      return `${slug || 'jogo'}.html`;
+    }
+
+    /**
+     * Dispara o download de um Blob no navegador usando link temporário
+     */
+    function dispararDownloadBlob(blob, nomeArquivo) {
+      const urlBlob = URL.createObjectURL(blob);
+      const linkTemporario = document.createElement('a');
+      linkTemporario.href = urlBlob;
+      linkTemporario.download = nomeArquivo;
+      linkTemporario.style.display = 'none';
+      document.body.appendChild(linkTemporario);
+      linkTemporario.click();
+      setTimeout(() => {
+        document.body.removeChild(linkTemporario);
+        URL.revokeObjectURL(urlBlob);
+      }, 300);
+    }
+
+    /**
+     * Executa o processo de download de um jogo
+     * @param {Object} jogo Objeto com os dados do jogo
+     */
+    async function baixarJogo(jogo) {
+      if (!jogo) return;
+
+      const nomeArquivo = gerarNomeArquivoSeguro(jogo.title);
+      // Se houver downloadUrl específico, usa ele; senão, usa o próprio url
+      const alvoDownload = (jogo.downloadUrl && jogo.downloadUrl.trim()) ? jogo.downloadUrl.trim() : (jogo.url || '').trim();
+
+      showToast(`Iniciando download de "${jogo.title}"...`, "info");
+
+      // CASO 1: Link demonstrativo ou hashtag (#)
+      // Gera arquivo HTML completo offline para uso imediato pelo professor/aluno
+      if (!alvoDownload || alvoDownload.startsWith('#')) {
+        try {
+          const htmlContent = gerarHtmlOfflineDoJogo(jogo);
+          const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+          dispararDownloadBlob(blob, nomeArquivo);
+          showToast(`✅ "${nomeArquivo}" baixado com sucesso! Pronto para uso offline.`, "success");
+        } catch (err) {
+          console.error("Erro ao gerar arquivo offline:", err);
+          showToast("Erro ao gerar arquivo para download.", "error");
+        }
+        return;
+      }
+
+      // CASO 2: Se for Data URL (ex.: data:text/html,...)
+      if (alvoDownload.startsWith('data:')) {
+        try {
+          const link = document.createElement('a');
+          link.href = alvoDownload;
+          link.download = nomeArquivo;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          showToast(`✅ Download de "${nomeArquivo}" concluído!`, "success");
+        } catch (e) {
+          window.open(alvoDownload, '_blank');
+        }
+        return;
+      }
+
+      // CASO 3: URL normal ou arquivo HTML local/remoto
+      try {
+        const response = await fetch(alvoDownload, { mode: 'cors' });
+        if (!response.ok) {
+          throw new Error(`Status de resposta: ${response.status}`);
+        }
+        const blob = await response.blob();
+        dispararDownloadBlob(blob, nomeArquivo);
+        showToast(`✅ Download de "${nomeArquivo}" concluído com sucesso!`, "success");
+      } catch (err) {
+        // Fallback: se o fetch falhar (CORS, sem permissão ou restrição de servidor),
+        // abre o jogo em nova aba e notifica o usuário
+        console.warn("Falha no download via fetch (CORS ou rede). Ativando fallback:", err);
+        showToast("Não foi possível baixar automaticamente — abrindo o jogo.", "alert");
+        
+        // Tenta acionar clique com download em nova aba
+        const fallbackLink = document.createElement('a');
+        fallbackLink.href = alvoDownload;
+        fallbackLink.target = '_blank';
+        fallbackLink.rel = 'noopener noreferrer';
+        fallbackLink.setAttribute('download', nomeArquivo);
+        document.body.appendChild(fallbackLink);
+        fallbackLink.click();
+        document.body.removeChild(fallbackLink);
+      }
+    }
+
+    // =========================================================================
+    // 3. GERADOR DE PROMPTS PEDAGÓGICOS (MANTIDO INTACTO)
+    function generateCustomPrompt(e) {
+      if (e) e.preventDefault();
+      updatePromptOutput();
+    }
+
+    function updatePromptOutput() {
+      const type = document.getElementById('pType').value;
+      const subject = document.getElementById('pSubject').value;
+      const grade = document.getElementById('pGrade').value;
+      const topic = document.getElementById('pTopic').value.trim() || 'Conteúdo Programático';
+      const quantity = document.getElementById('pQuantity').value;
+      const style = document.getElementById('pStyle').value;
+
+      const promptText = 
+`Atue como um Professor Especialista em Educação Básica, Design Instrucional e Alinhamento Curricular à BNCC.
+
+Crie uma proposta completa e detalhada para:
+- TIPO DE ATIVIDADE: ${type}
+- DISCIPLINA: ${subject}
+- ANO / ETAPA: ${grade}
+- TEMA / CONTEÚDO ESPECÍFICO: "${topic}"
+- QUANTIDADE DE ITENS / FASES: ${quantity}
+- ABORDAGEM PEDAGÓGICA: ${style}
+
+ESTRUTURA OBRIGATÓRIA DA SUA RESPOSTA:
+1. OBJETIVO PEDAGÓGICO: Indique claramente qual competência ou habilidade (código ou diretriz BNCC) os estudantes irão desenvolver.
+2. CONTEXTUALIZAÇÃO: Crie uma introdução breve e estimulante para o aluno, apresentando o desafio como uma missão prática.
+3. CONTEÚDO PRINCIPAL (${quantity} ITENS):
+   - Apresente as ${quantity} questões ou fases numeradas.
+   - Para cada uma, forneça dados claros, alternativas (se quiz/jogo) e o gabarito comentado passo a passo.
+4. FEEDBACK FORMATIVO: Escreva uma dica pedagógica construtiva para apoiar o estudante caso ele erre cada questão.
+5. ORIENTAÇÕES AO PROFESSOR: Dê 2 sugestões práticas de como aplicar este material em sala (individualmente, em duplas ou em estações de aprendizagem).
+
+IMPORTANTE: Mantenha linguagem acolhedora, precisa conceitualmente, sem ambiguidades e totalmente pronta para uso imediato em sala de aula.`;
+
+      document.getElementById('generatedPromptText').textContent = promptText;
+      showToast('Prompt gerado com sucesso!');
+    }
+
+    // 4. SISTEMA DE CÓPIA PARA CLIPBOARD COM FEEDBACK VISUAL
+    function copyText(elementId, btnElement) {
+      let text = '';
+      const el = document.getElementById(elementId);
+      if (el) {
+        text = el.innerText || el.textContent;
+      }
+
+      if (!text) return;
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          triggerCopySuccess(btnElement);
+        }).catch(() => {
+          fallbackCopyText(text, btnElement);
+        });
+      } else {
+        fallbackCopyText(text, btnElement);
+      }
+    }
+
+    function fallbackCopyText(text, btnElement) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        triggerCopySuccess(btnElement);
+      } catch (err) {
+        showToast('Não foi possível copiar automaticamente.');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function triggerCopySuccess(btnElement) {
+      showToast('Copiado para a área de transferência!');
+      if (btnElement) {
+        const originalText = btnElement.innerHTML;
+        btnElement.classList.add('copied');
+        btnElement.innerHTML = '<span>✅</span> Copiado!';
+        setTimeout(() => {
+          btnElement.classList.remove('copied');
+          btnElement.innerHTML = originalText;
+        }, 2200);
+      }
+    }
+
+    // 5. TOAST FEEDBACK MELHORADO
+    let toastTimeout;
+    function showToast(msg, type = "success") {
+      const toast = document.getElementById('toastNotification');
+      const icon = document.getElementById('toastIcon');
+      const message = document.getElementById('toastMessage');
+
+      message.textContent = msg;
+      if (type === 'error') {
+        icon.textContent = '❌';
+        toast.style.borderColor = '#ef4444';
+      } else if (type === 'alert') {
+        icon.textContent = '⚠️';
+        toast.style.borderColor = '#f59e0b';
+      } else if (type === 'info') {
+        icon.textContent = 'ℹ️';
+        toast.style.borderColor = '#38bdf8';
+      } else {
+        icon.textContent = '✅';
+        toast.style.borderColor = '#6366f1';
+      }
+
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
+    }
+
+    // 6. MINI-MODAL DE TESTE DE JOGO
+    const sampleQuestions = {
+      'Quiz de Tabuada': { q: 'Quanto é 8 x 7?', opts: ['54', '56', '58', '64'], correct: 1 },
+      'Caça-Palavras Ortográfico': { q: 'Qual das palavras abaixo está escrita corretamente?', opts: ['Excessão', 'Exceção', 'Eceção', 'Exceçâo'], correct: 1 },
+      'Quiz do Sistema Solar': { q: 'Qual é o maior planeta do Sistema Solar?', opts: ['Marte', 'Saturno', 'Júpiter', 'Netuno'], correct: 2 },
+      'Memória da Linha do Tempo': { q: 'Em que ano ocorreu a Proclamação da República no Brasil?', opts: ['1822', '1888', '1889', '1900'], correct: 2 },
+      'Forca dos Sinônimos': { q: 'Qual é o sinônimo mais exato de "AUTÊNTICO"?', opts: ['Fictício', 'Verdadeiro', 'Rápido', 'Lustroso'], correct: 1 },
+      'Soma Rápida Gamer': { q: 'Cálculo rápido: 47 + 38 = ?', opts: ['85', '75', '83', '95'], correct: 0 }
+    };
+
+    function openGameModal(gameTitle, subject) {
+      const modal = document.getElementById('gameModal');
+      document.getElementById('modalGameTitle').textContent = gameTitle;
+      document.getElementById('modalSubjectBadge').textContent = 'DEMO PEDAGÓGICA • ' + subject.toUpperCase();
+      
+      const qData = sampleQuestions[gameTitle] || { q: 'Desafio Rápido: 12 + 15 = ?', opts: ['25', '27', '29', '31'], correct: 1 };
+      document.getElementById('modalQuestion').textContent = qData.q;
+      
+      const optsContainer = document.getElementById('modalOptions');
+      optsContainer.innerHTML = '';
+      const feedback = document.getElementById('modalFeedback');
+      feedback.textContent = '';
+      feedback.style.color = '#fff';
+
+      qData.opts.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn-gamer-outline';
+        btn.style.width = '100%';
+        btn.style.padding = '0.75rem';
+        btn.style.justifyContent = 'center';
+        btn.textContent = opt;
+        btn.onclick = () => {
+          if (idx === qData.correct) {
+            feedback.textContent = '🎉 Parabéns! Resposta correta!';
+            feedback.style.color = '#4ade80';
+            btn.style.borderColor = '#4ade80';
+            btn.style.background = 'rgba(74, 222, 128, 0.2)';
+          } else {
+            feedback.textContent = '❌ Quase lá! Tente novamente.';
+            feedback.style.color = '#f87171';
+            btn.style.borderColor = '#f87171';
+            btn.style.background = 'rgba(248, 113, 113, 0.15)';
+          }
+        };
+        optsContainer.appendChild(btn);
+      });
+
+      modal.classList.add('open');
+    }
+
+    function closeGameModal(e) {
+      if (!e || e.target.id === 'gameModal') {
+        document.getElementById('gameModal').classList.remove('open');
+      }
+    }
+
+    function showPlaceholderInfo(gameTitle) {
+      showToast(`Card "${gameTitle}" pronto para receber seu link local.`);
+    }
+  </script>
+<script>
+/* Skip artifact shell — fixed helpers served beside every artifact. */
+(function () {
+  "use strict";
+
+  var fmt = {
+    num: function (v, opts) { return new Intl.NumberFormat("pt-BR", opts || {}).format(v); },
+    brl: function (v) { return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v); },
+    pct: function (v) { return new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 1 }).format(v); }
+  };
+
+  // axisFmt keeps axis tick labels short (compact notation) so long values
+  // (e.g. full BRL amounts) never clip against the plot edge.
+  function axisFmt(v) {
+    return fmt.num(v, { notation: "compact", maximumFractionDigits: 1 });
+  }
+
+  // format accepts a function OR one of the fmt names ("num" | "brl" | "pct").
+  function coerceFormat(spec) {
+    if (typeof spec === "function") return spec;
+    if (typeof spec === "string" && fmt[spec]) return fmt[spec];
+    return function (v) { return fmt.num(v); };
+  }
+
+  function accent() {
+    return getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#2563eb";
+  }
+  function mutedColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue("--text-muted").trim() || "#5b6472";
+  }
+  function svgEl(tag, attrs) {
+    var el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function frame(el, w, h) {
+    var svg = svgEl("svg", { viewBox: "0 0 " + w + " " + h, role: "img" });
+    el.innerHTML = "";
+    el.appendChild(svg);
+    return svg;
+  }
+
+  // maxOf guards the axis scale: empty values would give -Infinity (truthy,
+  // so "|| 1" can't catch it) and a non-positive max would flip the chart.
+  function maxOf(values) {
+    var m = values.length ? Math.max.apply(null, values) : 0;
+    return m > 0 ? m : 1;
+  }
+
+  // bar(el, {labels:[], values:[], color?, format?}) — vertical bar chart.
+  function bar(el, cfg) {
+    var W = 640, H = 280, padL = 46, padB = 30, padT = 12;
+    var svg = frame(el, W, H);
+    var max = maxOf(cfg.values);
+    var n = cfg.values.length;
+    var plotW = W - padL - 12, plotH = H - padT - padB;
+    var step = plotW / n, bw = Math.min(step * 0.62, 64);
+    var color = cfg.color || accent();
+    var f = coerceFormat(cfg.format);
+    for (var g = 0; g <= 4; g++) {
+      var gy = padT + plotH - (plotH * g) / 4;
+      svg.appendChild(svgEl("line", { x1: padL, y1: gy, x2: W - 12, y2: gy, stroke: "currentColor", "stroke-opacity": 0.08 }));
+      var lbl = svgEl("text", { x: padL - 8, y: gy + 4, "text-anchor": "end", "font-size": 10, fill: mutedColor() });
+      lbl.textContent = axisFmt((max * g) / 4);
+      svg.appendChild(lbl);
+    }
+    cfg.values.forEach(function (v, i) {
+      var bh = Math.max(0, (v / max) * plotH);
+      var x = padL + i * step + (step - bw) / 2;
+      var y = padT + plotH - bh;
+      var r = svgEl("rect", { x: x, y: y, width: bw, height: bh, rx: 4, fill: color });
+      var t = svgEl("title", {});
+      t.textContent = cfg.labels[i] + ": " + f(v);
+      r.appendChild(t);
+      svg.appendChild(r);
+      var tx = svgEl("text", { x: x + bw / 2, y: H - 10, "text-anchor": "middle", "font-size": 11, fill: mutedColor() });
+      tx.textContent = cfg.labels[i];
+      svg.appendChild(tx);
+    });
+  }
+
+  // line(el, {labels:[], values:[], color?, format?}) — single-series line.
+  function line(el, cfg) {
+    var W = 640, H = 280, padL = 46, padB = 30, padT = 12;
+    var svg = frame(el, W, H);
+    var max = maxOf(cfg.values);
+    var n = cfg.values.length;
+    var plotW = W - padL - 16, plotH = H - padT - padB;
+    var color = cfg.color || accent();
+    var f = coerceFormat(cfg.format);
+    for (var g = 0; g <= 4; g++) {
+      var gy = padT + plotH - (plotH * g) / 4;
+      svg.appendChild(svgEl("line", { x1: padL, y1: gy, x2: W - 16, y2: gy, stroke: "currentColor", "stroke-opacity": 0.08 }));
+      var lbl = svgEl("text", { x: padL - 8, y: gy + 4, "text-anchor": "end", "font-size": 10, fill: mutedColor() });
+      lbl.textContent = axisFmt((max * g) / 4);
+      svg.appendChild(lbl);
+    }
+    var pts = cfg.values.map(function (v, i) {
+      var x = padL + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
+      var y = padT + plotH - (v / max) * plotH;
+      return [x, y];
+    });
+    var d = pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
+    svg.appendChild(svgEl("path", { d: d, fill: "none", stroke: color, "stroke-width": 2, "stroke-linejoin": "round" }));
+    pts.forEach(function (p, i) {
+      var c = svgEl("circle", { cx: p[0], cy: p[1], r: 3.5, fill: color });
+      var t = svgEl("title", {});
+      t.textContent = cfg.labels[i] + ": " + f(cfg.values[i]);
+      c.appendChild(t);
+      svg.appendChild(c);
+      var tx = svgEl("text", { x: p[0], y: H - 10, "text-anchor": "middle", "font-size": 11, fill: mutedColor() });
+      tx.textContent = cfg.labels[i];
+      svg.appendChild(tx);
+    });
+  }
+
+  // donut(el, {labels:[], values:[], colors?}) — donut with center total.
+  function donut(el, cfg) {
+    var W = 320, H = 280, cx = W / 2, cy = H / 2, R = 92, r = 58;
+    var svg = frame(el, W, H);
+    var total = cfg.values.reduce(function (a, b) { return a + b; }, 0) || 1;
+    var palette = cfg.colors || [accent(), "#1baf7a", "#eda100", "#e34948", "#4a3aa7", "#e87ba4"];
+    var a0 = -Math.PI / 2;
+    cfg.values.forEach(function (v, i) {
+      var a1 = a0 + (v / total) * Math.PI * 2;
+      var large = a1 - a0 > Math.PI ? 1 : 0;
+      var p = ["M", cx + R * Math.cos(a0), cy + R * Math.sin(a0),
+        "A", R, R, 0, large, 1, cx + R * Math.cos(a1), cy + R * Math.sin(a1),
+        "L", cx + r * Math.cos(a1), cy + r * Math.sin(a1),
+        "A", r, r, 0, large, 0, cx + r * Math.cos(a0), cy + r * Math.sin(a0), "Z"].join(" ");
+      var path = svgEl("path", { d: p, fill: palette[i % palette.length] });
+      var t = svgEl("title", {});
+      t.textContent = cfg.labels[i] + ": " + fmt.num(v) + " (" + fmt.pct(v / total) + ")";
+      path.appendChild(t);
+      svg.appendChild(path);
+      a0 = a1;
+    });
+    var center = svgEl("text", { x: cx, y: cy + 5, "text-anchor": "middle", "font-size": 20, "font-weight": 650, fill: "currentColor" });
+    center.textContent = fmt.num(total);
+    svg.appendChild(center);
+  }
+
+  window.skipShell = { fmt: fmt };
+  window.skipChart = { bar: bar, line: line, donut: donut };
+})();
+
+</script>
+</body>
+</html>
