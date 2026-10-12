@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo do Abdão - Versão Corrigida</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat.cdn.min.css">
+  <style>
+/* Skip artifact shell — fixed styles served beside every artifact.
+   Complements basecoat; artifacts override --accent for their own identity. */
+:root {
+  color-scheme: light dark;
+  --accent: #2563eb;
+  --accent-contrast: #ffffff;
+  --accent-text: color-mix(in srgb, var(--accent) 72%, #000);
+  --bg: #f8f9fb;
+  --surface: #ffffff;
+  --text: #14171f;
+  --text-muted: #5b6472;
+  --border: rgba(20, 23, 31, 0.10);
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(20, 23, 31, 0.08);
+  --space: 16px;
+}
+/* Theme resolution. Without data-theme the viewer's system preference decides,
+   as it always did. With it, the artifact's own choice wins in BOTH directions:
+   a page that hardcodes one palette must not be handed the opposite set of
+   tokens by the machine it happens to be opened on. The dark values appear
+   twice because a media query cannot be folded into a selector list.
+   The attribute sits inside :where() so these blocks keep the specificity of a
+   bare :root — the page's own <style> is linked after this file and must go on
+   overriding any token it wants, exactly as it could before. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --accent-text: color-mix(in srgb, var(--accent) 78%, #fff);
+    --bg: #101318;
+    --surface: #181c23;
+    --text: #eef1f6;
+    --text-muted: #9aa4b2;
+    --border: rgba(238, 241, 246, 0.12);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+:root:where([data-theme="dark"]) {
+  color-scheme: dark;
+  --accent-text: color-mix(in srgb, var(--accent) 78%, #fff);
+  --bg: #101318;
+  --surface: #181c23;
+  --text: #eef1f6;
+  --text-muted: #9aa4b2;
+  --border: rgba(238, 241, 246, 0.12);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+:root:where([data-theme="light"]) { color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+
+.shell-container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+.shell-section { padding: calc(var(--space) * 2) 0; }
+.shell-grid { display: grid; gap: var(--space); grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.shell-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: var(--space); }
+.shell-footer { padding: 24px 0 40px; color: var(--text-muted); font-size: 13px; }
+
+.shell-hero { padding: calc(var(--space) * 3) 0 calc(var(--space) * 2); }
+.shell-hero h1 { font-size: clamp(26px, 4vw, 40px); line-height: 1.15; margin: 0 0 10px; text-wrap: balance; }
+.shell-hero p { color: var(--text-muted); max-width: 60ch; margin: 0; }
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space);
+}
+
+.kpi { display: flex; flex-direction: column; gap: 4px; }
+.kpi .kpi-value { font-size: 28px; font-weight: 650; line-height: 1.1; }
+.kpi .kpi-label { font-size: 13px; color: var(--text-muted); }
+.kpi .kpi-delta { font-size: 12.5px; font-weight: 600; }
+.kpi .kpi-delta.up { color: #0a8f3c; }
+.kpi .kpi-delta.down { color: #cf3131; }
+
+table.shell-table { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.shell-table th {
+  text-align: left; font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--text-muted); font-weight: 600;
+}
+table.shell-table th, table.shell-table td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--border); }
+table.shell-table td.num, table.shell-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+table.shell-table tbody tr:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+
+.chart-box { width: 100%; min-height: 220px; }
+.chart-box svg { width: 100%; height: auto; display: block; }
+
+.muted { color: var(--text-muted); }
+.accent { color: var(--accent-text); }
+.shell-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--accent-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shell-fade { animation: shell-fade 400ms ease both; }
+  @keyframes shell-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+}
+
+</style>
+  
+  <style>
+    :root {
+      --accent: #ec4899;
+      --accent-contrast: #ffffff;
+      --abdao-gold: #f59e0b;
+      --abdao-gold-glow: rgba(245, 158, 11, 0.4);
+      --bg-dark: #0f081d;
+      --surface-dark: #1b1231;
+      --surface-elevated: #281a49;
+      --border-dark: #3c2968;
+      --text-light: #f8fafc;
+      --text-subtle: #cbd5e1;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 10%, #2e1065 0%, #150a2d 50%, #090314 100%);
+      color: var(--text-light);
+      min-height: 100vh;
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Floating background currency animation */
+    .money-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .money-particle {
+      position: absolute;
+      opacity: 0.15;
+      animation: floatUp 16s linear infinite;
+      user-select: none;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.22; }
+      90% { opacity: 0.22; }
+      100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+    }
+
+    .main-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 1rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Screen containers */
+    .screen {
+      display: none;
+      width: 100%;
+    }
+    .screen.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Header controls */
+    .top-controls {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Team Scoreboard Bar */
+    .scoreboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+    }
+    .team-badge-card {
+      background: var(--surface-dark);
+      border: 2px solid var(--border-dark);
+      border-radius: 12px;
+      padding: 0.65rem 0.75rem;
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .team-badge-card.is-active {
+      border-color: #facc15;
+      background: linear-gradient(135deg, #2f1d57, #3e216e);
+      box-shadow: 0 0 16px rgba(250, 204, 21, 0.45);
+      transform: translateY(-2px);
+    }
+    .team-name-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-weight: 700;
+      font-size: 0.92rem;
+      margin-bottom: 0.35rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .team-color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px currentColor;
+    }
+    .team-points {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fef08a;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .team-hints-row {
+      display: flex;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      margin-top: 0.3rem;
+      color: var(--text-subtle);
+    }
+    .hint-tag {
+      background: rgba(0, 0, 0, 0.35);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Game Question Box */
+    .game-card {
+      background: var(--surface-dark);
+      border: 1px solid var(--border-dark);
+      border-radius: 18px;
+      padding: 1.5rem;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .round-meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border-dark);
+      margin-bottom: 1rem;
+      font-size: 0.88rem;
+    }
+    .meta-tag {
+      background: rgba(236, 72, 153, 0.15);
+      color: #f472b6;
+      border: 1px solid rgba(236, 72, 153, 0.3);
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .current-team-turn-banner {
+      background: linear-gradient(90deg, #ec4899, #f59e0b);
+      color: #110520;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.95rem;
+    }
+    .question-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      line-height: 1.45;
+      margin: 0.75rem 0 1.25rem 0;
+      color: #ffffff;
+    }
+
+    /* Visual Data Element Box */
+    .visual-wrapper {
+      background: #110826;
+      border: 1px solid #432e74;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.4rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: auto;
+    }
+    .custom-chart-table {
+      width: 100%;
+      max-width: 500px;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+    .custom-chart-table th, .custom-chart-table td {
+      border: 1px solid #4c3282;
+      padding: 0.5rem 0.8rem;
+    }
+    .custom-chart-table th {
+      background: #2b1754;
+      color: #fcd34d;
+      font-weight: 700;
+    }
+    .custom-chart-table tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .bar-chart-flex {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.8rem;
+      height: 190px;
+      padding: 1rem 0.5rem 0.5rem 0.5rem;
+      width: 100%;
+      max-width: 520px;
+    }
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .bar-rect {
+      width: 100%;
+      max-width: 44px;
+      background: linear-gradient(180deg, #f43f5e, #ec4899);
+      border-radius: 6px 6px 0 0;
+      transition: height 0.4s ease;
+      position: relative;
+    }
+    .bar-val {
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      color: #fef08a;
+    }
+    .bar-label {
+      font-size: 0.74rem;
+      margin-top: 0.4rem;
+      text-align: center;
+      color: #cbd5e1;
+      max-width: 60px;
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+    /* Question Options */
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (min-width: 640px) {
+      .options-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .opt-btn {
+      background: var(--surface-elevated);
+      border: 2px solid var(--border-dark);
+      color: #ffffff;
+      padding: 1rem;
+      border-radius: 12px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      transition: all 0.2s ease;
+      line-height: 1.35;
+      min-height: 64px;
+    }
+    .opt-btn:hover:not(:disabled) {
+      border-color: #ec4899;
+      background: #342260;
+      transform: translateY(-2px);
+    }
+    .opt-letter {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fcd34d;
+      border-radius: 8px;
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .opt-btn.correct {
+      background: #065f46 !important;
+      border-color: #10b981 !important;
+      color: #ecfdf5 !important;
+      animation: pulseGreen 0.4s;
+    }
+    .opt-btn.wrong {
+      background: #7f1d1d !important;
+      border-color: #ef4444 !important;
+      color: #fef2f2 !important;
+    }
+    .opt-btn.eliminated {
+      opacity: 0.35;
+      text-decoration: line-through;
+      pointer-events: none;
+      background: #191228 !important;
+      border-color: #2b1f44 !important;
+    }
+
+    /* Actions Footer inside Game Card */
+    .game-actions-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border-dark);
+    }
+    .hints-group {
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    /* Cards Modal */
+    .cards-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 99;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .cards-modal-overlay.active {
+      display: flex;
+    }
+    .cards-popup {
+      background: var(--surface-dark);
+      border: 2px solid var(--border-dark);
+      border-radius: 20px;
+      padding: 1.5rem;
+      max-width: 440px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    }
+    .cards-deck {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .secret-card {
+      width: 85px;
+      height: 120px;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      border: 2px solid #c084fc;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #ffffff;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+      transition: all 0.2s;
+    }
+    .secret-card:hover {
+      transform: translateY(-6px) scale(1.05);
+      border-color: #facc15;
+    }
+
+    /* Start & Setup screens */
+    .hero-banner {
+      text-align: center;
+      padding: 2.5rem 1rem 1.5rem;
+    }
+    .logo-container {
+      width: 130px;
+      height: 130px;
+      margin: 0 auto 1.25rem;
+      filter: drop-shadow(0 10px 15px rgba(245, 158, 11, 0.4));
+      animation: gentleBounce 3s ease-in-out infinite;
+    }
+    @keyframes gentleBounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .gradient-title {
+      font-size: clamp(2.2rem, 6vw, 3.4rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+      background: linear-gradient(90deg, #fbbf24, #ec4899, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: #f59e0b;
+    }
+    .sub-title {
+      color: var(--text-subtle);
+      font-size: 1.1rem;
+      margin-bottom: 1.8rem;
+    }
+
+    /* Setup teams styling */
+    .teams-config-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-width: 560px;
+      margin: 0 auto 1.5rem;
+    }
+    .team-edit-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--surface-elevated);
+      padding: 0.6rem 0.9rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-dark);
+    }
+    .team-edit-input {
+      flex: 1;
+      background: #140d24;
+      border: 1px solid #453070;
+      color: #ffffff;
+      padding: 0.5rem 0.8rem;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .team-edit-input:focus {
+      outline: 2px solid #ec4899;
+    }
+
+    /* Podium Screen */
+    .podium-container {
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+    .podium-ranks {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 1rem;
+      margin: 2rem auto;
+      max-width: 600px;
+    }
+    .podium-place {
+      flex: 1;
+      background: var(--surface-dark);
+      border: 2px solid var(--border-dark);
+      border-radius: 16px 16px 8px 8px;
+      padding: 1rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .podium-1st {
+      order: 2;
+      height: 250px;
+      border-color: #eab308;
+      background: linear-gradient(180deg, #37230b, #1e1338);
+    }
+    .podium-2nd {
+      order: 1;
+      height: 200px;
+      border-color: #94a3b8;
+    }
+    .podium-3rd {
+      order: 3;
+      height: 170px;
+      border-color: #b45309;
+    }
+    .podium-badge {
+      font-size: 2.2rem;
+      margin-bottom: 0.2rem;
+    }
+    .podium-score {
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #fde047;
+      margin-top: auto;
+    }
+
+    /* Utility action buttons */
+    .btn-gold {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #1a0826 !important;
+      font-weight: 800;
+      border: none;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+    }
+    .btn-gold:hover {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      transform: translateY(-2px);
+    }
+    .btn-secondary-dark {
+      background: #251642;
+      border: 1px solid #4a3275;
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+    .btn-secondary-dark:hover {
+      background: #321d5a;
+      border-color: #63439b;
+    }
+
+    @media print {
+      .top-controls, .hints-group, .game-actions-bar, .money-bg {
+        display: none !important;
+      }
+      body {
+        background: white !important;
+        color: black !important;
+      }
+      .game-card {
+        border: 1px solid #ccc;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background floating currency icons -->
+  <div class="money-bg" id="moneyBg"></div>
+
+  <div class="main-wrapper">
+    <!-- Top audio & exit bar -->
+    <div class="top-controls">
+      <button class="btn btn-sm btn-secondary-dark" id="soundToggleBtn" title="Alternar som">🔊 Som Ativado</button>
+      <button class="btn btn-sm btn-secondary-dark" id="endGameDirectBtn" style="display: none;">🏁 Encerrar Jogo</button>
+    </div>
+
+    <!-- TELA 1: INÍCIO -->
+    <section id="screenIntro" class="screen active">
+      <div class="hero-banner">
+        <div class="logo-container">
+          <!-- Logo SVG de Moeda de Ouro Sorridente com Óculos e Notas -->
+          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+            <!-- Notas ao fundo -->
+            <rect x="10" y="32" width="46" height="26" rx="3" transform="rotate(-25 10 32)" fill="#10b981" stroke="#047857" stroke-width="2"/>
+            <circle cx="28" cy="38" r="5" fill="#34d399"/>
+            <rect x="46" y="16" width="46" height="26" rx="3" transform="rotate(22 46 16)" fill="#10b981" stroke="#047857" stroke-width="2"/>
+            <circle cx="70" cy="34" r="5" fill="#34d399"/>
+            <!-- Moeda dourada principal -->
+            <circle cx="50" cy="52" r="38" fill="url(#goldGrad)" stroke="#b45309" stroke-width="3"/>
+            <circle cx="50" cy="52" r="32" stroke="#fde047" stroke-width="2" stroke-dasharray="3 3"/>
+            <!-- Óculos escuros -->
+            <path d="M28 42 C 28 39, 44 39, 46 44 C 47 46, 45 52, 38 52 C 30 52, 28 47, 28 42 Z" fill="#0f172a"/>
+            <path d="M54 44 C 56 39, 72 39, 72 42 C 72 47, 70 52, 62 52 C 55 52, 53 46, 54 44 Z" fill="#0f172a"/>
+            <rect x="44" y="43" width="12" height="3" fill="#0f172a"/>
+            <!-- Brilho nos óculos -->
+            <path d="M31 43 L 42 47" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M57 43 L 68 47" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            <!-- Sorriso largo com cifrão ou dentes -->
+            <path d="M36 62 Q 50 74 64 62" stroke="#78350f" stroke-width="3.5" stroke-linecap="round" fill="#ffffff"/>
+            <!-- Bochechas rosadas -->
+            <circle cx="28" cy="58" r="4" fill="#fb7185" opacity="0.6"/>
+            <circle cx="72" cy="58" r="4" fill="#fb7185" opacity="0.6"/>
+            <!-- Moedinhas pequenas flutuando -->
+            <circle cx="20" cy="80" r="8" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/>
+            <text x="17.5" y="83" font-size="8" font-weight="bold" fill="#78350f">R$</text>
+            <circle cx="80" cy="78" r="9" fill="#fbbf24" stroke="#d97706" stroke-width="1.5"/>
+            <text x="77" y="81.5" font-size="9" font-weight="bold" fill="#78350f">R$</text>
+            <!-- Defs -->
+            <defs>
+              <linearGradient id="goldGrad" x1="20" y1="20" x2="80" y2="85" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#fef08a"/>
+                <stop offset="0.4" stop-color="#f59e0b"/>
+                <stop offset="1" stop-color="#d97706"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <h1 class="gradient-title">JOGO DO ABDÃO</h1>
+        <p class="sub-title">Probabilidade e Estatística • 9º ano • 150 questões</p>
+        <button class="btn btn-lg btn-gold" id="btnGoToConfig" style="padding: 0.9rem 2.5rem; font-size: 1.15rem;">
+          ▶ COMEÇAR
+        </button>
+      </div>
+    </section>
+
+    <!-- TELA 2: CONFIGURAÇÃO DE EQUIPES -->
+    <section id="screenConfig" class="screen">
+      <div class="panel" style="max-width: 640px; margin: 0 auto; background: var(--surface-dark); border: 1px solid var(--border-dark); border-radius: 16px; padding: 1.75rem;">
+        <h2 style="margin-top: 0; text-align: center; color: #fde047; font-size: 1.6rem;">Configuração de Equipes</h2>
+        <p style="text-align: center; color: var(--text-subtle); margin-bottom: 1.5rem; font-size: 0.95rem;">
+          Personalize os nomes das equipes participantes (2 a 6 equipes). Cada equipe terá 2 Cartas 🃏 e 2 Pulos ⏭️ por partida!
+        </p>
+
+        <div class="teams-config-list" id="teamsListContainer">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1.5rem;">
+          <button class="btn btn-sm btn-secondary-dark" id="btnAddTeam">➕ Adicionar Equipe</button>
+          <button class="btn btn-sm btn-secondary-dark" id="btnRemoveTeam">➖ Remover Equipe</button>
+        </div>
+
+        <div style="text-align: center;">
+          <button class="btn btn-lg btn-gold" id="btnStartGame" style="padding: 0.8rem 2.2rem; font-size: 1.1rem; width: 100%; max-width: 340px;">
+            COMEÇAR A JOGAR
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 3: JOGO / RODADA -->
+    <section id="screenGame" class="screen">
+      <!-- Placar de Equipes -->
+      <div class="scoreboard-grid" id="scoreboardContainer"></div>
+
+      <!-- Card da Questão -->
+      <div class="game-card">
+        <div class="round-meta-bar">
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <span class="meta-tag" id="roundInfoLabel">Rodada 1 de 30</span>
+            <span class="meta-tag" id="questionNumLabel" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; border-color: rgba(168, 85, 247, 0.4);">
+              Pergunta 1 de 150
+            </span>
+            <span class="meta-tag" id="categoryBadge" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border-color: rgba(59, 130, 246, 0.4);">
+              Conceitos
+            </span>
+          </div>
+
+          <div class="current-team-turn-banner" id="currentTeamTurnBanner">
+            <span>🎲 Vez de:</span>
+            <strong id="turnTeamName">Equipe 1</strong>
+          </div>
+        </div>
+
+        <h3 class="question-title" id="questionStatement">Carregando pergunta...</h3>
+
+        <!-- Elemento Visual (Tabela ou Gráfico) -->
+        <div class="visual-wrapper" id="visualContainer" style="display: none;"></div>
+
+        <!-- Alternativas -->
+        <div class="options-grid" id="optionsContainer"></div>
+
+        <!-- Barra inferior de ações e dicas -->
+        <div class="game-actions-bar">
+          <div class="hints-group">
+            <button class="btn btn-secondary-dark" id="btnUseCards" title="Elimina 1, 2 ou 3 alternativas erradas">
+              🃏 CARTAS <span id="cardsCountBadge">(2)</span>
+            </button>
+            <button class="btn btn-secondary-dark" id="btnSkipQuestion" title="Pula a pergunta sem perder a vez e joga a atual para o final">
+              ⏭️ PULAR <span id="skipsCountBadge">(2)</span>
+            </button>
+          </div>
+
+          <div>
+            <button class="btn btn-gold" id="btnNextQuestion" style="display: none; padding: 0.65rem 1.6rem; font-size: 1rem;">
+              PRÓXIMA PERGUNTA ➜
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TELA 4: PÓDIO FINAL -->
+    <section id="screenPodium" class="screen">
+      <div class="podium-container">
+        <h1 class="gradient-title" style="margin-bottom: 0.5rem;">🎉 FIM DE JOGO! 🎉</h1>
+        <p class="sub-title">Confira o grande pódio dos mestres da Probabilidade e Estatística!</p>
+
+        <div class="podium-ranks" id="podiumRanksContainer">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <div class="panel" style="max-width: 600px; margin: 1.5rem auto; background: var(--surface-dark); border: 1px solid var(--border-dark); border-radius: 12px; padding: 1.25rem;">
+          <h3 style="margin-top: 0; color: #fde047;">Classificação Geral</h3>
+          <div id="fullLeaderboardTable"></div>
+        </div>
+
+        <div style="margin-top: 2rem;">
+          <button class="btn btn-lg btn-gold" id="btnPlayAgain" style="padding: 0.8rem 2.5rem; font-size: 1.15rem;">
+            🔄 JOGAR NOVAMENTE
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL DE CARTAS 🃏 -->
+  <div class="cards-modal-overlay" id="cardsModal">
+    <div class="cards-popup">
+      <h3 style="margin: 0 0 0.5rem; color: #facc15; font-size: 1.4rem;">Escolha uma Carta da Sorte! 🃏</h3>
+      <p style="color: var(--text-subtle); font-size: 0.9rem; margin-bottom: 1rem;">
+        A carta revelará quantas alternativas erradas serão eliminadas nesta questão (1, 2 ou 3).
+      </p>
+
+      <div class="cards-deck">
+        <div class="secret-card" onclick="window.pickSecretCard(0)">❓</div>
+        <div class="secret-card" onclick="window.pickSecretCard(1)">❓</div>
+        <div class="secret-card" onclick="window.pickSecretCard(2)">❓</div>
+      </div>
+
+      <p id="cardResultMsg" style="font-weight: 700; color: #4ade80; min-height: 24px;"></p>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       1. BANCO DE DADOS DAS 150 QUESTÕES
+       Formato: Nº|Bloco|Enunciado|A|B|C|D|Índice Correto|Visual
+       ========================================================= */
+    const RAW_QUESTIONS_DATA = `1|Conceitos|O que é Estatística?|A ciência que estuda a coleta, organização, análise e interpretação de dados|A ciência que estuda apenas números inteiros|Um ramo da Biologia|O estudo de gráficos sem dados numéricos|0|
+2|Conceitos|Em Estatística, o que é a população?|Apenas uma parte dos elementos pesquisados|O conjunto de todos os elementos que possuem a característica em estudo|O resultado final de uma pesquisa|Um tipo de gráfico de barras|1|
+3|Conceitos|O que é uma amostra?|Todo o conjunto de dados de uma pesquisa|O maior valor encontrado nos dados|Uma parte representativa da população|A média aritmética dos dados|2|
+4|Conceitos|Uma variável qualitativa é aquela que:|É expressa por números|É expressa por atributos ou categorias (ex.: cor, sexo)|É sempre contínua|Não pode ser pesquisada|1|
+5|Conceitos|Uma variável quantitativa discreta é aquela que:|Assume valores inteiros e contáveis (ex.: número de filhos)|Assume valores em intervalos contínuos|É expressa por palavras|É sempre negativa|0|
+6|Conceitos|O que é um censo?|Pesquisa realizada apenas com uma amostra|Um gráfico de barras|O valor que mais se repete nos dados|Pesquisa realizada com toda a população|3|
+7|Conceitos|Em Estatística, o rol é:|A organização dos dados em ordem crescente ou decrescente|Um tipo de tabela de frequências|A média dos dados|O número total de dados coletados|0|
+8|Conceitos|Uma variável quantitativa contínua é aquela que:|Assume apenas valores inteiros|Assume qualquer valor dentro de um intervalo (ex.: altura, peso)|É expressa por categorias|É sempre igual à moda|1|
+9|Conceitos|A frequência absoluta de um valor é:|O número de vezes que esse valor aparece no conjunto de dados|A porcentagem que esse valor representa|A soma de todos os valores|A média aritmética dos dados|0|
+10|Conceitos|A frequência relativa de um valor é:|O maior valor do conjunto|A razão entre a frequência absoluta e o total de dados|A soma de todas as frequências|A mediana dos dados|1|
+11|Conceitos|Dados primários são aqueles:|Coletados diretamente pelo pesquisador|Já publicados por outras pessoas|Inventados para completar a pesquisa|Sempre numéricos|0|
+12|Conceitos|A pesquisa por amostragem é preferível ao censo quando:|A população é muito pequena|A população é muito grande e o custo de pesquisar todos é alto|Não existem dados disponíveis|Em qualquer situação, sem exceção|1|
+13|Conceitos|Em uma pesquisa, a variável 'número de irmãos' é classificada como:|Qualitativa nominal|Quantitativa discreta|Quantitativa contínua|Qualitativa ordinal|1|
+14|Conceitos|A variável 'cor dos olhos' é classificada como:|Quantitativa|Qualitativa|Contínua|Numérica|1|
+15|Conceitos|Para agrupar dados contínuos em uma tabela de distribuição de frequências, utilizamos:|Intervalos de classe|Apenas a moda|Gráfico de setores|A mediana|0|
+16|Conceitos|A amplitude total de um conjunto de dados é:|A soma de todos os valores|A média aritmética|A frequência do valor mais comum|A diferença entre o maior e o menor valor|3|
+17|Conceitos|Em uma distribuição de frequências com classes, o ponto médio de uma classe é:|A média entre o limite inferior e o limite superior da classe|O valor que mais se repete na classe|A amplitude da classe|O total de dados da tabela|0|
+18|Conceitos|Sobre o número de classes em uma distribuição de frequências, é correto afirmar que:|Deve ser sempre igual a 5|Deve ser escolhido para organizar bem os dados, geralmente entre 5 e 20 classes|Deve ser sempre igual ao total de dados|Deve ser sempre igual a 1|1|
+19|Conceitos|Uma amostra é considerada representativa quando:|Contém todos os elementos da população|Reflete as características da população de forma proporcional|É escolhida sem nenhum critério|É sempre muito pequena|1|
+20|Conceitos|A diferença entre variáveis quantitativas discretas e contínuas é que:|As discretas assumem valores contáveis e as contínuas assumem valores em intervalos|As discretas são qualitativas|As contínuas são sempre inteiras|Não existe diferença entre elas|0|
+21|Tabelas|Em uma tabela de frequências, a coluna de frequência absoluta indica:|O número de vezes que cada valor aparece|A porcentagem de cada valor|A média dos valores|O tipo de gráfico a ser usado|0|
+22|Tabelas|Em uma turma de 25 alunos, 5 tiraram nota 8. A frequência absoluta da nota 8 é:|25|5|8|20|1|
+23|Tabelas|Observe a tabela abaixo. O total de alunos da turma é:|24|16|20|10|2|TABELA:Nota|Frequência;6|4;7|6;8|10
+24|Tabelas|Observe a tabela abaixo. A nota com maior frequência é:|6|7|8|4|2|TABELA:Nota|Frequência;6|4;7|6;8|10
+25|Tabelas|Um valor tem frequência absoluta 10 em um total de 50 dados. Sua frequência relativa é:|10%|20%|50%|25%|1|
+26|Tabelas|Observe a tabela abaixo. O total de entrevistados é:|28|30|25|20|0|TABELA:Esporte|Frequência;Futebol|12;Vôlei|8;Basquete|5;Natação|3
+27|Tabelas|Observe a tabela abaixo. O esporte com menor preferência é:|Futebol|Vôlei|Basquete|Natação|3|TABELA:Esporte|Frequência;Futebol|12;Vôlei|8;Basquete|5;Natação|3
+28|Tabelas|A frequência acumulada de um valor em uma tabela é:|A soma das frequências absolutas até aquele valor|A frequência multiplicada por 100|O maior valor da tabela|A média dos valores|0|
+29|Tabelas|Observe a tabela abaixo. A porcentagem de alunos com 12 anos é:|30%|25%|40%|50%|2|TABELA:Idade|Frequência;10 anos|5;11 anos|8;12 anos|12;13 anos|5
+30|Tabelas|Observe a tabela abaixo. A frequência acumulada até a idade 11 é:|8|5|13|25|2|TABELA:Idade|Frequência;10 anos|5;11 anos|8;12 anos|12;13 anos|5
+31|Tabelas|Observe a tabela abaixo. Quantos alunos tiraram nota maior ou igual a 7?|15|12|21|27|0|TABELA:Nota|Frequência;5|6;6|9;7|12;8|3
+32|Tabelas|Em uma pesquisa com 40 pessoas sobre o meio de transporte usado, 10 usam ônibus. A frequência relativa de quem usa ônibus é:|10%|25%|40%|50%|1|
+33|Tabelas|Observe a tabela abaixo. O total de pessoas pesquisadas é:|33|30|35|25|2|TABELA:Nº de irmãos|Frequência;0|10;1|15;2|8;3|2
+34|Tabelas|Observe a tabela abaixo. A porcentagem de pessoas com exatamente 1 irmão é:|15%|30%|Aproximadamente 42,9%|50%|2|TABELA:Nº de irmãos|Frequência;0|10;1|15;2|8;3|2
+35|Tabelas|Uma tabela mostra que 60% dos 50 alunos de uma escola praticam esporte. O número de alunos que praticam esporte é:|30|25|40|20|0|
+36|Tabelas|Observe a tabela abaixo. O total de dados é:|20|14|18|16|2|TABELA:Altura (cm)|Frequência;150 a 155|4;155 a 160|8;160 a 165|6
+37|Tabelas|Observe a tabela abaixo. A frequência relativa da idade 17, em porcentagem, é:|25%|40%|35%|30%|2|TABELA:Idade|Frequência;15|6;16|10;17|14;18|10
+38|Tabelas|Em uma tabela com 80 dados, a frequência acumulada do 3º valor é 45. Isso significa que:|45 dados são menores ou iguais a esse valor|45 dados são maiores que esse valor|O 3º valor aparece 45 vezes|Faltam 45 dados na tabela|0|
+39|Tabelas|Observe a tabela abaixo. O ponto médio da classe '20 a 30' é:|20|30|25|15|2|TABELA:Classe|Frequência;0 a 10|5;10 a 20|12;20 a 30|8;30 a 40|5
+40|Tabelas|Observe a tabela abaixo. A frequência acumulada até a classe '20 a 30' é:|17|20|25|30|2|TABELA:Classe|Frequência;0 a 10|5;10 a 20|12;20 a 30|8;30 a 40|5
+41|Tabelas|Uma pesquisa com 200 pessoas mostrou que 45% preferem café, 35% preferem chá e o restante prefere suco. O número de pessoas que preferem suco é:|40|30|50|20|0|
+42|Tabelas|Observe a tabela abaixo. A porcentagem de alunos que acertaram 3 ou mais questões é:|30%|25%|50%|40%|2|TABELA:Nº de acertos|Frequência;0|2;1|5;2|8;3|12;4|3
+43|Gráficos|Um gráfico de barras é mais adequado para:|Comparar categorias ou valores entre si|Mostrar a variação de um valor ao longo do tempo|Calcular a média|Ordenar dados em ordem crescente|0|
+44|Gráficos|Um gráfico de linhas é mais adequado para:|Comparar categorias isoladas|Mostrar a evolução de um valor ao longo do tempo|Representar partes de um todo|Calcular a mediana|1|
+45|Gráficos|Um gráfico de setores (pizza) é mais adequado para:|Mostrar a evolução temporal|Comparar alturas|Mostrar a proporção de cada parte em relação ao todo|Ordenar dados|2|
+46|Gráficos|Em um gráfico de barras, a barra mais alta representa:|O valor com maior frequência|O valor com menor frequência|A média dos dados|O total de dados|0|
+47|Gráficos|Observe o gráfico abaixo. O dia com maior venda foi:|Quarta-feira|Segunda-feira|Terça-feira|Sexta-feira|3|BARRA:Segunda:10;Terça:15;Quarta:20;Quinta:15;Sexta:25
+48|Gráficos|Observe o gráfico abaixo. O total de vendas na semana foi:|85|80|90|75|0|BARRA:Segunda:10;Terça:15;Quarta:20;Quinta:15;Sexta:25
+49|Gráficos|Observe o gráfico abaixo. Um setor que ocupa 50% do círculo representa um ângulo de:|90°|360°|180°|45°|2|PIZZA:Setor 50%:50;Restante:50
+50|Gráficos|Observe o gráfico abaixo. Um setor que ocupa 25% do círculo representa um ângulo de:|180°|45°|90°|60°|2|PIZZA:Setor 25%:25;Restante:75
+51|Gráficos|Observe o gráfico abaixo. A temperatura máxima do dia foi:|28°|27°|30°|25°|2|LINHA:8h:20;10h:25;12h:28;14h:30;16h:27
+52|Gráficos|Observe o gráfico abaixo. Entre quais horários a temperatura mais subiu?|Entre 8h e 10h|Entre 10h e 12h|Entre 12h e 14h|Entre 14h e 16h|0|LINHA:8h:20;10h:25;12h:28;14h:30;16h:27
+53|Gráficos|Observe o gráfico abaixo. O ângulo do setor 'futebol' é:|108°|72°|144°|36°|2|PIZZA:Futebol:40;Vôlei:30;Basquete:20;Natação:10
+54|Gráficos|Observe o gráfico abaixo. O ângulo do setor 'natação' é:|72°|108°|36°|144°|2|PIZZA:Futebol:40;Vôlei:30;Basquete:20;Natação:10
+55|Gráficos|Observe o gráfico abaixo. Quantos livros Ana, Bruno e Diego leram juntos?|15|18|14|12|0|BARRA:Ana:4;Bruno:6;Carla:8;Diego:5
+56|Gráficos|Observe o gráfico abaixo. A diferença entre quem leu mais e quem leu menos é:|2|3|4|5|2|BARRA:Ana:4;Bruno:6;Carla:8;Diego:5
+57|Gráficos|Observe o gráfico abaixo. O mês de menor lucro foi:|Janeiro|Fevereiro|Março|Abril|2|LINHA:Janeiro:1000;Fevereiro:1200;Março:900;Abril:1500
+58|Gráficos|Observe o gráfico abaixo. O lucro total no quadrimestre foi:|4600|4000|4500|4700|0|LINHA:Janeiro:1000;Fevereiro:1200;Março:900;Abril:1500
+59|Gráficos|Observe o gráfico abaixo. O número de alunos em Exatas é:|90|72|108|120|2|PIZZA:Ciências:25;Exatas:30;Humanas:20;Artes:25
+60|Gráficos|Observe o gráfico abaixo. O ângulo do setor 'Humanas' é:|90°|108°|72°|60°|2|PIZZA:Ciências:25;Exatas:30;Humanas:20;Artes:25
+61|Gráficos|Observe o gráfico abaixo. A média das notas desses alunos é:|6,5|7,5|7|8|2|BARRA:Aluno 1:7;Aluno 2:5;Aluno 3:9;Aluno 4:6;Aluno 5:8
+62|Gráficos|Observe o gráfico abaixo. O crescimento populacional entre 2020 e 2025 foi de:|2.000|4.000|3.000|1.000|2|LINHA:2010:10000;2015:12000;2020:11000;2025:14000
+63|Gráficos|Observe o gráfico abaixo. Um setor com ângulo de 90° representa qual porcentagem do total?|50%|10%|25%|75%|2|PIZZA:Setor 90°:25;Restante:75
+64|Gráficos|Observe o gráfico abaixo. Se cada unidade vale R$ 10, a receita total é:|R$ 1.300|R$ 1.500|R$ 1.400|R$ 1.200|2|BARRA:Produto A:30;Produto B:45;Produto C:25;Produto D:40
+65|Média|A média aritmética dos números 4, 6 e 8 é:|6|5|7|18|0|
+66|Média|A média aritmética de 10, 20 e 30 é:|15|20|25|30|1|
+67|Média|A média aritmética dos números 2, 3, 4 e 5 é:|4|3|3,5|4,5|2|
+68|Média|A média aritmética de 5, 5, 5 e 5 é:|20|4|5|10|2|
+69|Média|Um aluno obteve notas 7, 8 e 9 em três provas. Sua média é:|7,5|8,5|8|9|2|
+70|Média|A média aritmética de 1, 2, 3, 4 e 5 é:|2,5|3,5|3|4|2|
+71|Média|A média aritmética de 0, 10 e 20 é:|15|5|10|30|2|
+72|Média|A média aritmética de 6, 9 e 12 é:|8|10|9|27|2|
+73|Média|A média aritmética dos números 3, 7, 8 e 10 é:|6,5|7,5|7|8|2|
+74|Média|Observe a tabela abaixo. A média das notas é:|6|6,5|6,3|7|2|TABELA:Nota|Frequência;5|2;6|3;7|5
+75|Média|A média ponderada de 6 com peso 2 e 8 com peso 3 é:|7|7,5|7,2|8|2|
+76|Média|A média aritmética de 12, 15, 18 e 21 é:|16|17|16,5|15,5|2|
+77|Média|A média dos números 2, 4, 6, 8 e 10 é:|5|7|6|8|2|
+78|Média|Observe a tabela abaixo. A idade média é:|11|11,5|11,3|12|2|TABELA:Idade|Frequência;10|4;11|6;12|10
+79|Média|A média aritmética de 100, 200 e 300 é:|150|250|200|300|2|
+80|Média|Um time marcou 2, 3, 1, 4 e 5 gols em cinco partidas. A média de gols por partida é:|2,5|3,5|3|4|2|
+81|Média|A média aritmética de cinco números é 8. Se quatro deles são 6, 7, 9 e 10, o quinto número é:|7|9|8|6|2|
+82|Média|Observe a tabela abaixo. Usando o ponto médio de cada classe, a média aproximada é:|15|20|18|17|2|TABELA:Classe|Frequência;0 a 10|4;10 a 20|6;20 a 30|10
+83|Média|A média ponderada de 5 com peso 1, 7 com peso 2 e 9 com peso 3 é:|7|8|7,67|7,5|2|
+84|Média|A média aritmética de 8 números é 12. A soma desses números é:|20|84|96|108|2|
+85|Média|Em uma turma, a média de 10 meninos é 6 e a média de 15 meninas é 8. A média da turma toda é:|7|7,5|7,2|6,8|2|
+86|Média|A média aritmética de 1, 3, 5, 7, 9 e 11 é:|5,5|6,5|6|7|2|
+87|Média|Observe a tabela abaixo. A média de acertos é:|3,5|2,5|3|4|2|TABELA:Nº de acertos|Frequência;2|5;3|10;4|5
+88|Média|A média aritmética de 3, 8 e 13 é:|7|9|8|24|2|
+89|Mediana|A mediana de um conjunto de dados é:|O valor central quando os dados estão ordenados|O valor que mais se repete|A média aritmética|O maior valor|0|
+90|Mediana|Para calcular a mediana, os dados devem estar:|Em qualquer ordem|Ordenados (crescente ou decrescente)|Sempre em ordem decrescente|Agrupados em classes|1|
+91|Mediana|A mediana dos números 3, 7, 9 é:|3|9|7|6|2|
+92|Mediana|A mediana dos números 1, 2, 3, 4, 5 é:|2|4|3|5|2|
+93|Mediana|A mediana dos números 10, 20, 30, 40, 50 é:|20|40|30|25|2|
+94|Mediana|A mediana dos números 5, 1, 9, 3, 7 (após ordenar) é:|3|7|5|9|2|
+95|Mediana|A mediana dos números 2, 4, 6, 8 é:|4|6|5|4,5|2|
+96|Mediana|A mediana dos números 3, 5, 7, 9 é:|5|7|6|6,5|2|
+97|Mediana|A mediana dos números 12, 15, 18, 21, 24 é:|15|21|18|16,5|2|
+98|Mediana|A mediana dos números 4, 8, 12, 16 é:|8|12|10|9|2|
+99|Mediana|Observe a tabela abaixo. A mediana é:|3|4|3,5|2|2|TABELA:Valor|Frequência;2|2;3|3;4|5
+100|Mediana|A mediana dos números 7, 3, 9, 5, 11, 13 (após ordenar) é:|9|7|8|10|2|
+101|Mediana|A mediana dos números 1, 1, 2, 3, 3, 3, 4 é:|2|2,5|3|4|2|
+102|Mediana|Observe a tabela abaixo. A mediana das idades é:|10|12|11|11,5|2|TABELA:Idade|Frequência;10|3;11|5;12|2
+103|Mediana|A mediana dos números 20, 30, 40, 50, 60, 70 é:|40|50|45|55|2|
+104|Mediana|A mediana dos números 5, 5, 6, 7, 8, 8, 9 é:|6|8|7|6,5|2|
+105|Mediana|A mediana dos números 14, 18, 22, 26, 30, 34 é:|22|26|24|25|2|
+106|Mediana|A mediana de um conjunto de 9 números é o valor que ocupa qual posição, após ordenar?|4ª posição|9ª posição|5ª posição|1ª posição|2|
+107|Mediana|Observe a tabela abaixo. A mediana é:|1|3|2|2,5|2|TABELA:Valor|Frequência;1|4;2|6;3|4
+108|Mediana|A mediana dos números 3, 6, 9, 12, 15, 18, 21, 24 é:|12|15|13,5|13|2|
+109|Mediana|A mediana de um conjunto de 6 números é:|O valor da 3ª posição|O valor da 4ª posição|A média dos valores que ocupam a 3ª e a 4ª posição|O valor da 6ª posição|2|
+110|Mediana|Observe a tabela abaixo. A mediana é:|2,5|2|3|3,5|2|TABELA:Nº de acertos|Frequência;1|2;2|4;3|6;4|2
+111|Moda|A moda de um conjunto de dados é:|O valor que mais se repete|O valor central|A média aritmética|O menor valor|0|
+112|Moda|A moda dos números 2, 3, 3, 4, 5 é:|2|3|4|5|1|
+113|Moda|A moda dos números 1, 1, 2, 2, 2, 3 é:|1|3|2|Não existe|2|
+114|Moda|A moda dos números 5, 7, 7, 7, 9, 9 é:|5|9|7|8|2|
+115|Moda|A moda dos números 4, 4, 6, 6, 6, 8 é:|4|8|6|5|2|
+116|Moda|A moda dos números 10, 20, 20, 30, 30, 30 é:|20|10|30|25|2|
+117|Moda|Quando todos os valores aparecem com a mesma frequência, dizemos que o conjunto é:|Bimodal|Unimodal|Amodal (não possui moda)|Multimodal|2|
+118|Moda|A moda dos números 3, 5, 3, 5, 7 é:|3|5|3 e 5 (bimodal)|7|2|
+119|Moda|Observe a tabela abaixo. A moda é:|6|7|6 e 7 (bimodal)|8|2|TABELA:Nota|Frequência;5|3;6|8;7|8;8|2
+120|Moda|A moda dos números 1, 2, 2, 3, 3, 3, 4, 4, 4, 4 é:|3|2|4|1|2|
+121|Moda|Observe a tabela abaixo. A moda é:|11|13|11 e 13 (bimodal)|12|2|TABELA:Idade|Frequência;10|5;11|9;12|7;13|9
+122|Moda|A moda dos números 2, 4, 6, 8, 10 é:|6|2|Não existe (amodal)|10|2|
+123|Moda|A moda dos números 0, 0, 1, 1, 1, 2, 2, 3 é:|0|2|1|3|2|
+124|Moda|Observe a tabela abaixo. A moda é:|0|2|1|3|2|TABELA:Nº de irmãos|Frequência;0|12;1|18;2|10;3|5
+125|Moda|A moda dos números 5, 5, 6, 7, 7, 7, 8, 8, 8, 8 é:|7|5|8|6|2|
+126|Moda|Um conjunto com duas modas é chamado de:|Unimodal|Amodal|Bimodal|Multimodal|2|
+127|Moda|Observe a tabela abaixo. A classe modal é:|0 a 10|20 a 30|10 a 20|30 a 40|2|TABELA:Classe|Frequência;0 a 10|5;10 a 20|12;20 a 30|9;30 a 40|4
+128|Moda|A moda dos números 2, 2, 3, 3, 4, 4, 5, 5, 6, 6 é:|2|6|Não existe (amodal)|4|2|
+129|Moda|Observe a tabela abaixo. A moda é:|3|4|3 e 4 (bimodal)|1|2|TABELA:Valor|Frequência;1|6;2|6;3|10;4|10;5|3
+130|Moda|A moda dos números 7, 7, 8, 8, 8, 9, 9, 9, 9, 10, 10 é:|8|7|9|10|2|
+131|Moda|Em uma distribuição de frequências com classes, a classe modal é:|A classe com menor frequência|A primeira classe|A classe com maior frequência|A última classe|2|
+132|Moda|Observe a tabela abaixo. A classe modal é:|20 a 30|30 a 40|20 a 30 e 30 a 40 (bimodal)|10 a 20|2|TABELA:Classe|Frequência;10 a 20|8;20 a 30|15;30 a 40|15;40 a 50|6
+133|Moda|A moda dos números 1, 1, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4 é:|3|1|4|2|2|
+134|Moda|Um conjunto em que todos os valores são diferentes (nenhum se repete) é:|Unimodal|Bimodal|Amodal|Multimodal|2|
+135|Probabilidade|A probabilidade de um evento é calculada por:|Número de casos favoráveis ÷ número de casos possíveis|Número de casos possíveis ÷ número de casos favoráveis|Número de casos favoráveis × número de casos possíveis|Soma dos casos favoráveis e possíveis|0|
+136|Probabilidade|A probabilidade de sair 'cara' ao lançar uma moeda honesta é:|1|1/2|1/4|0|1|
+137|Probabilidade|A probabilidade de sair o número 3 ao lançar um dado honesto é:|1/3|1/2|1/6|1/4|2|
+138|Probabilidade|Ao lançar um dado honesto, a probabilidade de sair um número par é:|1/3|1/6|1/2|1/4|2|
+139|Probabilidade|A probabilidade de um evento impossível é:|1|1/2|0|100%|2|
+140|Probabilidade|A probabilidade de um evento certo é:|0|1/2|1|1/4|2|
+141|Probabilidade|De um baralho comum de 52 cartas, a probabilidade de retirar uma carta de copas é:|1/13|1/2|1/4|1/26|2|
+142|Probabilidade|Se a probabilidade de um evento A é 0,3, a probabilidade de NÃO ocorrer A é:|0,3|0,6|0,7|1,3|2|
+143|Probabilidade|Ao lançar um dado honesto, a probabilidade de sair um número maior que 4 é:|1/2|1/6|1/3|2/3|2|
+144|Probabilidade|Em uma urna há 3 bolas vermelhas e 2 bolas azuis. Retirando uma bola ao acaso, a probabilidade de ela ser vermelha é:|2/5|1/2|3/5|1/5|2|
+145|Probabilidade|A probabilidade de sair 'coroa' ao lançar uma moeda honesta é:|1/4|1/3|1/2|1|2|
+146|Probabilidade|Ao lançar um dado honesto, a probabilidade de sair um número ímpar é:|1/3|1/6|1/2|2/3|2|
+147|Probabilidade|Lançando duas moedas honestas, a probabilidade de saírem duas caras é:|1/2|1/3|1/4|1/8|2|
+148|Probabilidade|Lançando dois dados honestos, a probabilidade de a soma ser 7 é:|1/12|1/36|1/6|1/18|2|
+149|Probabilidade|Uma roleta tem 8 setores iguais, dos quais 3 são verdes. Girando a roleta uma vez, a probabilidade de parar em um setor verde é:|1/8|3/5|3/8|1/3|2|
+150|Probabilidade|Em uma urna há 3 bolas verdes, 4 vermelhas e 5 azuis. Retirando uma bola ao acaso, a probabilidade de ela ser verde é:|1/3|3/5|1/4|1/6|2|`;
+
+    // Parse question bank
+    const ALL_QUESTIONS = RAW_QUESTIONS_DATA.trim().split("\n").map(line => {
+      const parts = line.split("|");
+      const id = parseInt(parts[0], 10);
+      const bloco = parts[1];
+      const enunciado = parts[2];
+      const optA = parts[3];
+      const optB = parts[4];
+      const optC = parts[5];
+      const optD = parts[6];
+      const correctIdx = parseInt(parts[7], 10);
+      const rawOptions = [optA, optB, optC, optD];
+      const correctText = rawOptions[correctIdx];
+      const visual = parts.slice(8).join("|").trim();
+      return {
+        id,
+        bloco,
+        enunciado,
+        options: rawOptions,
+        correctText,
+        visual: visual || null
+      };
+    });
+
+    /* =========================================================
+       2. WEB AUDIO API SYNTHESIZER (SEM DEPENDÊNCIAS EXTERNAS)
+       ========================================================= */
+    let audioCtx = null;
+    let soundEnabled = true;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+          audioCtx = new AudioContextClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+
+        if (type === "correct") {
+          // Happy chime: C5 -> E5 -> G5
+          const freqs = [523.25, 659.25, 783.99];
+          freqs.forEach((f, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(f, now + idx * 0.1);
+            gain.gain.setValueAtTime(0.18, now + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + idx * 0.1);
+            osc.stop(now + idx * 0.1 + 0.36);
+          });
+        } else if (type === "wrong") {
+          // Low buzz
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.linearRampToValueAtTime(95, now + 0.35);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.36);
+        } else if (type === "flip") {
+          // Card flip whoosh
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.13);
+        } else if (type === "skip") {
+          // Slide down tone
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(600, now);
+          osc.frequency.exponentialRampToValueAtTime(220, now + 0.2);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.21);
+        }
+      } catch (err) {
+        console.warn("Audio error:", err);
+      }
+    }
+
+    /* =========================================================
+       3. ESTADO GLOBAL DO JOGO
+       ========================================================= */
+    const TEAM_PALETTES = [
+      { name: "Equipe 1", color: "#ef4444" }, // Vermelho
+      { name: "Equipe 2", color: "#3b82f6" }, // Azul
+      { name: "Equipe 3", color: "#10b981" }, // Verde
+      { name: "Equipe 4", color: "#f97316" }, // Laranja
+      { name: "Equipe 5", color: "#a855f7" }, // Roxo
+      { name: "Equipe 6", color: "#06b6d4" }  // Ciano
+    ];
+
+    let gameState = {
+      teams: [],
+      currentTeamIndex: 0,
+      deck: [], // shuffled questions
+      currentQuestion: null,
+      questionCounter: 0, // 1 to 150
+      totalRounds: 30,
+      currentRound: 1,
+      answeredInCurrentTurn: false,
+      usedCardsThisQuestion: false
+    };
+
+    // Fisher-Yates shuffle
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    /* =========================================================
+       4. INTERFACE E TELAS
+       ========================================================= */
+    function showScreen(screenId) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      const target = document.getElementById(screenId);
+      if (target) target.classList.add("active");
+
+      const exitBtn = document.getElementById("endGameDirectBtn");
+      if (exitBtn) {
+        exitBtn.style.display = screenId === "screenGame" ? "inline-flex" : "none";
+      }
+    }
+
+    /* Setup Teams Screen */
+    let tempTeams = [
+      { id: 1, name: "Equipe 1", color: "#ef4444" },
+      { id: 2, name: "Equipe 2", color: "#3b82f6" },
+      { id: 3, name: "Equipe 3", color: "#10b981" },
+      { id: 4, name: "Equipe 4", color: "#f97316" },
+      { id: 5, name: "Equipe 5", color: "#a855f7" }
+    ];
+
+    function renderTeamConfigList() {
+      const list = document.getElementById("teamsListContainer");
+      list.innerHTML = "";
+      tempTeams.forEach((team, index) => {
+        const row = document.createElement("div");
+        row.className = "team-edit-row";
+        row.innerHTML = `
+          <span class="team-color-dot" style="background:${team.color}; color:${team.color}"></span>
+          <span style="font-weight:700; width:70px;">#${index + 1}</span>
+          <input type="text" class="team-edit-input" value="${team.name}" maxlength="22" data-idx="${index}" aria-label="Nome da Equipe ${index + 1}">
+        `;
+        list.appendChild(row);
+      });
+
+      // Update inputs listeners
+      list.querySelectorAll(".team-edit-input").forEach(input => {
+        input.addEventListener("input", (e) => {
+          const idx = parseInt(e.target.getAttribute("data-idx"), 10);
+          tempTeams[idx].name = e.target.value.trim() || `Equipe ${idx + 1}`;
+        });
+      });
+
+      // Button state
+      document.getElementById("btnAddTeam").disabled = tempTeams.length >= 6;
+      document.getElementById("btnRemoveTeam").disabled = tempTeams.length <= 2;
+    }
+
+    function initGameWithTeams() {
+      gameState.teams = tempTeams.map(t => ({
+        id: t.id,
+        name: t.name || `Equipe ${t.id}`,
+        color: t.color,
+        score: 0,
+        cardsLeft: 2,
+        skipsLeft: 2,
+        correctCount: 0,
+        answeredCount: 0
+      }));
+
+      gameState.currentTeamIndex = 0;
+      gameState.deck = shuffleArray(ALL_QUESTIONS);
+      gameState.questionCounter = 0;
+      gameState.totalRounds = Math.ceil(150 / gameState.teams.length);
+      gameState.currentRound = 1;
+
+      renderScoreboard();
+      showScreen("screenGame");
+      nextQuestionTurn();
+    }
+
+    /* Scoreboard */
+    function renderScoreboard() {
+      const sb = document.getElementById("scoreboardContainer");
+      sb.innerHTML = "";
+
+      gameState.teams.forEach((team, idx) => {
+        const isCurrent = idx === gameState.currentTeamIndex;
+        const card = document.createElement("div");
+        card.className = `team-badge-card ${isCurrent ? "is-active" : ""}`;
+        card.style.borderColor = isCurrent ? "#facc15" : team.color + "66";
+
+        const cardsTag = team.cardsLeft > 0 ? `🃏×${team.cardsLeft}` : `🃏✖`;
+        const skipsTag = team.skipsLeft > 0 ? `⏭️×${team.skipsLeft}` : `⏭️✖`;
+
+        card.innerHTML = `
+          <div class="team-name-row" title="${team.name}">
+            <span class="team-color-dot" style="background:${team.color}; color:${team.color}"></span>
+            <span style="color:#ffffff;">${team.name}</span>
+          </div>
+          <div class="team-points">🪙 ${team.score}</div>
+          <div class="team-hints-row">
+            <span class="hint-tag" style="${team.cardsLeft === 0 ? 'opacity:0.5' : ''}">${cardsTag}</span>
+            <span class="hint-tag" style="${team.skipsLeft === 0 ? 'opacity:0.5' : ''}">${skipsTag}</span>
+          </div>
+        `;
+        sb.appendChild(card);
+      });
+
+      const currentTeam = gameState.teams[gameState.currentTeamIndex];
+      const banner = document.getElementById("currentTeamTurnBanner");
+      banner.style.background = `linear-gradient(90deg, ${currentTeam.color}, #f59e0b)`;
+      document.getElementById("turnTeamName").textContent = currentTeam.name;
+
+      // Update button labels & disabled states
+      const cardBtn = document.getElementById("btnUseCards");
+      const skipBtn = document.getElementById("btnSkipQuestion");
+      const cardBadge = document.getElementById("cardsCountBadge");
+      const skipBadge = document.getElementById("skipsCountBadge");
+
+      cardBadge.textContent = currentTeam.cardsLeft > 0 ? `(${currentTeam.cardsLeft})` : "✖";
+      skipBadge.textContent = currentTeam.skipsLeft > 0 ? `(${currentTeam.skipsLeft})` : "✖";
+
+      cardBtn.disabled = currentTeam.cardsLeft <= 0 || gameState.answeredInCurrentTurn || gameState.usedCardsThisQuestion;
+      skipBtn.disabled = currentTeam.skipsLeft <= 0 || gameState.answeredInCurrentTurn;
+    }
+
+    /* Render Visual Aids (TABELA, BARRA, LINHA, PIZZA) */
+    function renderVisualAid(visualStr) {
+      const container = document.getElementById("visualContainer");
+      if (!visualStr) {
+        container.style.display = "none";
+        container.innerHTML = "";
+        return;
+      }
+
+      container.style.display = "flex";
+      container.innerHTML = "";
+
+      const colonIdx = visualStr.indexOf(":");
+      const type = visualStr.substring(0, colonIdx).toUpperCase();
+      const content = visualStr.substring(colonIdx + 1);
+
+      if (type === "TABELA") {
+        // TABELA:Col1|Col2;v1|v2;v3|v4
+        const rows = content.split(";").map(r => r.split("|"));
+        const table = document.createElement("table");
+        table.className = "custom-chart-table";
+
+        if (rows.length > 0) {
+          const thead = document.createElement("thead");
+          const trHead = document.createElement("tr");
+          rows[0].forEach(cell => {
+            const th = document.createElement("th");
+            th.textContent = cell;
+            trHead.appendChild(th);
+          });
+          thead.appendChild(trHead);
+          table.appendChild(thead);
+
+          const tbody = document.createElement("tbody");
+          for (let i = 1; i < rows.length; i++) {
+            const tr = document.createElement("tr");
+            rows[i].forEach(cell => {
+              const td = document.createElement("td");
+              td.textContent = cell;
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          }
+          table.appendChild(tbody);
+        }
+        container.appendChild(table);
+
+      } else if (type === "BARRA") {
+        // BARRA:rótulo:valor;rótulo:valor
+        const items = content.split(";").map(pair => {
+          const parts = pair.split(":");
+          return { label: parts[0], val: parseFloat(parts[1]) || 0 };
+        });
+        const maxVal = Math.max(...items.map(i => i.val), 1);
+
+        const barFlex = document.createElement("div");
+        barFlex.className = "bar-chart-flex";
+
+        items.forEach(item => {
+          const col = document.createElement("div");
+          col.className = "bar-col";
+          const pctHeight = Math.round((item.val / maxVal) * 100);
+
+          col.innerHTML = `
+            <div class="bar-val">${item.val}</div>
+            <div class="bar-rect" style="height:${pctHeight}%;"></div>
+            <div class="bar-label">${item.label}</div>
+          `;
+          barFlex.appendChild(col);
+        });
+        container.appendChild(barFlex);
+
+      } else if (type === "LINHA") {
+        // LINHA:rótulo:valor;rótulo:valor
+        const items = content.split(";").map(pair => {
+          const parts = pair.split(":");
+          return { label: parts[0], val: parseFloat(parts[1]) || 0 };
+        });
+
+        const svgW = 460;
+        const svgH = 200;
+        const padX = 50;
+        const padY = 30;
+        const plotW = svgW - padX * 2;
+        const plotH = svgH - padY * 2;
+
+        const maxVal = Math.max(...items.map(i => i.val));
+        const minVal = Math.min(...items.map(i => i.val));
+        const valRange = maxVal === minVal ? 1 : (maxVal - minVal);
+
+        const points = items.map((item, idx) => {
+          const x = padX + (idx / Math.max(items.length - 1, 1)) * plotW;
+          const y = svgH - padY - ((item.val - minVal) / valRange) * plotH;
+          return { x, y, label: item.label, val: item.val };
+        });
+
+        const polylinePoints = points.map(p => `${p.x},${p.y}`).join(" ");
+
+        let dotsHtml = "";
+        points.forEach(p => {
+          dotsHtml += `
+            <circle cx="${p.x}" cy="${p.y}" r="5" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+            <text x="${p.x}" y="${p.y - 9}" font-size="11" font-weight="bold" fill="#fef08a" text-anchor="middle">${p.val}</text>
+            <text x="${p.x}" y="${svgH - 8}" font-size="11" fill="#cbd5e1" text-anchor="middle">${p.label}</text>
+          `;
+        });
+
+        const svg = `
+          <svg viewBox="0 0 ${svgW} ${svgH}" style="width:100%; max-width:480px; height:auto; overflow:visible;">
+            <!-- Linhas de grade suaves -->
+            <line x1="${padX}" y1="${padY}" x2="${svgW - padX}" y2="${padY}" stroke="#332454" stroke-dasharray="3 3"/>
+            <line x1="${padX}" y1="${svgH - padY}" x2="${svgW - padX}" y2="${svgH - padY}" stroke="#4c367b"/>
+            <!-- Linha dos dados -->
+            <polyline fill="none" stroke="#38bdf8" stroke-width="3" points="${polylinePoints}" stroke-linejoin="round"/>
+            ${dotsHtml}
+          </svg>
+        `;
+        container.innerHTML = svg;
+
+      } else if (type === "PIZZA") {
+        // PIZZA:rótulo:porcentagem;rótulo:porcentagem
+        const items = content.split(";").map(pair => {
+          const parts = pair.split(":");
+          return { label: parts[0], val: parseFloat(parts[1]) || 0 };
+        });
+
+        const total = items.reduce((acc, curr) => acc + curr.val, 0) || 100;
+        const colors = ["#ec4899", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#f43f5e"];
+
+        let cumulativeAngle = 0;
+        const cx = 95, cy = 95, r = 75;
+        let pathsHtml = "";
+        let legendHtml = "";
+
+        items.forEach((item, idx) => {
+          const angle = (item.val / total) * 360;
+          const startAngle = cumulativeAngle;
+          const endAngle = cumulativeAngle + angle;
+          cumulativeAngle += angle;
+
+          const startRad = (startAngle - 90) * (Math.PI / 180);
+          const endRad = (endAngle - 90) * (Math.PI / 180);
+
+          const x1 = cx + r * Math.cos(startRad);
+          const y1 = cy + r * Math.sin(startRad);
+          const x2 = cx + r * Math.cos(endRad);
+          const y2 = cy + r * Math.sin(endRad);
+
+          const largeArc = angle > 180 ? 1 : 0;
+          const color = colors[idx % colors.length];
+
+          // Draw slice
+          pathsHtml += `
+            <path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z"
+                  fill="${color}" stroke="#1b1231" stroke-width="2"/>
+          `;
+
+          legendHtml += `
+            <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; margin-bottom:4px;">
+              <span style="width:12px; height:12px; background:${color}; border-radius:3px; display:inline-block;"></span>
+              <span><strong>${item.label}:</strong> ${item.val}%</span>
+            </div>
+          `;
+        });
+
+        container.innerHTML = `
+          <div style="display:flex; align-items:center; justify-content:center; gap:1.5rem; flex-wrap:wrap;">
+            <svg viewBox="0 0 190 190" width="180" height="180">
+              ${pathsHtml}
+            </svg>
+            <div style="text-align:left; max-width:180px;">${legendHtml}</div>
+          </div>
+        `;
+      }
+    }
+
+    /* Display question on turn */
+    function nextQuestionTurn() {
+      if (gameState.deck.length === 0) {
+        finishGame();
+        return;
+      }
+
+      gameState.answeredInCurrentTurn = false;
+      gameState.usedCardsThisQuestion = false;
+
+      // Increment question counter
+      gameState.questionCounter++;
+      if (gameState.questionCounter > 150) {
+        finishGame();
+        return;
+      }
+
+      // Calculate round
+      gameState.currentRound = Math.floor((gameState.questionCounter - 1) / gameState.teams.length) + 1;
+
+      // Update Top Labels
+      document.getElementById("roundInfoLabel").textContent = `Rodada ${gameState.currentRound} de ${gameState.totalRounds}`;
+      document.getElementById("questionNumLabel").textContent = `Pergunta ${gameState.questionCounter} de 150`;
+
+      // Draw question from top of deck
+      gameState.currentQuestion = gameState.deck.shift();
+      const q = gameState.currentQuestion;
+
+      document.getElementById("categoryBadge").textContent = q.bloco;
+      document.getElementById("questionStatement").textContent = q.enunciado;
+
+      // Render Visual
+      renderVisualAid(q.visual);
+
+      // Embaralhamento das alternativas em tempo real com Fisher-Yates
+      const shuffledOptions = shuffleArray(q.options);
+      const letters = ["A", "B", "C", "D"];
+
+      const optionsBox = document.getElementById("optionsContainer");
+      optionsBox.innerHTML = "";
+
+      shuffledOptions.forEach((optText, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "opt-btn";
+        btn.innerHTML = `<span class="opt-letter">${letters[idx]}</span> <span>${optText}</span>`;
+        btn.setAttribute("data-text", optText);
+
+        btn.addEventListener("click", () => handleAnswerOption(btn, optText, q.correctText));
+        optionsBox.appendChild(btn);
+      });
+
+      // Actions reset
+      document.getElementById("btnNextQuestion").style.display = "none";
+      renderScoreboard();
+    }
+
+    /* Handling player answer */
+    function handleAnswerOption(selectedBtn, chosenText, correctText) {
+      if (gameState.answeredInCurrentTurn) return;
+      gameState.answeredInCurrentTurn = true;
+
+      const currentTeam = gameState.teams[gameState.currentTeamIndex];
+      currentTeam.answeredCount++;
+
+      const allBtns = document.querySelectorAll(".opt-btn");
+      allBtns.forEach(btn => btn.disabled = true);
+
+      const isCorrect = chosenText.trim() === correctText.trim();
+
+      if (isCorrect) {
+        selectedBtn.classList.add("correct");
+        currentTeam.score += 10;
+        currentTeam.correctCount++;
+        playSound("correct");
+      } else {
+        selectedBtn.classList.add("wrong");
+        playSound("wrong");
+
+        // Highlight correct option
+        allBtns.forEach(btn => {
+          if (btn.getAttribute("data-text").trim() === correctText.trim()) {
+            btn.classList.add("correct");
+          }
+        });
+      }
+
+      renderScoreboard();
+
+      // Show Next button
+      const nextBtn = document.getElementById("btnNextQuestion");
+      nextBtn.style.display = "inline-flex";
+      nextBtn.focus();
+    }
+
+    /* Advance to Next Team */
+    function advanceTurnToNextTeam() {
+      gameState.currentTeamIndex = (gameState.currentTeamIndex + 1) % gameState.teams.length;
+      nextQuestionTurn();
+    }
+
+    /* Cartas 🃏 feature */
+    function openCardsModal() {
+      const currentTeam = gameState.teams[gameState.currentTeamIndex];
+      if (currentTeam.cardsLeft <= 0 || gameState.answeredInCurrentTurn || gameState.usedCardsThisQuestion) return;
+
+      const modal = document.getElementById("cardsModal");
+      document.getElementById("cardResultMsg").textContent = "";
+
+      // Reset card faces
+      const cards = modal.querySelectorAll(".secret-card");
+      cards.forEach(card => {
+        card.textContent = "❓";
+        card.style.background = "linear-gradient(135deg, #6366f1, #a855f7)";
+        card.style.pointerEvents = "auto";
+      });
+
+      modal.classList.add("active");
+    }
+
+    window.pickSecretCard = function(cardIdx) {
+      const currentTeam = gameState.teams[gameState.currentTeamIndex];
+      if (currentTeam.cardsLeft <= 0 || gameState.usedCardsThisQuestion) return;
+
+      currentTeam.cardsLeft--;
+      gameState.usedCardsThisQuestion = true;
+
+      // Random 1, 2, or 3
+      const values = [1, 2, 3];
+      const eliminatedCount = values[Math.floor(Math.random() * values.length)];
+
+      playSound("flip");
+
+      const modal = document.getElementById("cardsModal");
+      const cards = modal.querySelectorAll(".secret-card");
+      cards[cardIdx].textContent = eliminatedCount;
+      cards[cardIdx].style.background = "linear-gradient(135deg, #f59e0b, #ea580c)";
+      cards.forEach(c => c.style.pointerEvents = "none");
+
+      const msg = document.getElementById("cardResultMsg");
+      msg.textContent = `🎯 Eliminando ${eliminatedCount} alternativa(s) errada(s)...`;
+
+      // Apply elimination after brief delay
+      setTimeout(() => {
+        eliminateWrongAnswers(eliminatedCount);
+        modal.classList.remove("active");
+        renderScoreboard();
+      }, 900);
+    };
+
+    function eliminateWrongAnswers(count) {
+      const q = gameState.currentQuestion;
+      const allBtns = Array.from(document.querySelectorAll(".opt-btn"));
+      const wrongBtns = allBtns.filter(b => b.getAttribute("data-text").trim() !== q.correctText.trim());
+
+      // Shuffle wrong answers to eliminate randomly
+      const shuffledWrong = shuffleArray(wrongBtns);
+      const toEliminate = shuffledWrong.slice(0, count);
+
+      toEliminate.forEach(btn => {
+        btn.classList.add("eliminated");
+        btn.disabled = true;
+      });
+    }
+
+    /* Pular ⏭️ feature */
+    function skipCurrentQuestion() {
+      const currentTeam = gameState.teams[gameState.currentTeamIndex];
+      if (currentTeam.skipsLeft <= 0 || gameState.answeredInCurrentTurn) return;
+
+      currentTeam.skipsLeft--;
+      playSound("skip");
+
+      // Anti-loop: se resta apenas essa pergunta pulada no deck, continua nela
+      if (gameState.deck.length > 0) {
+        // Envia pergunta atual para o final do baralho e reembaralha o restante
+        gameState.deck.push(gameState.currentQuestion);
+        gameState.deck = shuffleArray(gameState.deck);
+      } else {
+        // Se deck estava vazio, devolve ela mesma para não travar
+        gameState.deck.push(gameState.currentQuestion);
+      }
+
+      // Reverte contador da pergunta pois não contou como respondida
+      gameState.questionCounter--;
+
+      // A equipe da vez PERMANECE a mesma (sem alterar currentTeamIndex)
+      nextQuestionTurn();
+    }
+
+    /* Fim de Jogo & Pódio */
+    function finishGame() {
+      showScreen("screenPodium");
+
+      // Ordena equipes por pontuação decrescente
+      const rankedTeams = [...gameState.teams].sort((a, b) => b.score - a.score);
+
+      const podiumBox = document.getElementById("podiumRanksContainer");
+      podiumBox.innerHTML = "";
+
+      const medals = ["🥇", "🥈", "🥉"];
+      const classes = ["podium-1st", "podium-2nd", "podium-3rd"];
+
+      // Render top 3 podium
+      const top3 = rankedTeams.slice(0, 3);
+      top3.forEach((team, i) => {
+        const placeDiv = document.createElement("div");
+        placeDiv.className = `podium-place ${classes[i] || ""}`;
+        placeDiv.innerHTML = `
+          <div class="podium-badge">${medals[i] || "🎖️"}</div>
+          <strong style="color:${team.color}; font-size:1.1rem;">${team.name}</strong>
+          <span style="font-size:0.85rem; color:#cbd5e1; margin-top:0.25rem;">${team.correctCount} acertos</span>
+          <div class="podium-score">🪙 ${team.score} pts</div>
+        `;
+        podiumBox.appendChild(placeDiv);
+      });
+
+      // Tabela de Classificação Geral
+      const tableDiv = document.getElementById("fullLeaderboardTable");
+      let tableHtml = `
+        <table class="shell-table" style="width:100%; border-collapse:collapse; margin-top:0.5rem;">
+          <thead>
+            <tr style="border-bottom:1px solid #4a3674;">
+              <th style="text-align:left; padding:8px;">Pos</th>
+              <th style="text-align:left; padding:8px;">Equipe</th>
+              <th style="text-align:center; padding:8px;">Acertos</th>
+              <th style="text-align:right; padding:8px;">Moedas</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      rankedTeams.forEach((team, idx) => {
+        tableHtml += `
+          <tr style="border-bottom:1px solid #2b1f48;">
+            <td style="padding:8px; font-weight:700;">#${idx + 1}</td>
+            <td style="padding:8px;">
+              <span class="team-color-dot" style="background:${team.color}; display:inline-block; vertical-align:middle; margin-right:6px;"></span>
+              <strong>${team.name}</strong>
+            </td>
+            <td style="padding:8px; text-align:center;">${team.correctCount} / ${team.answeredCount}</td>
+            <td style="padding:8px; text-align:right; font-weight:800; color:#fde047;">🪙 ${team.score}</td>
+          </tr>
+        `;
+      });
+      tableHtml += `</tbody></table>`;
+      tableDiv.innerHTML = tableHtml;
+    }
+
+    /* Reset / Jogar Novamente */
+    function restartGame() {
+      gameState.teams.forEach(t => {
+        t.score = 0;
+        t.cardsLeft = 2;
+        t.skipsLeft = 2;
+        t.correctCount = 0;
+        t.answeredCount = 0;
+      });
+      gameState.currentTeamIndex = 0;
+      gameState.deck = shuffleArray(ALL_QUESTIONS);
+      gameState.questionCounter = 0;
+      gameState.totalRounds = Math.ceil(150 / gameState.teams.length);
+      gameState.currentRound = 1;
+
+      renderScoreboard();
+      showScreen("screenGame");
+      nextQuestionTurn();
+    }
+
+    /* Floating currency particle background generator */
+    function createMoneyBackground() {
+      const bg = document.getElementById("moneyBg");
+      const symbols = ["🪙", "💵", "💰", "✨", "🪙"];
+      for (let i = 0; i < 22; i++) {
+        const p = document.createElement("div");
+        p.className = "money-particle";
+        p.textContent = symbols[i % symbols.length];
+        p.style.left = `${Math.random() * 96}%`;
+        p.style.fontSize = `${1.2 + Math.random() * 1.6}rem`;
+        p.style.animationDelay = `${Math.random() * 16}s`;
+        p.style.animationDuration = `${12 + Math.random() * 10}s`;
+        bg.appendChild(p);
+      }
+    }
+
+    /* =========================================================
+       5. INICIALIZAÇÃO DE EVENTOS
+       ========================================================= */
+    document.addEventListener("DOMContentLoaded", () => {
+      createMoneyBackground();
+      renderTeamConfigList();
+
+      // Transições de telas
+      document.getElementById("btnGoToConfig").addEventListener("click", () => {
+        getAudioContext();
+        showScreen("screenConfig");
+      });
+
+      document.getElementById("btnAddTeam").addEventListener("click", () => {
+        if (tempTeams.length < 6) {
+          const nextIdx = tempTeams.length;
+          tempTeams.push({
+            id: nextIdx + 1,
+            name: `Equipe ${nextIdx + 1}`,
+            color: TEAM_PALETTES[nextIdx].color
+          });
+          renderTeamConfigList();
+        }
+      });
+
+      document.getElementById("btnRemoveTeam").addEventListener("click", () => {
+        if (tempTeams.length > 2) {
+          tempTeams.pop();
+          renderTeamConfigList();
+        }
+      });
+
+      document.getElementById("btnStartGame").addEventListener("click", () => {
+        getAudioContext();
+        initGameWithTeams();
+      });
+
+      document.getElementById("btnNextQuestion").addEventListener("click", () => {
+        advanceTurnToNextTeam();
+      });
+
+      document.getElementById("btnUseCards").addEventListener("click", () => {
+        openCardsModal();
+      });
+
+      document.getElementById("btnSkipQuestion").addEventListener("click", () => {
+        skipCurrentQuestion();
+      });
+
+      document.getElementById("btnPlayAgain").addEventListener("click", () => {
+        restartGame();
+      });
+
+      // Sound mute toggle
+      const soundBtn = document.getElementById("soundToggleBtn");
+      soundBtn.addEventListener("click", () => {
+        soundEnabled = !soundEnabled;
+        soundBtn.textContent = soundEnabled ? "🔊 Som Ativado" : "🔇 Som Desativado";
+      });
+
+      // Exit game
+      document.getElementById("endGameDirectBtn").addEventListener("click", () => {
+        if (confirm("Deseja realmente encerrar a partida agora e ver o pódio final?")) {
+          finishGame();
+        }
+      });
+    });
+  </script>
+<script>
+/* Skip artifact shell — fixed helpers served beside every artifact. */
+(function () {
+  "use strict";
+
+  var fmt = {
+    num: function (v, opts) { return new Intl.NumberFormat("pt-BR", opts || {}).format(v); },
+    brl: function (v) { return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v); },
+    pct: function (v) { return new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 1 }).format(v); }
+  };
+
+  // axisFmt keeps axis tick labels short (compact notation) so long values
+  // (e.g. full BRL amounts) never clip against the plot edge.
+  function axisFmt(v) {
+    return fmt.num(v, { notation: "compact", maximumFractionDigits: 1 });
+  }
+
+  // format accepts a function OR one of the fmt names ("num" | "brl" | "pct").
+  function coerceFormat(spec) {
+    if (typeof spec === "function") return spec;
+    if (typeof spec === "string" && fmt[spec]) return fmt[spec];
+    return function (v) { return fmt.num(v); };
+  }
+
+  function accent() {
+    return getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#2563eb";
+  }
+  function mutedColor() {
+    return getComputedStyle(document.documentElement).getPropertyValue("--text-muted").trim() || "#5b6472";
+  }
+  function svgEl(tag, attrs) {
+    var el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function frame(el, w, h) {
+    var svg = svgEl("svg", { viewBox: "0 0 " + w + " " + h, role: "img" });
+    el.innerHTML = "";
+    el.appendChild(svg);
+    return svg;
+  }
+
+  // maxOf guards the axis scale: empty values would give -Infinity (truthy,
+  // so "|| 1" can't catch it) and a non-positive max would flip the chart.
+  function maxOf(values) {
+    var m = values.length ? Math.max.apply(null, values) : 0;
+    return m > 0 ? m : 1;
+  }
+
+  // bar(el, {labels:[], values:[], color?, format?}) — vertical bar chart.
+  function bar(el, cfg) {
+    var W = 640, H = 280, padL = 46, padB = 30, padT = 12;
+    var svg = frame(el, W, H);
+    var max = maxOf(cfg.values);
+    var n = cfg.values.length;
+    var plotW = W - padL - 12, plotH = H - padT - padB;
+    var step = plotW / n, bw = Math.min(step * 0.62, 64);
+    var color = cfg.color || accent();
+    var f = coerceFormat(cfg.format);
+    for (var g = 0; g <= 4; g++) {
+      var gy = padT + plotH - (plotH * g) / 4;
+      svg.appendChild(svgEl("line", { x1: padL, y1: gy, x2: W - 12, y2: gy, stroke: "currentColor", "stroke-opacity": 0.08 }));
+      var lbl = svgEl("text", { x: padL - 8, y: gy + 4, "text-anchor": "end", "font-size": 10, fill: mutedColor() });
+      lbl.textContent = axisFmt((max * g) / 4);
+      svg.appendChild(lbl);
+    }
+    cfg.values.forEach(function (v, i) {
+      var bh = Math.max(0, (v / max) * plotH);
+      var x = padL + i * step + (step - bw) / 2;
+      var y = padT + plotH - bh;
+      var r = svgEl("rect", { x: x, y: y, width: bw, height: bh, rx: 4, fill: color });
+      var t = svgEl("title", {});
+      t.textContent = cfg.labels[i] + ": " + f(v);
+      r.appendChild(t);
+      svg.appendChild(r);
+      var tx = svgEl("text", { x: x + bw / 2, y: H - 10, "text-anchor": "middle", "font-size": 11, fill: mutedColor() });
+      tx.textContent = cfg.labels[i];
+      svg.appendChild(tx);
+    });
+  }
+
+  // line(el, {labels:[], values:[], color?, format?}) — single-series line.
+  function line(el, cfg) {
+    var W = 640, H = 280, padL = 46, padB = 30, padT = 12;
+    var svg = frame(el, W, H);
+    var max = maxOf(cfg.values);
+    var n = cfg.values.length;
+    var plotW = W - padL - 16, plotH = H - padT - padB;
+    var color = cfg.color || accent();
+    var f = coerceFormat(cfg.format);
+    for (var g = 0; g <= 4; g++) {
+      var gy = padT + plotH - (plotH * g) / 4;
+      svg.appendChild(svgEl("line", { x1: padL, y1: gy, x2: W - 16, y2: gy, stroke: "currentColor", "stroke-opacity": 0.08 }));
+      var lbl = svgEl("text", { x: padL - 8, y: gy + 4, "text-anchor": "end", "font-size": 10, fill: mutedColor() });
+      lbl.textContent = axisFmt((max * g) / 4);
+      svg.appendChild(lbl);
+    }
+    var pts = cfg.values.map(function (v, i) {
+      var x = padL + (n === 1 ? plotW / 2 : (plotW * i) / (n - 1));
+      var y = padT + plotH - (v / max) * plotH;
+      return [x, y];
+    });
+    var d = pts.map(function (p, i) { return (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1); }).join(" ");
+    svg.appendChild(svgEl("path", { d: d, fill: "none", stroke: color, "stroke-width": 2, "stroke-linejoin": "round" }));
+    pts.forEach(function (p, i) {
+      var c = svgEl("circle", { cx: p[0], cy: p[1], r: 3.5, fill: color });
+      var t = svgEl("title", {});
+      t.textContent = cfg.labels[i] + ": " + f(cfg.values[i]);
+      c.appendChild(t);
+      svg.appendChild(c);
+      var tx = svgEl("text", { x: p[0], y: H - 10, "text-anchor": "middle", "font-size": 11, fill: mutedColor() });
+      tx.textContent = cfg.labels[i];
+      svg.appendChild(tx);
+    });
+  }
+
+  // donut(el, {labels:[], values:[], colors?}) — donut with center total.
+  function donut(el, cfg) {
+    var W = 320, H = 280, cx = W / 2, cy = H / 2, R = 92, r = 58;
+    var svg = frame(el, W, H);
+    var total = cfg.values.reduce(function (a, b) { return a + b; }, 0) || 1;
+    var palette = cfg.colors || [accent(), "#1baf7a", "#eda100", "#e34948", "#4a3aa7", "#e87ba4"];
+    var a0 = -Math.PI / 2;
+    cfg.values.forEach(function (v, i) {
+      var a1 = a0 + (v / total) * Math.PI * 2;
+      var large = a1 - a0 > Math.PI ? 1 : 0;
+      var p = ["M", cx + R * Math.cos(a0), cy + R * Math.sin(a0),
+        "A", R, R, 0, large, 1, cx + R * Math.cos(a1), cy + R * Math.sin(a1),
+        "L", cx + r * Math.cos(a1), cy + r * Math.sin(a1),
+        "A", r, r, 0, large, 0, cx + r * Math.cos(a0), cy + r * Math.sin(a0), "Z"].join(" ");
+      var path = svgEl("path", { d: p, fill: palette[i % palette.length] });
+      var t = svgEl("title", {});
+      t.textContent = cfg.labels[i] + ": " + fmt.num(v) + " (" + fmt.pct(v / total) + ")";
+      path.appendChild(t);
+      svg.appendChild(path);
+      a0 = a1;
+    });
+    var center = svgEl("text", { x: cx, y: cy + 5, "text-anchor": "middle", "font-size": 20, "font-weight": 650, fill: "currentColor" });
+    center.textContent = fmt.num(total);
+    svg.appendChild(center);
+  }
+
+  window.skipShell = { fmt: fmt };
+  window.skipChart = { bar: bar, line: line, donut: donut };
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Super Matemática Abdon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#FFD24C; --gold-dark:#C98A00;
+  --ink:#1a1330; --paper:#fff7e6;
+  --p1:#2E86FF; --p1-dark:#1857A6;
+  --p2:#FF4FA0; --p2-dark:#B22770;
+  --p3:#22C6A6; --p3-dark:#0E8A72;
+  --danger:#FF4B4B; --danger-dark:#B21E1E;
+  --ok:#3CCB6E; --ok-dark:#1E8F45;
+  --panel:#221a3d; --panel2:#2d2352;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;background:radial-gradient(ellipse at top,#3a2d66 0%,#150f28 70%);font-family:'Baloo 2',sans-serif;color:var(--paper);overflow:hidden;}
+.pixel{font-family:'Press Start 2P',monospace;}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.screen{display:none;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;padding:14px;position:relative;overflow:auto;}
+.screen.active{display:flex;}
+button{cursor:pointer;font-family:'Baloo 2',sans-serif;font-weight:700;border:none;outline:none;}
+button:focus-visible, .focusable:focus-visible{outline:4px solid var(--gold);outline-offset:2px;}
+.btn{
+  background:linear-gradient(180deg,#4a3a86,#2d2255);
+  color:#fff;border:3px solid #7a63c9;border-radius:16px;
+  padding:14px 26px;font-size:1.05rem;box-shadow:0 6px 0 #1a1435, 0 8px 18px rgba(0,0,0,.4);
+  transition:transform .08s ease;
+}
+.btn:hover{transform:translateY(-2px);}
+.btn:active{transform:translateY(3px);box-shadow:0 3px 0 #1a1435;}
+.btn.gold{background:linear-gradient(180deg,var(--gold),var(--gold-dark));color:#3a2500;border-color:#ffe38a;box-shadow:0 6px 0 #8a6100,0 8px 18px rgba(0,0,0,.4);}
+.btn.small{padding:8px 16px;font-size:.85rem;border-radius:12px;}
+.btn.focused{outline:4px solid var(--gold);outline-offset:2px;transform:translateY(-2px);}
+
+/* ---------- TITLE ---------- */
+#screen-title{gap:10px;text-align:center;}
+.logo-badge{
+  width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%, #ffe38a, var(--gold) 55%, var(--gold-dark) 100%);
+  display:flex;align-items:center;justify-content:center;font-size:64px;
+  box-shadow:0 0 0 8px #3a2d66, 0 0 0 12px var(--gold-dark), 0 14px 30px rgba(0,0,0,.5);
+  animation:float 3.2s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-10px) rotate(3deg);}}
+.title-main{font-size:clamp(1.4rem,5vw,2.6rem);line-height:1.4;text-shadow:4px 4px 0 var(--p2-dark),0 0 30px rgba(255,210,76,.5);color:var(--gold);letter-spacing:1px;}
+.title-sub{font-family:'Baloo 2';font-weight:700;color:#cbb8ff;font-size:1.1rem;margin-top:-4px;}
+.school-tag{background:var(--panel);border:2px solid #6a4fc9;border-radius:14px;padding:8px 18px;font-size:.85rem;color:#e5dcff;margin-top:6px;}
+.title-menu{display:flex;flex-direction:column;gap:12px;margin-top:22px;width:min(320px,80vw);}
+.stars-bg{position:absolute;inset:0;z-index:-1;overflow:hidden;}
+.star-dot{position:absolute;width:3px;height:3px;background:#fff;border-radius:50%;opacity:.7;animation:twinkle 2.4s ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:.2;}50%{opacity:1;}}
+
+/* ---------- HELP ---------- */
+.panel-box{background:var(--panel);border:3px solid #6a4fc9;border-radius:20px;padding:20px 24px;max-width:640px;width:92vw;max-height:80vh;overflow-y:auto;}
+.panel-box h2{color:var(--gold);margin-top:0;font-size:1.3rem;}
+.panel-box h3{color:#9fd8ff;margin-bottom:4px;font-size:1.05rem;}
+.panel-box p, .panel-box li{color:#e5dcff;font-size:.95rem;line-height:1.5;}
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0;}
+.ctrl-card{background:var(--panel2);border-radius:12px;padding:10px 12px;border:2px solid #4a3a86;}
+.ctrl-card b{color:var(--gold);}
+
+/* ---------- CHAR SELECT ---------- */
+.char-grid{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;margin:20px 0;}
+.char-card{width:150px;background:var(--panel);border:3px solid #6a4fc9;border-radius:18px;padding:14px;text-align:center;transition:transform .12s;}
+.char-card:hover,.char-card.focused{transform:translateY(-6px) scale(1.03);border-color:var(--gold);}
+.char-avatar{width:90px;height:90px;margin:0 auto 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:44px;}
+.char-name{font-weight:800;color:var(--gold);font-size:1rem;}
+.char-desc{font-size:.75rem;color:#cbb8ff;margin-top:4px;min-height:32px;}
+
+/* ---------- STAGE SELECT ---------- */
+#screen-stage{padding-top:10px;}
+.stage-header{text-align:center;margin-bottom:10px;}
+.stage-header h2{color:var(--gold);margin:0 0 2px;font-size:1.3rem;}
+.stage-header p{color:#cbb8ff;margin:0;font-size:.85rem;}
+.stage-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;max-width:760px;width:94vw;margin-top:10px;}
+.stage-tile{
+  position:relative;border-radius:16px;padding:12px 6px 10px;text-align:center;border:3px solid #4a3a86;
+  background:linear-gradient(180deg,#3a2d66,#221a3d);color:#fff;min-height:96px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;
+}
+.stage-tile.preboss{border-color:#ff9b4f;background:linear-gradient(180deg,#5a3520,#3a2113);}
+.stage-tile.boss{border-color:var(--danger);background:linear-gradient(180deg,#5a1414,#2b0808);grid-column:span 5;min-height:90px;}
+.stage-tile:hover,.stage-tile.focused{transform:translateY(-4px);border-color:var(--gold);}
+.stage-num{font-family:'Press Start 2P';font-size:.7rem;color:var(--gold);}
+.stage-name{font-size:.72rem;color:#e5dcff;line-height:1.2;}
+.stage-star{font-size:1.1rem;}
+.stage-tag{position:absolute;top:-8px;right:-6px;background:var(--danger);color:#fff;font-size:.6rem;padding:3px 6px;border-radius:8px;font-family:'Press Start 2P';}
+.stage-tag.medium{background:#ff9b4f;color:#3a2500;}
+.legend{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:14px;font-size:.75rem;color:#cbb8ff;}
+.legend span{display:inline-flex;align-items:center;gap:5px;}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+
+/* ---------- GAME SCREEN ---------- */
+#screen-game{padding:0;justify-content:flex-start;}
+#gameWrap{position:relative;width:100%;max-width:960px;aspect-ratio:16/9;background:#000;border-radius:0;overflow:hidden;touch-action:none;}
+#game{width:100%;height:100%;display:block;}
+#hud{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;font-family:'Press Start 2P';font-size:.6rem;color:#fff;text-shadow:2px 2px 0 #000;}
+#hud .hud-left,#hud .hud-right{background:rgba(20,14,40,.55);border-radius:10px;padding:6px 10px;display:flex;flex-direction:column;gap:4px;}
+.hearts{display:flex;gap:3px;}
+.hud-btn{pointer-events:all;background:rgba(20,14,40,.7);border:2px solid #6a4fc9;color:#fff;border-radius:8px;padding:5px 8px;font-family:'Press Start 2P';font-size:.55rem;}
+#msgBanner{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);background:rgba(10,6,22,.88);border:3px solid var(--gold);border-radius:16px;padding:16px 22px;text-align:center;display:none;z-index:5;max-width:80%;}
+#msgBanner.show{display:block;}
+#msgBanner h3{margin:0 0 6px;color:var(--gold);font-family:'Press Start 2P';font-size:.9rem;}
+#msgBanner p{margin:0;color:#e5dcff;font-size:.9rem;}
+
+/* ---------- TOUCH CONTROLS ---------- */
+#touchControls{position:absolute;inset:0;pointer-events:none;display:none;}
+#touchControls.show{display:block;}
+.tbtn{position:absolute;pointer-events:all;width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.14);border:3px solid rgba(255,255,255,.4);color:#fff;font-size:1.4rem;display:flex;align-items:center;justify-content:center;user-select:none;}
+.tbtn:active{background:rgba(255,210,76,.5);}
+#tLeft{left:16px;bottom:70px;}
+#tRight{left:92px;bottom:70px;}
+#tJump{right:92px;bottom:78px;background:rgba(60,203,110,.25);border-color:#3ccb6e;}
+#tAttack{right:16px;bottom:16px;width:52px;height:52px;background:rgba(255,75,75,.25);border-color:var(--danger);display:none;}
+#tConfirm{right:16px;bottom:78px;display:none;background:rgba(255,210,76,.3);border-color:var(--gold);font-size:1rem;width:70px;height:70px;}
+
+/* ---------- CLEAR / WIN ---------- */
+.result-emoji{font-size:60px;}
+.stat-row{display:flex;gap:18px;justify-content:center;margin:12px 0;font-size:.9rem;color:#e5dcff;}
+
+footer.credit{position:fixed;bottom:4px;right:8px;font-size:.6rem;color:#5a4d8a;z-index:1;}
+
+@media (max-width:600px){
+  .stage-grid{grid-template-columns:repeat(3,1fr);}
+  .stage-tile.boss{grid-column:span 3;}
+  .char-grid{gap:10px;}
+  .char-card{width:118px;padding:10px;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- TITLE -->
+  <section id="screen-title" class="screen active">
+    <div class="stars-bg" id="starsBg"></div>
+    <div class="logo-badge">🧮</div>
+    <div class="title-main pixel">SUPER<br>MATEMÁTICA<br>ABDON</div>
+    <div class="title-sub">Descontos • Juros Simples • Tabelas de Preços</div>
+    <div class="school-tag">🏫 Escola Abdon Dantas &nbsp;•&nbsp; Prof. Guilherme Augusto</div>
+    <div class="title-menu">
+      <button class="btn gold focusable" id="btnPlay">▶ JOGAR</button>
+      <button class="btn focusable" id="btnHelp">❔ COMO JOGAR</button>
+    </div>
+  </section>
+
+  <!-- HELP -->
+  <section id="screen-help" class="screen">
+    <div class="panel-box">
+      <h2>❔ Como Jogar</h2>
+      <p>Corra, pule sobre obstáculos, colete moedas e derrote inimigos pisando neles. De tempos em tempos aparece uma <b>pergunta de matemática</b> (placas, portas ou desafios). Quando isso acontecer, a equipe decide a resposta e comanda quem está com o controle!</p>
+      <h3>🎮 Controles</h3>
+      <div class="ctrl-grid">
+        <div class="ctrl-card"><b>Teclado</b><br>← → ou A D: mover<br>Espaço / ↑: pular<br>Enter: confirmar porta<br>E: atacar</div>
+        <div class="ctrl-card"><b>Controle Xbox</b><br>Direcional / analógico: mover<br><b>A</b>: pular (só pular)<br><b>B</b> ou <b>X</b>: atacar inimigo/boss<br><b>Y</b>: confirmar resposta/porta</div>
+        <div class="ctrl-card"><b>Celular/Tablet</b><br>Botões na tela: mover, pular e atacar<br>Botão OK: confirmar a porta</div>
+        <div class="ctrl-card"><b>Mouse</b><br>Clique nos botões dos menus e nas fases</div>
+      </div>
+      <h3>⭐ Regras do modo pergunta</h3>
+      <ul>
+        <li>O personagem fica numa arena com <b>portas de resposta</b>.</li>
+        <li>Pequenos inimigos aparecem — pule sobre eles ou ataque (B/X) para derrotá-los sem se machucar.</li>
+        <li>Vocês têm <b>5 chances</b> contra os inimigos — se as 5 acabarem, voltam ao menu de fases.</li>
+        <li>Entrem na porta certa e confirmem (<b>Y</b> no controle, Enter no teclado, ou toque em OK). <b>Se errar a porta, perdem a vez na hora</b> e voltam ao menu de fases.</li>
+        <li>A porta com a resposta certa muda de lugar toda vez — vale a pena ler o <b>valor</b>, decorar a posição não ajuda!</li>
+        <li>Nas fases <b>Pré-Boss</b>, depois de acertar a pergunta aparece um <b>mini-chefão</b> — mesma dinâmica do chefão final, só que com <b>2 tapas</b> para vencer.</li>
+        <li>No <b>Boss Final</b>, são <b>3 perguntas seguidas</b>. Depois delas, o Rei Percentual aparece e é preciso <b>3 tapas</b> para vencer! Ele e os mini-chefões fogem quando vocês chegam perto e avançam num bote quando piscam laranja — fiquem atentos!</li>
+        <li>Os inimigos pequenos do chão também se esquivam quando alguém pula bem em cima deles — pisar neles agora exige mira e tempo certo, não é mais automático.</li>
+        <li>A cada mundo os inimigos mudam de aparência e ficam mais rápidos e espertos — nas fases finais eles perseguem o jogador!</li>
+        <li>Tentativas são <b>ilimitadas</b> — podem escolher a mesma fase de novo!</li>
+      </ul>
+      <button class="btn gold focusable" id="btnHelpBack" style="margin-top:10px;width:100%;">VOLTAR</button>
+    </div>
+  </section>
+
+  <!-- CHARACTER SELECT -->
+  <section id="screen-char" class="screen">
+    <h2 class="pixel" style="color:var(--gold);font-size:1rem;">ESCOLHA SEU HERÓI</h2>
+    <div class="char-grid" id="charGrid"></div>
+    <button class="btn focusable" id="btnCharBack">⬅ VOLTAR</button>
+  </section>
+
+  <!-- STAGE SELECT -->
+  <section id="screen-stage" class="screen">
+    <div class="stage-header">
+      <h2 class="pixel" style="font-size:1rem;">MAPA DAS FASES</h2>
+      <p>Menu controlado pelo professor — todas as fases estão liberadas</p>
+    </div>
+    <div class="stage-grid" id="stageGrid"></div>
+    <div class="legend">
+      <span><span class="dot" style="background:#4a3a86;"></span>Fase normal (fácil)</span>
+      <span><span class="dot" style="background:#ff9b4f;"></span>Pré-boss (médio)</span>
+      <span><span class="dot" style="background:var(--danger);"></span>Boss final (difícil — 3 perguntas + Rei Percentual)</span>
+      <span>⭐ = fase concluída</span>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="btn small focusable" id="btnStageChar">🧑 Trocar personagem</button>
+      <button class="btn small focusable" id="btnResetStars">♻ Zerar estrelas</button>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="screen-game" class="screen">
+    <div id="gameWrap">
+      <canvas id="game" width="960" height="540"></canvas>
+      <div id="hud">
+        <div class="hud-left">
+          <div id="hudPhase">FASE 1</div>
+          <div class="hearts" id="hudHearts"></div>
+        </div>
+        <div class="hud-right">
+          <div id="hudCoins">🪙 x0</div>
+          <button class="hud-btn" id="btnQuit">☰ MENU</button>
+        </div>
+      </div>
+      <div id="msgBanner"><h3 id="msgTitle"></h3><p id="msgText"></p></div>
+      <div id="touchControls">
+        <div class="tbtn" id="tLeft">◀</div>
+        <div class="tbtn" id="tRight">▶</div>
+        <div class="tbtn" id="tJump">⤴</div>
+        <div class="tbtn" id="tAttack">⚔</div>
+        <div class="tbtn" id="tConfirm">OK</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLEAR -->
+  <section id="screen-clear" class="screen">
+    <div class="panel-box" style="text-align:center;">
+      <div class="result-emoji">🏆</div>
+      <h2 style="color:var(--gold);">Fase Concluída!</h2>
+      <p id="clearPhaseName" style="color:#e5dcff;"></p>
+      <div class="stat-row"><div>🪙 Moedas: <span id="clearCoins">0</span></div></div>
+      <button class="btn gold focusable" id="btnClearMenu" style="width:100%;">VOLTAR AO MAPA</button>
+    </div>
+  </section>
+
+  <!-- WIN -->
+  <section id="screen-win" class="screen">
+    <div class="panel-box" style="text-align:center;">
+      <div class="result-emoji">👑</div>
+      <h2 style="color:var(--gold);">VOCÊS DERROTARAM O REI PERCENTUAL!</h2>
+      <p style="color:#e5dcff;">Jurildo, Descontina e Tabelina dominaram Descontos, Juros Simples e Tabelas de Preços. Parabéns, equipe da Escola Abdon Dantas! 🎉</p>
+      <button class="btn gold focusable" id="btnWinMenu" style="width:100%;">VOLTAR AO MAPA</button>
+    </div>
+  </section>
+
+</div>
+<footer class="credit">Super Matemática Abdon — Prof. Guilherme Augusto</footer>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================
+   UTILITÁRIOS
+========================================================= */
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rectsOverlap=(a,b)=>a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y;
+function shuffleArray(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const tmp=a[i]; a[i]=a[j]; a[j]=tmp; }
+  return a;
+}
+function mulberry32(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+/* =========================================================
+   ÁUDIO (sintetizado, sem arquivos externos)
+========================================================= */
+let actx=null;
+function audioCtx(){ if(!actx){ try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } return actx; }
+function beep(freq,dur,type,vol){
+  const ctx=audioCtx(); if(!ctx) return;
+  const o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type||'square'; o.frequency.value=freq;
+  g.gain.value=(vol||0.06);
+  o.connect(g); g.connect(ctx.destination);
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur);
+  o.stop(ctx.currentTime+dur);
+}
+const sfx={
+  jump:()=>beep(520,.12,'square',.05),
+  stomp:()=>beep(220,.10,'square',.06),
+  coin:()=>{beep(880,.07,'square',.05);setTimeout(()=>beep(1180,.09,'square',.05),60);},
+  hurt:()=>beep(140,.22,'sawtooth',.08),
+  correct:()=>{beep(660,.1,'square',.06);setTimeout(()=>beep(880,.1,'square',.06),110);setTimeout(()=>beep(1100,.16,'square',.06),220);},
+  wrong:()=>{beep(200,.18,'sawtooth',.08);setTimeout(()=>beep(120,.28,'sawtooth',.08),140);},
+  select:()=>beep(440,.06,'square',.04),
+  clear:()=>{[523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.14,'square',.06),i*110));},
+  bossHit:()=>{beep(150,.14,'square',.08);},
+  bossRoar:()=>{beep(80,.35,'sawtooth',.09);setTimeout(()=>beep(70,.3,'sawtooth',.08),120);},
+};
+
+/* =========================================================
+   BANCO DE QUESTÕES
+========================================================= */
+function Q(text,opts,correctIdx){
+  return {text, options:opts.map((t,i)=>({text:t, correct:i===correctIdx}))};
+}
+const QUESTIONS = {
+ 1:[ // Mercado - fácil - Desconto
+  Q("Um pacote de arroz custa R$ 25,00 e está com 10% de desconto. Qual o valor final?",["R$ 22,50","R$ 20,00","R$ 24,00","R$ 27,50"],0),
+  Q("Uma caixa de leite custa R$ 60,00 com 20% de desconto. Quanto você vai pagar?",["R$ 40,00","R$ 48,00","R$ 50,00","R$ 45,00"],1),
+  Q("1 kg de carne custa R$ 40,00. Com 5% de desconto, qual o valor final?",["R$ 35,00","R$ 39,50","R$ 38,00","R$ 42,00"],2),
+  Q("Um pacote de biscoito custa R$ 8,00 com 25% de desconto. Qual o valor final?",["R$ 7,00","R$ 5,00","R$ 6,50","R$ 6,00"],3),
+ ],
+ 2:[ // Mercado - fácil - Tabela de preços
+  Q("Tabela: Arroz R$5,00/kg | Feijão R$7,00/kg | Açúcar R$4,00/kg. Comprando 2kg de arroz e 1kg de feijão, qual o total?",["R$ 15,00","R$ 19,00","R$ 17,00","R$ 12,00"],2),
+  Q("Tabela: Maçã R$3,00/kg | Banana R$2,00/kg | Laranja R$2,50/kg. Comprando 3kg de banana, quanto se paga?",["R$ 5,00","R$ 6,00","R$ 7,00","R$ 8,00"],1),
+  Q("Tabela: Leite R$4,00 | Pão R$6,00 | Ovos R$9,00. Qual o produto mais barato da tabela?",["Leite","Pão","Ovos","Todos custam o mesmo"],0),
+  Q("Tabela: Suco R$5,00 | Refrigerante R$7,00 | Água R$2,00. Comprando 1 unidade de cada, qual o total?",["R$ 12,00","R$ 16,00","R$ 10,00","R$ 14,00"],3),
+ ],
+ 3:[ // Moda - fácil - Desconto
+  Q("Uma camisa custa R$ 50,00 com 10% de desconto. Qual o valor final?",["R$ 40,00","R$ 45,00","R$ 48,00","R$ 42,00"],1),
+  Q("Uma calça custa R$ 80,00 com 15% de desconto. Qual o valor final?",["R$ 70,00","R$ 65,00","R$ 68,00","R$ 75,00"],2),
+  Q("Um tênis custa R$ 120,00 com 20% de desconto. Qual o valor final?",["R$ 100,00","R$ 96,00","R$ 110,00","R$ 90,00"],1),
+  Q("Um boné custa R$ 30,00 com 10% de desconto. Qual o valor final?",["R$ 25,00","R$ 28,00","R$ 27,00","R$ 24,00"],2),
+ ],
+ 4:[ // Moda - fácil - Juros simples
+  Q("Uma jaqueta de R$ 100,00 é financiada com juros simples de 2% ao mês, por 3 meses. Qual o valor dos juros?",["R$ 5,00","R$ 8,00","R$ 6,00","R$ 4,00"],2),
+  Q("Um vestido de R$ 200,00 é comprado a prazo com juros simples de 1% ao mês, por 5 meses. Qual o valor TOTAL a pagar?",["R$ 200,00","R$ 220,00","R$ 205,00","R$ 210,00"],3),
+  Q("Uma calça de R$ 150,00 é financiada com juros simples de 3% ao mês, por 2 meses. Qual o valor dos juros?",["R$ 10,00","R$ 12,00","R$ 9,00","R$ 6,00"],2),
+  Q("Uma bermuda de R$ 60,00 tem juros simples de 5% ao mês, por 1 mês. Qual o valor TOTAL a pagar?",["R$ 66,00","R$ 60,00","R$ 65,00","R$ 63,00"],3),
+ ],
+ 5:[ // Brinquedos - fácil - Tabela de preços
+  Q("Tabela: Bola R$20,00 | Boneca R$35,00 | Carrinho R$25,00. Comprando a bola e o carrinho, qual o total?",["R$ 55,00","R$ 40,00","R$ 45,00","R$ 50,00"],2),
+  Q("Tabela: Quebra-cabeça R$18,00 | Pipa R$6,00 | Ioiô R$9,00. Qual é o brinquedo mais caro?",["Quebra-cabeça","Pipa","Ioiô","Todos custam o mesmo"],0),
+  Q("Tabela: Skate R$90,00 | Patins R$70,00 | Bicicleta R$250,00. Qual a diferença de preço entre o skate e os patins?",["R$ 15,00","R$ 25,00","R$ 20,00","R$ 10,00"],2),
+  Q("Tabela: Pelúcia R$40,00 | Jogo R$55,00 | Blocos R$30,00. Comprando os três, qual o total?",["R$ 120,00","R$ 130,00","R$ 115,00","R$ 125,00"],3),
+ ],
+ 6:[ // Brinquedos - fácil - Desconto
+  Q("Uma boneca de R$ 35,00 tem 20% de desconto. Qual o valor final?",["R$ 30,00","R$ 28,00","R$ 25,00","R$ 32,00"],1),
+  Q("Um carrinho de R$ 25,00 tem 10% de desconto. Qual o valor final?",["R$ 20,00","R$ 24,00","R$ 23,00","R$ 22,50"],3),
+  Q("Um jogo de tabuleiro de R$ 60,00 tem 25% de desconto. Qual o valor final?",["R$ 40,00","R$ 45,00","R$ 50,00","R$ 55,00"],1),
+  Q("Uma pelúcia de R$ 40,00 tem 15% de desconto. Qual o valor final?",["R$ 36,00","R$ 34,00","R$ 32,00","R$ 38,00"],1),
+ ],
+ 7:[ // Tech - fácil - Juros simples
+  Q("Um fone de ouvido de R$ 100,00 é financiado com juros simples de 2% ao mês, por 4 meses. Qual o valor dos juros?",["R$ 10,00","R$ 6,00","R$ 8,00","R$ 12,00"],2),
+  Q("Uma caixa de som de R$ 150,00 é comprada a prazo com juros simples de 1% ao mês, por 6 meses. Qual o valor TOTAL a pagar?",["R$ 150,00","R$ 165,00","R$ 160,00","R$ 159,00"],3),
+  Q("Um carregador de R$ 50,00 tem juros simples de 4% ao mês, por 2 meses. Qual o valor dos juros?",["R$ 5,00","R$ 6,00","R$ 4,00","R$ 3,00"],2),
+  Q("Um smartwatch de R$ 300,00 é financiado com juros simples de 2% ao mês, por 3 meses. Qual o valor TOTAL a pagar?",["R$ 315,00","R$ 320,00","R$ 310,00","R$ 318,00"],3),
+ ],
+ 8:[ // Tech - PRÉ-BOSS - médio - Desconto + Tabela
+  Q("Tabela: Celular R$800,00 | Tablet R$600,00 | Notebook R$1500,00. O notebook está com 10% de desconto. Qual o valor final do notebook?",["R$ 1300,00","R$ 1400,00","R$ 1350,00","R$ 1450,00"],2),
+  Q("Uma TV de R$1200,00 tem 15% de desconto. Depois, um cupom extra reduz mais R$50,00. Qual o valor final?",["R$ 1020,00","R$ 950,00","R$ 980,00","R$ 970,00"],3),
+  Q("Tabela: Fone R$100,00 | Caixa de som R$150,00 | Mouse R$60,00. Comprando os três, com 10% de desconto sobre o total, quanto se paga?",["R$ 280,00","R$ 300,00","R$ 279,00","R$ 270,00"],2),
+  Q("Um videogame de R$2000,00 tem 20% de desconto, mais frete de R$50,00. Qual o valor final a pagar?",["R$ 1600,00","R$ 1700,00","R$ 1550,00","R$ 1650,00"],3),
+ ],
+ 9:[ // Castelo - PRÉ-BOSS - médio - Juros + Desconto
+  Q("Uma bicicleta de R$500,00: à vista tem 10% de desconto; a prazo, juros simples de 2% ao mês por 3 meses. Qual a DIFERENÇA entre pagar a prazo e à vista?",["R$ 70,00","R$ 90,00","R$ 60,00","R$ 80,00"],3),
+  Q("Um celular de R$900,00 tem 15% de desconto à vista. A prazo, juros simples de 3% ao mês por 2 meses. Quanto custa a MAIS pagar a prazo do que à vista?",["R$ 180,00","R$ 200,00","R$ 170,00","R$ 189,00"],3),
+  Q("Uma roupa de R$200,00 é comprada a prazo com juros simples de 4% ao mês por 1 mês. Qual o valor a prazo?",["R$ 200,00","R$ 210,00","R$ 205,00","R$ 208,00"],3),
+  Q("Um brinquedo de R$150,00: à vista tem 10% de desconto; a prazo, juros simples de 5% ao mês por 2 meses. Qual a DIFERENÇA entre pagar a prazo e à vista?",["R$ 25,00","R$ 35,00","R$ 20,00","R$ 30,00"],3),
+ ],
+ 10:[ // Torre Final - BOSS - difícil - multi-etapas (3 perguntas em sequência)
+  Q("Um notebook de R$2400,00 recebe primeiro um desconto de 10%, e depois mais 5% sobre o valor já reduzido. Qual o valor final?",["R$ 2160,00","R$ 2100,00","R$ 2000,00","R$ 2052,00"],3),
+  Q("Um celular de R$1000,00 é comprado a prazo em 4 meses, com juros simples de 2,5% ao mês. Qual o valor TOTAL pago?",["R$ 1050,00","R$ 1150,00","R$ 1080,00","R$ 1100,00"],3),
+  Q("Uma TV de R$3000,00 tem 20% de desconto à vista. A prazo, juros simples de 3% ao mês por 5 meses. Qual a DIFERENÇA entre o valor a prazo e à vista?",["R$ 1000,00","R$ 1100,00","R$ 950,00","R$ 1050,00"],3),
+  Q("Tabela: Fone R$200,00 | Caixa de som R$350,00 | Smartwatch R$450,00. Comprando os três, com 15% de desconto no total e depois um acréscimo de 2% de juros sobre o valor com desconto, qual o valor final aproximado?",["R$ 850,00","R$ 900,00","R$ 880,00","R$ 867,00"],3),
+ ],
+};
+
+/* =========================================================
+   CONFIGURAÇÃO DAS FASES / MUNDOS
+========================================================= */
+const PHASES=[
+ null,
+ {id:1,name:"Feira da Manhã",world:"Mercado Feliz",kind:"normal",topic:"Desconto",theme:'market'},
+ {id:2,name:"Corredor das Ofertas",world:"Mercado Feliz",kind:"normal",topic:"Tabela de Preços",theme:'market'},
+ {id:3,name:"Vitrine da Moda",world:"Loja da Moda",kind:"normal",topic:"Desconto",theme:'fashion'},
+ {id:4,name:"Provador Encantado",world:"Loja da Moda",kind:"normal",topic:"Juros Simples",theme:'fashion'},
+ {id:5,name:"Prateleira Alta",world:"Fábrica de Brinquedos",kind:"normal",topic:"Tabela de Preços",theme:'toys'},
+ {id:6,name:"Esteira Maluca",world:"Fábrica de Brinquedos",kind:"normal",topic:"Desconto",theme:'toys'},
+ {id:7,name:"Sala dos Circuitos",world:"Central Tech",kind:"normal",topic:"Juros Simples",theme:'tech'},
+ {id:8,name:"Servidor Central",world:"Central Tech",kind:"preboss",topic:"Desconto + Tabela",theme:'techdark'},
+ {id:9,name:"Portão do Castelo",world:"Castelo Numérico",kind:"preboss",topic:"Juros + Desconto",theme:'castle'},
+ {id:10,name:"Trono do Rei Percentual",world:"Torre Final",kind:"boss",topic:"Desafio Final",theme:'boss'},
+];
+
+const THEMES={
+ market:{sky1:'#8ED1FC',sky2:'#DFF6C6',ground:'#8B5E3C',grass:'#5FBE55',accent:'#F2994A'},
+ fashion:{sky1:'#FFD6E8',sky2:'#FFF0F6',ground:'#9C6BD1',grass:'#FF8FC0',accent:'#FF6FA5'},
+ toys:{sky1:'#FFF3B0',sky2:'#CDEAFB',ground:'#3E8FB0',grass:'#FFC94A',accent:'#4FD1C5'},
+ tech:{sky1:'#1B2A4A',sky2:'#3E5C9A',ground:'#233047',grass:'#12E0E8',accent:'#00E5FF'},
+ techdark:{sky1:'#101623',sky2:'#2B3A63',ground:'#1c2436',grass:'#FF7A45',accent:'#FF4B4B'},
+ castle:{sky1:'#1c1035',sky2:'#40275e',ground:'#2b1a45',grass:'#8a5cff',accent:'#FFD24C'},
+ boss:{sky1:'#2b0000',sky2:'#5c0d0d',ground:'#1a0000',grass:'#FF4B4B',accent:'#FFD24C'},
+};
+
+/* Inimigos: um "kind" diferente por fase — aparência, cor e comportamento mudam,
+   ficando mais espertos/rápidos conforme as fases avançam. */
+const ENEMY_KINDS={
+ 1:{shape:'blob', color:'#B85C38', dark:'#6b3418', behavior:'patrol',   speedMul:1.0, detect:0,   name:'Tomate Maroto'},
+ 2:{shape:'blob', color:'#8B5E3C', dark:'#523714', behavior:'patrol',   speedMul:1.08,detect:0,   name:'Batata Rolante'},
+ 3:{shape:'spike',color:'#FF6B6B', dark:'#a53232', behavior:'patrol',   speedMul:1.18,detect:0,   name:'Cabide Espinhoso'},
+ 4:{shape:'spike',color:'#FF9BD1', dark:'#c05a94', behavior:'patrol',   speedMul:1.25,detect:0,   name:'Botão Turbo'},
+ 5:{shape:'robot',color:'#4FD1C5', dark:'#1f7a70', behavior:'chase',    speedMul:1.35,detect:190, name:'Robozinho Curioso'},
+ 6:{shape:'robot',color:'#FFC94A', dark:'#a5790a', behavior:'chase',    speedMul:1.4, detect:200, name:'Bloco Vigia'},
+ 7:{shape:'bat',  color:'#7C5CFF', dark:'#4a34b0', behavior:'fly',      speedMul:1.35,detect:0,   name:'Morcego Elétrico'},
+ 8:{shape:'virus',color:'#FF7A45', dark:'#a5451a', behavior:'chase',    speedMul:1.6, detect:250, name:'Vírus Veloz'},
+ 9:{shape:'ghost',color:'#8a5cff', dark:'#4a2f99', behavior:'flyChase', speedMul:1.75,detect:280, name:'Fantasma Numérico'},
+ 10:{shape:'guard',color:'#FF4B4B',dark:'#8a1414', behavior:'chase',    speedMul:1.95,detect:310, name:'Guarda do Rei'},
+};
+
+const CHARACTERS=[
+ {id:'jurildo',name:'Jurildo',emoji:'🧑',color:'#2E86FF',dark:'#1857A6',desc:'Rápido e corajoso, especialista em pular obstáculos.'},
+ {id:'descontina',name:'Descontina',emoji:'👧',color:'#FF4FA0',dark:'#B22770',desc:'Craque em enxergar a melhor oferta na loja.'},
+ {id:'tabelina',name:'Tabelina',emoji:'🧕',color:'#22C6A6',dark:'#0E8A72',desc:'Lê qualquer tabela de preços num piscar de olhos.'},
+];
+
+/* =========================================================
+   ESTADO GLOBAL
+========================================================= */
+const state={
+  screen:'title',
+  selectedChar:CHARACTERS[0],
+  currentPhaseId:1,
+  sub:'play', // 'play' | 'question' | 'bossfight'
+  score:0,
+};
+let stars=JSON.parse(localStorage.getItem('smAbdon_stars')||'{}');
+function saveStars(){localStorage.setItem('smAbdon_stars',JSON.stringify(stars));}
+
+/* =========================================================
+   TELAS
+========================================================= */
+const screens={};
+document.querySelectorAll('.screen').forEach(el=>screens[el.id.replace('screen-','')]=el);
+function showScreen(name){
+  Object.values(screens).forEach(s=>s.classList.remove('active'));
+  screens[name].classList.add('active');
+  state.screen=name;
+  setupMenuFocus(name);
+}
+
+/* Estrelas de fundo no título */
+(function(){
+  const box=document.getElementById('starsBg');
+  for(let i=0;i<40;i++){
+    const d=document.createElement('div');
+    d.className='star-dot';
+    d.style.left=Math.random()*100+'%';
+    d.style.top=Math.random()*100+'%';
+    d.style.animationDelay=(Math.random()*2)+'s';
+    box.appendChild(d);
+  }
+})();
+
+/* =========================================================
+   NAVEGAÇÃO DE MENUS VIA CONTROLE / TECLADO (foco em botões)
+========================================================= */
+let menuFocusables=[]; let menuFocusIdx=0;
+function setupMenuFocus(name){
+  const el=screens[name];
+  menuFocusables=Array.from(el.querySelectorAll('.focusable, .stage-tile, .char-card'));
+  menuFocusables.forEach(b=>b.classList.remove('focused'));
+  menuFocusIdx=0;
+  if(menuFocusables[0]) menuFocusables[0].classList.add('focused');
+}
+function moveMenuFocus(delta){
+  if(!menuFocusables.length) return;
+  menuFocusables[menuFocusIdx].classList.remove('focused');
+  menuFocusIdx=(menuFocusIdx+delta+menuFocusables.length)%menuFocusables.length;
+  menuFocusables[menuFocusIdx].classList.add('focused');
+  sfx.select();
+}
+function activateMenuFocus(){
+  if(menuFocusables[menuFocusIdx]){ menuFocusables[menuFocusIdx].click(); }
+}
+
+/* =========================================================
+   BOTÕES - TITLE / HELP
+========================================================= */
+document.getElementById('btnPlay').onclick=()=>{ audioCtx(); showScreen('char'); };
+document.getElementById('btnHelp').onclick=()=>{ showScreen('help'); };
+document.getElementById('btnHelpBack').onclick=()=>{ showScreen('title'); };
+
+/* =========================================================
+   CHARACTER SELECT
+========================================================= */
+const charGrid=document.getElementById('charGrid');
+CHARACTERS.forEach(c=>{
+  const card=document.createElement('div');
+  card.className='char-card focusable';
+  card.tabIndex=0;
+  card.innerHTML=`<div class="char-avatar" style="background:${c.color};">${c.emoji}</div>
+    <div class="char-name">${c.name}</div>
+    <div class="char-desc">${c.desc}</div>`;
+  card.onclick=()=>{ state.selectedChar=c; sfx.select(); showScreen('stage'); };
+  charGrid.appendChild(card);
+});
+document.getElementById('btnCharBack').onclick=()=>showScreen('title');
+
+/* =========================================================
+   STAGE SELECT
+========================================================= */
+const stageGrid=document.getElementById('stageGrid');
+function buildStageGrid(){
+  stageGrid.innerHTML='';
+  for(let i=1;i<=10;i++){
+    const p=PHASES[i];
+    const tile=document.createElement('div');
+    tile.className='stage-tile focusable '+(p.kind==='preboss'?'preboss':p.kind==='boss'?'boss':'');
+    tile.tabIndex=0;
+    const tag=p.kind==='preboss'?'<div class="stage-tag medium">PRÉ-BOSS</div>':p.kind==='boss'?'<div class="stage-tag">BOSS FINAL</div>':'';
+    tile.innerHTML=`${tag}<div class="stage-num">FASE ${p.id}</div><div class="stage-name">${p.name}<br><small>${p.world}</small></div><div class="stage-star">${stars[p.id]?'⭐':'☆'}</div>`;
+    tile.onclick=()=>{ sfx.select(); startPhase(p.id); };
+    stageGrid.appendChild(tile);
+  }
+}
+document.getElementById('btnStageChar').onclick=()=>showScreen('char');
+document.getElementById('btnResetStars').onclick=()=>{ stars={}; saveStars(); buildStageGrid(); setupMenuFocus('stage'); };
+
+/* =========================================================
+   CLEAR / WIN SCREEN BUTTONS
+========================================================= */
+document.getElementById('btnClearMenu').onclick=()=>{ buildStageGrid(); showScreen('stage'); };
+document.getElementById('btnWinMenu').onclick=()=>{ buildStageGrid(); showScreen('stage'); };
+document.getElementById('btnQuit').onclick=()=>{ buildStageGrid(); showScreen('stage'); };
+
+/* =========================================================
+   INPUT: TECLADO
+========================================================= */
+const keys={};
+window.addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(state.screen!=='game'){
+    if(e.code==='ArrowDown'||e.code==='ArrowRight') moveMenuFocus(1);
+    else if(e.code==='ArrowUp'||e.code==='ArrowLeft') moveMenuFocus(-1);
+    else if(e.code==='Enter'||e.code==='Space') { activateMenuFocus(); }
+  }
+});
+window.addEventListener('keyup',e=>{ keys[e.code]=false; });
+
+/* =========================================================
+   INPUT: TOUCH
+========================================================= */
+const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
+const touchState={left:false,right:false,jump:false,attack:false,confirm:false};
+function bindTouchBtn(id,key){
+  const el=document.getElementById(id);
+  const on=(ev)=>{ev.preventDefault();touchState[key]=true;};
+  const off=(ev)=>{ev.preventDefault();touchState[key]=false;};
+  el.addEventListener('touchstart',on,{passive:false});
+  el.addEventListener('touchend',off,{passive:false});
+  el.addEventListener('touchcancel',off,{passive:false});
+  el.addEventListener('mousedown',on);
+  el.addEventListener('mouseup',off);
+  el.addEventListener('mouseleave',off);
+}
+bindTouchBtn('tLeft','left');bindTouchBtn('tRight','right');bindTouchBtn('tJump','jump');bindTouchBtn('tAttack','attack');bindTouchBtn('tConfirm','confirm');
+if(isTouch) document.getElementById('touchControls').classList.add('show');
+function setActionButtonsVisible(showAttack,showConfirm){
+  document.getElementById('tAttack').style.display=(isTouch&&showAttack)?'flex':'none';
+  document.getElementById('tConfirm').style.display=(isTouch&&showConfirm)?'flex':'none';
+}
+
+/* =========================================================
+   INPUT: GAMEPAD (Xbox) — A só pula, Y só confirma (corrigido)
+========================================================= */
+let prevA=false, prevY=false;
+function readGamepad(){
+  const pads=navigator.getGamepads?navigator.getGamepads():[];
+  const gp=pads&&pads[0];
+  const r={left:false,right:false,jumpHeld:false,attack:false,jumpEdge:false,confirmEdge:false,menuUp:false,menuDown:false};
+  if(!gp) return r;
+  const ax=gp.axes[0]||0;
+  if(ax<-0.35||(gp.buttons[14]&&gp.buttons[14].pressed)) r.left=true;
+  if(ax>0.35||(gp.buttons[15]&&gp.buttons[15].pressed)) r.right=true;
+  const btnA=!!(gp.buttons[0]&&gp.buttons[0].pressed); // A: PULAR (somente)
+  const btnB=!!(gp.buttons[1]&&gp.buttons[1].pressed); // B: atacar
+  const btnX=!!(gp.buttons[2]&&gp.buttons[2].pressed); // X: atacar (alternativo)
+  const btnY=!!(gp.buttons[3]&&gp.buttons[3].pressed); // Y: CONFIRMAR (somente)
+  r.jumpHeld=btnA;
+  r.attack=btnB||btnX;
+  r.jumpEdge = btnA && !prevA;
+  r.confirmEdge = btnY && !prevY;
+  prevA=btnA; prevY=btnY;
+  if(gp.buttons[12]&&gp.buttons[12].pressed) r.menuUp=true;
+  if(gp.buttons[13]&&gp.buttons[13].pressed) r.menuDown=true;
+  const ay=gp.axes[1]||0;
+  if(ay<-0.5) r.menuUp=true; if(ay>0.5) r.menuDown=true;
+  return r;
+}
+let menuGpCooldown=0;
+function pollGamepadMenu(){
+  if(state.screen==='game') return;
+  const gp=readGamepad();
+  if(menuGpCooldown>0){menuGpCooldown--;}
+  else{
+    if(gp.menuDown||gp.right){moveMenuFocus(1);menuGpCooldown=12;}
+    else if(gp.menuUp||gp.left){moveMenuFocus(-1);menuGpCooldown=12;}
+  }
+  if(gp.jumpEdge) activateMenuFocus();
+}
+
+/* =========================================================
+   FÍSICA / CONSTANTES DO JOGO
+========================================================= */
+const CW=960, CH=540, GROUND_Y=460, GRAVITY=0.62, JUMP_V=-13.2, MOVE_SPEED=4.2;
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+
+function getInput(){
+  const gp=readGamepad();
+  return {
+    left: !!(keys['ArrowLeft']||keys['KeyA']||touchState.left||gp.left),
+    right: !!(keys['ArrowRight']||keys['KeyD']||touchState.right||gp.right),
+    jump: !!(keys['Space']||keys['ArrowUp']||keys['KeyW']||touchState.jump||gp.jumpHeld),
+    jumpEdge: gp.jumpEdge || jumpEdgeKB(),
+    attack: !!(keys['KeyE']||keys['KeyF']||touchState.attack||gp.attack),
+    confirm: !!(keys['Enter']||touchState.confirm) || gp.confirmEdge,
+  };
+}
+let prevJumpKB=false;
+function jumpEdgeKB(){
+  const held=!!(keys['Space']||keys['ArrowUp']||keys['KeyW']||touchState.jump);
+  const edge=held&&!prevJumpKB; prevJumpKB=held; return edge;
+}
+
+/* =========================================================
+   GERAÇÃO DE FASE (procedural, seed fixa por fase)
+========================================================= */
+function genLevel(phaseId){
+  const rnd=mulberry32(phaseId*7919+13);
+  const p=PHASES[phaseId];
+  const hard = p.kind==='boss'?2 : p.kind==='preboss'?1 : 0;
+  const width = 2300 + hard*550;
+  const numGaps = 2+hard;
+  const numEnemies = 3+hard*2;
+  const numCoins = 10+hard*4;
+  const numPlats = 3+hard;
+  const kind = ENEMY_KINDS[phaseId];
+
+  const gaps=[]; let cursor=500;
+  for(let i=0;i<numGaps;i++){
+    cursor += 260+rnd()*260;
+    const w= 55+rnd()*30+hard*8;
+    if(cursor+w < width-500){ gaps.push({start:cursor,end:cursor+w}); cursor+=w; }
+  }
+  const platforms=[];
+  for(let i=0;i<numPlats;i++){
+    const x=300+rnd()*(width-700);
+    platforms.push({x, y:GROUND_Y-90-rnd()*70, w:110+rnd()*40, h:16});
+  }
+  const enemies=[];
+  for(let i=0;i<numEnemies;i++){
+    const x=350+ (i+1)*(width-700)/numEnemies + (rnd()*80-40);
+    if(gaps.some(g=>x>g.start-40&&x<g.end+40)) continue;
+    const baseY=GROUND_Y-30;
+    enemies.push({
+      x, y:baseY, baseY, w:30,h:30, kind, behavior:kind.behavior,
+      minX:x-70-hard*15, maxX:x+70+hard*15,
+      dir:rnd()>0.5?1:-1,
+      speed:(1+hard*0.35)*kind.speedMul,
+      detect:kind.detect+hard*35,
+      phaseT:rnd()*10,
+      dodgeT:0, dodgeDir:1,
+      alive:true,
+    });
+  }
+  const coins=[];
+  for(let i=0;i<numCoins;i++){
+    const x=200+rnd()*(width-400);
+    const y=GROUND_Y-40-rnd()*140;
+    coins.push({x,y,r:9,taken:false});
+  }
+  const questionTriggerX = width-380;
+  const flagX = width-90;
+  return {width, gaps, platforms, enemies, coins, questionTriggerX, flagX, questionDone:false};
+}
+
+/* Movimento por comportamento — deixa os inimigos "mais espertos" fase a fase.
+   Inimigos de chão (patrol/chase) agora se ESQUIVAM quando o jogador cai em cima deles,
+   em vez de ficar parados esperando o pisão — precisa de tempo e mira de verdade. */
+function stepEnemy(e,player,dt){
+  const targetX = player ? player.x+player.w/2 : null;
+  if(e.behavior==='fly'||e.behavior==='flyChase'){
+    stepFlyingEnemy(e,targetX,dt);
+    return;
+  }
+  // --- inimigos de chão ---
+  const ex=e.x+e.w/2;
+  const playerAbove = player && player.vy>0 && (player.y+player.h) < e.y+6 && Math.abs((player.x+player.w/2)-ex) < e.w*1.6;
+  if(playerAbove && e.dodgeT<=0){
+    e.dodgeT = 22+Math.random()*10;
+    // foge para o lado que tiver mais espaço dentro da patrulha
+    e.dodgeDir = (ex-e.minX > e.maxX-ex) ? -1 : 1;
+    if(Math.random()<0.3) e.dodgeDir*=-1; // um pouco de imprevisibilidade
+  }
+  if(e.dodgeT>0){
+    e.dodgeT-=dt;
+    e.dir=e.dodgeDir;
+    e.x=clamp(e.x+e.dir*e.speed*1.9*dt, e.minX-90, e.maxX+90);
+    return;
+  }
+  if(e.behavior==='chase'){
+    if(targetX!=null && Math.abs(targetX-ex)<e.detect){
+      e.dir = targetX>ex?1:-1;
+      e.x += e.dir*e.speed*1.25*dt;
+    } else {
+      e.x += e.dir*e.speed*dt;
+      if(e.x<e.minX||e.x>e.maxX) e.dir*=-1;
+    }
+    e.x=clamp(e.x, e.minX-60, e.maxX+60);
+  } else { // patrol
+    e.x += e.dir*e.speed*dt;
+    if(e.x<e.minX||e.x>e.maxX) e.dir*=-1;
+  }
+}
+function stepFlyingEnemy(e,targetX,dt){
+  switch(e.behavior){
+    case 'fly':
+      e.x += e.dir*e.speed*dt;
+      if(e.x<e.minX||e.x>e.maxX) e.dir*=-1;
+      e.phaseT += dt*0.08;
+      e.y = e.baseY - 30 + Math.sin(e.phaseT)*24;
+      break;
+    case 'flyChase':
+      if(targetX!=null && Math.abs(targetX-e.x)<e.detect){
+        e.dir = targetX>e.x?1:-1;
+        e.x += e.dir*e.speed*1.2*dt;
+      } else {
+        e.x += e.dir*e.speed*dt;
+        if(e.x<e.minX||e.x>e.maxX) e.dir*=-1;
+      }
+      e.x = clamp(e.x, e.minX-70, e.maxX+70);
+      e.phaseT += dt*0.1;
+      e.y = e.baseY - 30 + Math.sin(e.phaseT)*28;
+      break;
+  }
+}
+
+/* =========================================================
+   JOGADOR (na fase e nas arenas de pergunta/boss)
+========================================================= */
+function makePlayer(x,y){ return {x,y,w:30,h:44,vx:0,vy:0,onGround:true,facing:1,lives:3,invuln:0,animT:0}; }
+
+let level=null, player=null, camX=0, coinsCollected=0, questionArena=null, bossFight=null;
+let bannerTimeout=null;
+
+function startPhase(id){
+  state.currentPhaseId=id;
+  level=genLevel(id);
+  player=makePlayer(40, GROUND_Y-44);
+  player.lives=3;
+  questionArena=null; bossFight=null;
+  camX=0; coinsCollected=0; state.sub='play';
+  document.getElementById('hudPhase').textContent='FASE '+id+' • '+PHASES[id].world;
+  setActionButtonsVisible(false,false);
+  updateHud();
+  showScreen('game');
+  hideBanner();
+  lastTime=performance.now();
+  requestAnimationFrame(loop);
+}
+
+function updateHud(){
+  const h=document.getElementById('hudHearts');
+  h.innerHTML='';
+  let lives, maxLives;
+  if(state.sub==='question'){ lives=questionArena.hearts; maxLives=5; }
+  else if(state.sub==='bossfight'){ lives=bossFight.hearts; maxLives=4; }
+  else { lives=player.lives; maxLives=3; }
+  for(let i=0;i<maxLives;i++){ h.innerHTML+= (i<lives?'❤':'🖤'); }
+  document.getElementById('hudCoins').textContent='🪙 x'+coinsCollected;
+}
+
+function showBanner(title,text,ms){
+  const b=document.getElementById('msgBanner');
+  document.getElementById('msgTitle').textContent=title;
+  document.getElementById('msgText').textContent=text;
+  b.classList.add('show');
+  clearTimeout(bannerTimeout);
+  if(ms) bannerTimeout=setTimeout(hideBanner,ms);
+}
+function hideBanner(){ document.getElementById('msgBanner').classList.remove('show'); }
+
+function failPhase(reasonTitle,reasonText){
+  sfx.wrong();
+  setActionButtonsVisible(false,false);
+  showBanner(reasonTitle,reasonText,1600);
+  setTimeout(()=>{ buildStageGrid(); showScreen('stage'); },1650);
+}
+
+/* =========================================================
+   LOOP PRINCIPAL
+========================================================= */
+let lastTime=0;
+function loop(t){
+  if(state.screen!=='game') return;
+  const dt=Math.min(2, (t-lastTime)/16.67); lastTime=t;
+  const input=getInput();
+  if(state.sub==='play') updatePlay(input,dt);
+  else if(state.sub==='question') updateQuestion(input,dt);
+  else if(state.sub==='bossfight') updateBossFight(input,dt);
+  render();
+  updateHud();
+  requestAnimationFrame(loop);
+}
+
+/* ---------- PLAY (plataforma) ---------- */
+function updatePlay(input,dt){
+  const p=player;
+  p.vx=0;
+  if(input.left){p.vx=-MOVE_SPEED;p.facing=-1;}
+  if(input.right){p.vx=MOVE_SPEED;p.facing=1;}
+  p.x=clamp(p.x+p.vx*dt,0,level.width-p.w);
+  if(input.jumpEdge && p.onGround){ p.vy=JUMP_V; p.onGround=false; sfx.jump(); }
+  p.vy+=GRAVITY*dt; p.y+=p.vy*dt;
+
+  // plataformas
+  p.onGround=false;
+  for(const pl of level.platforms){
+    if(p.vy>=0 && p.x+p.w>pl.x+6 && p.x<pl.x+pl.w-6 && p.y+p.h>=pl.y && p.y+p.h<=pl.y+16+p.vy*dt+2){
+      p.y=pl.y-p.h; p.vy=0; p.onGround=true;
+    }
+  }
+  // chão / buracos
+  const midX=p.x+p.w/2;
+  const inGap=level.gaps.some(g=>midX>g.start&&midX<g.end);
+  if(!inGap){
+    if(p.y+p.h>=GROUND_Y){ p.y=GROUND_Y-p.h; p.vy=0; p.onGround=true; }
+  } else if(p.y>CH+80){
+    hurtPlayer(true); return;
+  }
+
+  if(p.invuln>0) p.invuln-=dt;
+  p.animT += (Math.abs(p.vx)>0.2 ? Math.abs(p.vx)*dt*1.7 : dt*0.6);
+
+  // inimigos (comportamento varia por fase — perseguem, voam, etc)
+  for(const e of level.enemies){
+    if(!e.alive) continue;
+    stepEnemy(e, p, dt);
+    if(rectsOverlap(p,e)){
+      if(p.vy>0 && p.y+p.h-e.y<18){ e.alive=false; p.vy=-9; sfx.stomp(); state.score+=10; }
+      else if(p.invuln<=0){ hurtPlayer(false); return; }
+    }
+  }
+  // moedas
+  for(const c of level.coins){
+    if(c.taken) continue;
+    const cb={x:c.x-c.r,y:c.y-c.r,w:c.r*2,h:c.r*2};
+    if(rectsOverlap(p,cb)){ c.taken=true; coinsCollected++; sfx.coin(); }
+  }
+
+  camX=clamp(p.x-CW/2,0,Math.max(0,level.width-CW));
+
+  // gatilho da pergunta
+  if(!level.questionDone && p.x>=level.questionTriggerX){
+    startQuestionRound(1, []);
+    return;
+  }
+  // chegada na bandeira
+  if(level.questionDone && p.x>=level.flagX-20){
+    clearPhase();
+  }
+}
+
+function hurtPlayer(fromFall){
+  const p=player;
+  p.lives--; p.invuln=90;
+  sfx.hurt();
+  if(p.lives<=0){
+    failPhase(fromFall?'😵 Caiu no buraco!':'😵 Perdeu para os inimigos!', 'Tentativas ilimitadas — escolham a fase de novo no mapa!');
+  } else {
+    p.x=Math.max(0,p.x-40); p.y=GROUND_Y-p.h; p.vy=-6;
+  }
+}
+
+/* ---------- QUESTION MODE (arena de combate + portas) ---------- */
+const qPlayer=makePlayer(CW/2-15,GROUND_Y-44);
+
+function startQuestionRound(round, used){
+  state.sub='question';
+  const pool=QUESTIONS[state.currentPhaseId];
+  let idx;
+  if(used.length>=pool.length){ idx=Math.floor(Math.random()*pool.length); }
+  else{ do{ idx=Math.floor(Math.random()*pool.length); }while(used.includes(idx)); }
+  used.push(idx);
+  const q=pool[idx];
+  const shuffledOptions=shuffleArray(q.options); // posição da resposta certa muda sempre — força ler o VALOR, não decorar o lugar
+  const n=shuffledOptions.length;
+  const spacing=CW/(n+1);
+  const doors=shuffledOptions.map((o,i)=>({x:spacing*(i+1)-55,y:GROUND_Y-90,w:110,h:90,text:o.text,correct:o.correct,idx:i}));
+  const isFinalBoss = PHASES[state.currentPhaseId].kind==='boss';
+  questionArena={
+    q, doors, hearts:5, enemies:[], spawnT:0,
+    difficultyMul: isFinalBoss?1.6:PHASES[state.currentPhaseId].kind==='preboss'?1.25:1,
+    result:null, near:-1, round, totalRounds:isFinalBoss?3:1, used,
+  };
+  qPlayer.x=CW/2-15; qPlayer.y=GROUND_Y-44; qPlayer.vx=0; qPlayer.vy=0; qPlayer.onGround=true; qPlayer.invuln=0; qPlayer.facing=1; qPlayer.animT=0;
+  setActionButtonsVisible(true,true);
+  if(isFinalBoss) showBanner('❓ PERGUNTA '+round+'/3', 'Respondam certo para avançar rumo ao Rei Percentual! (Y ou Enter confirma)',2600);
+  else showBanner('❓ PERGUNTA!', 'A equipe decide — entrem na porta certa e confirmem (Y / Enter)!', 2600);
+}
+
+function updateQuestion(input,dt){
+  const A=questionArena;
+  if(A.result) return; // aguardando transição
+  const p=qPlayer;
+  p.vx=0;
+  if(input.left){p.vx=-MOVE_SPEED;p.facing=-1;}
+  if(input.right){p.vx=MOVE_SPEED;p.facing=1;}
+  p.x=clamp(p.x+p.vx*dt,10,CW-10-p.w);
+  if(input.jumpEdge && p.onGround){ p.vy=JUMP_V; p.onGround=false; sfx.jump(); }
+  p.vy+=GRAVITY*dt; p.y+=p.vy*dt;
+  if(p.y+p.h>=GROUND_Y){ p.y=GROUND_Y-p.h; p.vy=0; p.onGround=true; }
+  if(p.invuln>0) p.invuln-=dt;
+  p.animT += (Math.abs(p.vx)>0.2 ? Math.abs(p.vx)*dt*1.7 : dt*0.6);
+
+  // spawn inimigos pequenos (aparência da fase atual)
+  const kind = ENEMY_KINDS[state.currentPhaseId];
+  A.spawnT-=dt;
+  if(A.spawnT<=0){
+    A.spawnT=Math.max(42, 105-A.difficultyMul*20-Math.random()*20);
+    const fromLeft=Math.random()>0.5;
+    A.enemies.push({x:fromLeft?-20:CW+20,y:GROUND_Y-22,w:22,h:22,dir:fromLeft?1:-1,speed:(1.15+Math.random()*0.6)*A.difficultyMul*kind.speedMul,alive:true,kind});
+  }
+  for(const e of A.enemies){
+    if(!e.alive) continue;
+    e.x+=e.dir*e.speed*dt;
+    if(rectsOverlap(p,e)){
+      const attackHit = input.attack && Math.abs((p.x+p.w/2)-(e.x+e.w/2))<40;
+      if((p.vy>0 && p.y+p.h-e.y<16) || attackHit){
+        e.alive=false; if(p.vy>0)p.vy=-8; sfx.stomp(); state.score+=5;
+      } else if(p.invuln<=0){
+        A.hearts--; p.invuln=70; sfx.hurt();
+        if(A.hearts<=0){ A.result='lose_enemies'; setTimeout(()=>{ failPhase('😵 Os inimigos venceram!','Vocês tiveram 5 chances — chamem a próxima equipe!'); },400); return; }
+      }
+    }
+  }
+  A.enemies=A.enemies.filter(e=>e.x>-60&&e.x<CW+60);
+
+  // portas
+  A.near=-1;
+  for(const d of A.doors){
+    if(rectsOverlap(p,d)) A.near=d.idx;
+  }
+  if(A.near>=0 && input.confirm){
+    const door=A.doors[A.near];
+    const phaseKind = PHASES[state.currentPhaseId].kind;
+    const isFinalBoss = phaseKind==='boss';
+    const isPreBoss = phaseKind==='preboss';
+    if(door.correct){
+      A.result='win';
+      sfx.correct();
+      if(isFinalBoss && A.round<3){
+        showBanner('✅ CORRETO!','Próxima pergunta chegando...',1300);
+        setTimeout(()=>{ startQuestionRound(A.round+1, A.used); },1350);
+      } else if(isFinalBoss && A.round===3){
+        showBanner('✅ CORRETO!','Prontos? O Rei Percentual está chegando!',1500);
+        setTimeout(()=>{ enterBossFight('final'); },1550);
+      } else if(isPreBoss){
+        showBanner('✅ CORRETO!','Prontos? Um guardião está chegando!',1500);
+        setTimeout(()=>{ enterBossFight('mini'); },1550);
+      } else {
+        showBanner('✅ RESPOSTA CERTA!','Continuem correndo até a bandeira!',1500);
+        setTimeout(()=>{
+          level.questionDone=true; state.sub='play';
+          player.x=level.questionTriggerX+30; player.y=GROUND_Y-44; player.vy=0;
+          player.lives=Math.max(player.lives,2);
+          setActionButtonsVisible(false,false);
+          hideBanner();
+        },1550);
+      }
+    } else {
+      A.result='wrong';
+      setTimeout(()=>{ failPhase('❌ RESPOSTA ERRADA!','Perderam a vez — escolham a fase de novo no mapa!'); },250);
+    }
+  }
+}
+
+/* ---------- BOSS FIGHT (Rei Percentual no Boss Final — 3 tapas / mini-guardiões no pré-boss — 2 tapas, mesma dinâmica) ---------- */
+const MINIBOSS_BY_PHASE={
+  8:{name:'Vírus Chefe', color:'#7a2b0a'},
+  9:{name:'Guardião do Castelo', color:'#2b1a4a'},
+};
+function enterBossFight(variant){
+  state.sub='bossfight';
+  const isFinal = variant==='final';
+  const mini = MINIBOSS_BY_PHASE[state.currentPhaseId];
+  const name = isFinal ? 'Rei Percentual' : (mini?mini.name:'Guardião');
+  const color = isFinal ? '#4b0000' : (mini?mini.color:'#4b0000');
+  const w = isFinal?78:64, h = isFinal?86:70;
+  const yPos = GROUND_Y-h-4;
+  bossFight={
+    variant, name, color,
+    hp: isFinal?3:2, maxHp: isFinal?3:2,
+    hearts:4, hitCd:0, result:null,
+    x:CW-170, y:yPos, w, h, dir:-1, speed:isFinal?2.1:1.95,
+    minX:CW*0.45, maxX:CW-100, baseY:yPos, phaseT:0,
+    aiState:'chase', aiT:0, attackCd:100+Math.random()*40,
+  };
+  qPlayer.x=90; qPlayer.y=GROUND_Y-44; qPlayer.vx=0; qPlayer.vy=0; qPlayer.onGround=true; qPlayer.invuln=0; qPlayer.facing=1; qPlayer.animT=0;
+  setActionButtonsVisible(true,false);
+  sfx.bossRoar();
+  if(isFinal) showBanner('👑 O REI PERCENTUAL APARECEU!','Ele foge quando vocês chegam perto e ataca de bote quando pisca laranja! Deem 3 TAPAS nele (pulem ou ataquem com B/X)!',3400);
+  else showBanner('⚔ '+name.toUpperCase()+' APARECEU!','Mesmo jeito do chefão: foge de perto e ataca de bote quando pisca laranja. Deem 2 TAPAS nele!',3200);
+}
+
+function updateBossFight(input,dt){
+  const B=bossFight;
+  if(B.result) return;
+  const p=qPlayer;
+  p.vx=0;
+  if(input.left){p.vx=-MOVE_SPEED;p.facing=-1;}
+  if(input.right){p.vx=MOVE_SPEED;p.facing=1;}
+  p.x=clamp(p.x+p.vx*dt,10,CW-10-p.w);
+  if(input.jumpEdge && p.onGround){ p.vy=JUMP_V; p.onGround=false; sfx.jump(); }
+  p.vy+=GRAVITY*dt; p.y+=p.vy*dt;
+  if(p.y+p.h>=GROUND_Y){ p.y=GROUND_Y-p.h; p.vy=0; p.onGround=true; }
+  if(p.invuln>0) p.invuln-=dt;
+  p.animT += (Math.abs(p.vx)>0.2 ? Math.abs(p.vx)*dt*1.7 : dt*0.6);
+
+  // IA do boss: persegue o jogador, mas foge quando percebe que vai levar um ataque,
+  // e de tempos em tempos avisa e avança num bote rápido para atacar.
+  const target=p.x+p.w/2, bc=B.x+B.w/2;
+  const dist = target-bc, absDist=Math.abs(dist);
+  if(B.hitCd>0) B.hitCd-=dt;
+  B.attackCd -= dt;
+  if(B.aiT>0) B.aiT -= dt;
+
+  const playerThreat = (input.attack && absDist<95) || absDist<58; // jogador perto/atacando = perigo pro boss
+  if(B.hitCd<=0 && playerThreat && B.aiState!=='attack' && B.aiState!=='telegraph'){
+    B.aiState='flee'; B.aiT=36;
+  }
+
+  if(B.aiState==='flee'){
+    const fleeDir = dist>0?-1:1; // corre para o lado oposto ao jogador
+    B.dir=-fleeDir;
+    B.x = clamp(B.x + fleeDir*B.speed*1.6*dt, B.minX, B.maxX);
+    if(B.aiT<=0) B.aiState='chase';
+  } else if(B.aiState==='telegraph'){
+    B.dir = dist>0?1:-1; // treme no lugar, avisando o bote
+    if(B.aiT<=0){ B.aiState='attack'; B.aiT=30; }
+  } else if(B.aiState==='attack'){
+    B.dir = dist>0?1:-1;
+    B.x = clamp(B.x + B.dir*B.speed*2.5*dt, B.minX, B.maxX);
+    if(B.aiT<=0){ B.aiState='chase'; B.attackCd=130+Math.random()*55; }
+  } else { // chase
+    B.dir = dist>0?1:-1;
+    B.x = clamp(B.x + B.dir*B.speed*dt, B.minX, B.maxX);
+    if(B.attackCd<=0){ B.aiState='telegraph'; B.aiT=24; }
+  }
+
+  B.phaseT += dt*0.09;
+  const shake = B.aiState==='telegraph' ? Math.sin(performance.now()/35)*4 : 0;
+  B.y = B.baseY + Math.sin(B.phaseT)*10 + shake;
+
+  if(rectsOverlap(p,{x:B.x,y:B.y,w:B.w,h:B.h})){
+    const stomp = p.vy>0 && (p.y+p.h-B.y)<26;
+    const attackHit = input.attack && Math.abs((p.x+p.w/2)-(B.x+B.w/2))<64;
+    if((stomp||attackHit) && B.hitCd<=0){
+      B.hp--; B.hitCd=55; if(stomp) p.vy=-9;
+      sfx.bossHit();
+      B.aiState='flee'; B.aiT=45; // depois de levar tapa, ele foge um pouco antes de voltar
+      if(B.hp<=0){
+        B.result='win';
+        sfx.clear();
+        setActionButtonsVisible(false,false);
+        if(B.variant==='final') showBanner('🏆 REI PERCENTUAL DERROTADO!','Vitória da equipe! Parabéns!',2200);
+        else showBanner('🏆 '+B.name.toUpperCase()+' DERROTADO!','Caminho livre até a bandeira!',2000);
+        setTimeout(()=>{ clearPhase(); },B.variant==='final'?2300:2100);
+      }
+    } else if(!stomp && !attackHit && p.invuln<=0){
+      B.hearts--; p.invuln=75; sfx.hurt();
+      if(B.hearts<=0){
+        B.result='lose';
+        setTimeout(()=>{ failPhase('😵 '+B.name+' venceu!','Tentem novamente — escolham a fase no mapa!'); },300);
+      }
+    }
+  }
+}
+
+function clearPhase(){
+  stars[state.currentPhaseId]=true; saveStars();
+  sfx.clear();
+  setActionButtonsVisible(false,false);
+  if(PHASES[state.currentPhaseId].kind==='boss'){
+    showScreen('win');
+  } else {
+    document.getElementById('clearPhaseName').textContent=PHASES[state.currentPhaseId].name+' — '+PHASES[state.currentPhaseId].world;
+    document.getElementById('clearCoins').textContent=coinsCollected;
+    showScreen('clear');
+  }
+}
+
+/* =========================================================
+   RENDER
+========================================================= */
+function drawBackground(theme){
+  const g=ctx.createLinearGradient(0,0,0,GROUND_Y);
+  g.addColorStop(0,theme.sky1); g.addColorStop(1,theme.sky2);
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+  ctx.globalAlpha=0.5;
+  for(let i=0;i<6;i++){
+    const x=((i*260)-(camX*0.3)%1300+1300)%1300-100;
+    ctx.beginPath();
+    ctx.ellipse(x,70+((i%3)*40),46,20,0,0,Math.PI*2);
+    ctx.fillStyle='#ffffff'; ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function drawGround(theme){
+  ctx.fillStyle=theme.grass;
+  ctx.fillRect(0,GROUND_Y,level.width,10);
+  let prev=0;
+  const segs=[];
+  const sorted=[...level.gaps].sort((a,b)=>a.start-b.start);
+  for(const g of sorted){ segs.push({s:prev,e:g.start}); prev=g.end; }
+  segs.push({s:prev,e:level.width});
+  for(const s of segs){
+    ctx.fillStyle=theme.grass; ctx.fillRect(s.s-camX,GROUND_Y,s.e-s.s,8);
+    ctx.fillStyle=theme.ground; ctx.fillRect(s.s-camX,GROUND_Y+8,s.e-s.s,CH-GROUND_Y-8);
+  }
+  ctx.fillStyle='rgba(0,0,0,0.55)';
+  for(const g of level.gaps){ ctx.fillRect(g.start-camX,GROUND_Y,g.end-g.start,CH-GROUND_Y); }
+}
+function drawPlatforms(theme){
+  for(const pl of level.platforms){
+    ctx.fillStyle=theme.accent;
+    roundRect(pl.x-camX,pl.y,pl.w,pl.h,6); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.35)';
+    ctx.fillRect(pl.x-camX,pl.y,pl.w,4);
+  }
+}
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function drawCoins(){
+  for(const c of level.coins){
+    if(c.taken) continue;
+    const sx=c.x-camX; if(sx<-20||sx>CW+20) continue;
+    const bob=Math.sin(performance.now()/220+c.x)*3;
+    ctx.fillStyle='#FFD24C'; ctx.beginPath(); ctx.arc(sx,c.y+bob,c.r,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#C98A00'; ctx.lineWidth=2; ctx.stroke();
+  }
+}
+
+/* ---------- Formas variadas de inimigos por fase ---------- */
+function drawEnemy(e,camOffset){
+  const sx=e.x-camOffset;
+  if(sx<-40||sx>CW+40) return;
+  const k=e.kind, c=k.color, d=k.dark, w=e.w, h=e.h, y=e.y;
+  const eyeDir=e.dir>0?1:-1;
+  const t=(e.phaseT||0);
+  ctx.save();
+  switch(k.shape){
+    case 'spike': {
+      ctx.fillStyle=c;
+      ctx.beginPath();
+      ctx.moveTo(sx,y+h); ctx.lineTo(sx,y+h*0.5); ctx.lineTo(sx+w*0.2,y); ctx.lineTo(sx+w*0.4,y+h*0.35);
+      ctx.lineTo(sx+w*0.6,y); ctx.lineTo(sx+w*0.8,y+h*0.35); ctx.lineTo(sx+w,y+h*0.5); ctx.lineTo(sx+w,y+h);
+      ctx.closePath(); ctx.fill();
+      break;
+    }
+    case 'robot': {
+      ctx.fillStyle=d; ctx.fillRect(sx+w*0.42,y-9,w*0.16,9);
+      ctx.fillStyle=c; ctx.beginPath(); ctx.arc(sx+w/2,y-11,3.5,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=c; roundRect(sx,y,w,h,5); ctx.fill();
+      ctx.fillStyle= (Math.floor(performance.now()/300)%2===0)?'#fff':d;
+      ctx.fillRect(sx+4,y+h-8,w-8,4);
+      break;
+    }
+    case 'bat': {
+      const flap=Math.sin(performance.now()/90)*10;
+      ctx.fillStyle=c;
+      ctx.beginPath(); ctx.moveTo(sx+w*0.5,y+h*0.5); ctx.lineTo(sx-6,y+h*0.2-flap); ctx.lineTo(sx-2,y+h*0.7); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(sx+w*0.5,y+h*0.5); ctx.lineTo(sx+w+6,y+h*0.2-flap); ctx.lineTo(sx+w+2,y+h*0.7); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(sx+w/2,y+h/2,w*0.32,h*0.36,0,0,Math.PI*2); ctx.fill();
+      break;
+    }
+    case 'virus': {
+      ctx.fillStyle=c;
+      for(let i=0;i<8;i++){
+        const a=t*2+i*(Math.PI/4);
+        ctx.beginPath();
+        ctx.moveTo(sx+w/2+Math.cos(a)*w*0.32, sx===sx? y+h/2+Math.sin(a)*h*0.32:0);
+        ctx.lineTo(sx+w/2+Math.cos(a)*w*0.62, y+h/2+Math.sin(a)*h*0.62);
+        ctx.lineWidth=4; ctx.strokeStyle=c; ctx.stroke();
+      }
+      ctx.beginPath(); ctx.arc(sx+w/2,y+h/2,w*0.34,0,Math.PI*2); ctx.fill();
+      break;
+    }
+    case 'ghost': {
+      ctx.globalAlpha=0.88;
+      ctx.fillStyle=c;
+      ctx.beginPath();
+      ctx.arc(sx+w/2,y+h*0.42,w*0.5,Math.PI,0);
+      ctx.lineTo(sx+w,y+h);
+      for(let i=0;i<3;i++){ ctx.quadraticCurveTo(sx+w-(i+0.5)*(w/3), y+h-10, sx+w-(i+1)*(w/3), y+h); }
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha=1;
+      break;
+    }
+    case 'guard': {
+      ctx.fillStyle=d; roundRect(sx-2,y-8,w+4,10,3); ctx.fill();
+      ctx.fillStyle=c; roundRect(sx,y,w,h,7); ctx.fill();
+      ctx.fillStyle='#3a0000'; ctx.fillRect(sx+3,y+h*0.28,w-6,6);
+      break;
+    }
+    default: { // blob
+      ctx.fillStyle=c; roundRect(sx,y,w,h,8); ctx.fill();
+    }
+  }
+  // olhos (padrão, exceto guard que já tem visor)
+  if(k.shape!=='guard'){
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(sx+w*0.32,y+h*0.4,3.2,0,Math.PI*2); ctx.arc(sx+w*0.68,y+h*0.4,3.2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1330';
+    ctx.beginPath(); ctx.arc(sx+w*0.32+eyeDir,y+h*0.4,1.5,0,Math.PI*2); ctx.arc(sx+w*0.68+eyeDir,y+h*0.4,1.5,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle='#FF3B3B';
+    ctx.beginPath(); ctx.arc(sx+w*0.32,y+h*0.31,2.6,0,Math.PI*2); ctx.arc(sx+w*0.68,y+h*0.31,2.6,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ---------- Boss (Rei Percentual) ---------- */
+function drawBossEntity(B){
+  ctx.save();
+  const hitFlash = B.hitCd>0 && Math.floor(B.hitCd/5)%2===0;
+  let bodyColor=B.color||'#4b0000';
+  if(hitFlash) bodyColor='#ff9b9b';
+  else if(B.aiState==='telegraph') bodyColor= Math.floor(performance.now()/60)%2===0 ? '#ff8a2b':(B.color||'#4b0000'); // pisca laranja avisando o bote
+  else if(B.aiState==='attack') bodyColor='#7a1010'; // vermelho mais forte durante o bote
+  else if(B.aiState==='flee') bodyColor='#2a0a0a'; // mais escuro fugindo
+  ctx.fillStyle=bodyColor;
+  roundRect(B.x,B.y,B.w,B.h,16); ctx.fill();
+  ctx.fillStyle='#FFD24C';
+  ctx.beginPath(); ctx.moveTo(B.x+B.w*0.18,B.y-4); ctx.lineTo(B.x+B.w*0.32,B.y-28); ctx.lineTo(B.x+B.w*0.5,B.y-8);
+  ctx.lineTo(B.x+B.w*0.68,B.y-28); ctx.lineTo(B.x+B.w*0.82,B.y-4); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(B.x+B.w*0.35,B.y+B.h*0.4,7,0,Math.PI*2); ctx.arc(B.x+B.w*0.65,B.y+B.h*0.4,7,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#1a1330';
+  ctx.beginPath(); ctx.arc(B.x+B.w*0.35+B.dir*2,B.y+B.h*0.4,3,0,Math.PI*2); ctx.arc(B.x+B.w*0.65+B.dir*2,B.y+B.h*0.4,3,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#2b0000'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(B.x+B.w*0.3,B.y+B.h*0.62); ctx.quadraticCurveTo(B.x+B.w*0.5,B.y+B.h*0.5,B.x+B.w*0.7,B.y+B.h*0.62); ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle='rgba(0,0,0,.5)'; ctx.fillRect(B.x,B.y-46,B.w,8);
+  ctx.fillStyle= B.hp>=B.maxHp?'#3CCB6E':B.hp>1?'#FFD24C':'#FF4B4B';
+  ctx.fillRect(B.x,B.y-46,B.w*(B.hp/B.maxHp),8);
+  ctx.fillStyle='#fff'; ctx.font='9px "Press Start 2P"'; ctx.textAlign='center';
+  ctx.fillText(B.hp+'/'+B.maxHp+' TAPAS',B.x+B.w/2,B.y-52);
+}
+
+/* ---------- Personagem: animação de andar/pular/idle ---------- */
+function drawCharBody(x,y,w,h,facing,invuln,char,animT,onGround,vy,moving){
+  ctx.save();
+  if(invuln>0 && Math.floor(invuln/6)%2===0) ctx.globalAlpha=0.4;
+  const cx=x+w/2;
+  let squashX=1, squashY=1;
+  if(!onGround){
+    if(vy<0){ squashY=1.14; squashX=0.9; } else { squashY=0.9; squashX=1.1; }
+  }
+  const cyc = moving ? Math.sin(animT/5.2) : Math.sin(animT/26)*0.25;
+  const legA = onGround ? cyc*10 : -8;
+  const legB = onGround ? -cyc*10 : 9;
+  const armA = onGround ? -cyc*11 : -16;
+  const armB = onGround ? cyc*11 : 15;
+  const bodyBob = onGround && moving ? Math.abs(Math.sin(animT/5.2))*2.6 : (onGround?0:0);
+  const baseY=y-bodyBob;
+
+  // sombra
+  ctx.fillStyle='rgba(0,0,0,.25)';
+  ctx.beginPath(); ctx.ellipse(cx, y+h+3, w*0.42, 5, 0,0,Math.PI*2); ctx.fill();
+
+  ctx.translate(cx, baseY+h/2);
+  ctx.scale(squashX, squashY);
+  ctx.translate(-cx, -(baseY+h/2));
+
+  // perna de trás
+  ctx.save(); ctx.translate(x+9, baseY+h-16); ctx.rotate(legB*Math.PI/180);
+  ctx.fillStyle=char.dark; ctx.fillRect(-4,0,8,16); ctx.restore();
+  // braço de trás
+  ctx.save(); ctx.translate(x+6, baseY+18); ctx.rotate(armB*Math.PI/180);
+  ctx.strokeStyle=char.dark; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,14); ctx.stroke(); ctx.restore();
+
+  // corpo
+  ctx.fillStyle=char.color;
+  roundRect(x+3,baseY+8,w-6,h-22,7); ctx.fill();
+
+  // perna da frente
+  ctx.save(); ctx.translate(x+w-9, baseY+h-16); ctx.rotate(legA*Math.PI/180);
+  ctx.fillStyle=char.dark; ctx.fillRect(-4,0,8,16); ctx.restore();
+
+  // cabeça
+  ctx.fillStyle='#F5C79E';
+  ctx.beginPath(); ctx.arc(cx,baseY+9,11,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=char.dark;
+  ctx.beginPath(); ctx.arc(cx,baseY+3,11,Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1330';
+  ctx.beginPath(); ctx.arc(cx+facing*4, baseY+10,2,0,Math.PI*2); ctx.fill();
+
+  // braço da frente
+  ctx.save(); ctx.translate(x+w-6, baseY+18); ctx.rotate(armA*Math.PI/180);
+  ctx.strokeStyle=char.color; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,14); ctx.stroke(); ctx.restore();
+
+  ctx.restore();
+}
+
+function drawSignpost(x,y,color){
+  const sx=x-camX;
+  ctx.fillStyle='#6a4fc9'; ctx.fillRect(sx-4,y-60,8,60);
+  ctx.fillStyle=color; roundRect(sx-34,y-96,68,44,8); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='bold 26px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('?',sx,y-64);
+}
+function drawFlag(x){
+  const sx=x-camX;
+  ctx.fillStyle='#ddd'; ctx.fillRect(sx,GROUND_Y-160,6,160);
+  ctx.fillStyle='#FFD24C';
+  ctx.beginPath(); ctx.moveTo(sx+6,GROUND_Y-155); ctx.lineTo(sx+50,GROUND_Y-140); ctx.lineTo(sx+6,GROUND_Y-122); ctx.closePath(); ctx.fill();
+}
+
+function render(){
+  const theme=THEMES[PHASES[state.currentPhaseId].theme];
+  ctx.clearRect(0,0,CW,CH);
+  if(state.sub==='play'){
+    drawBackground(theme);
+    drawGround(theme);
+    drawPlatforms(theme);
+    drawCoins();
+    for(const e of level.enemies) if(e.alive) drawEnemy(e,camX);
+    if(!level.questionDone) drawSignpost(level.questionTriggerX,GROUND_Y,theme.accent);
+    if(level.questionDone) drawFlag(level.flagX);
+    drawCharBody(player.x-camX,player.y,player.w,player.h,player.facing,player.invuln,state.selectedChar,player.animT,player.onGround,player.vy,Math.abs(player.vx)>0.2);
+    ctx.fillStyle='rgba(20,14,40,.4)'; ctx.fillRect(0,0,CW,26);
+    ctx.fillStyle='#fff'; ctx.font='12px "Press Start 2P", monospace'; ctx.textAlign='center';
+    ctx.fillText(PHASES[state.currentPhaseId].world.toUpperCase()+' — '+PHASES[state.currentPhaseId].topic.toUpperCase(),CW/2,17);
+  } else if(state.sub==='question'){
+    renderQuestion(theme);
+  } else if(state.sub==='bossfight'){
+    renderBossFight(theme);
+  }
+}
+
+function renderQuestion(theme){
+  const g=ctx.createLinearGradient(0,0,0,GROUND_Y);
+  g.addColorStop(0,'#241a45'); g.addColorStop(1,theme.sky2);
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle=theme.grass; ctx.fillRect(0,GROUND_Y,CW,8);
+  ctx.fillStyle=theme.ground; ctx.fillRect(0,GROUND_Y+8,CW,CH-GROUND_Y-8);
+
+  const A=questionArena;
+  ctx.fillStyle='rgba(10,6,22,.75)';
+  ctx.fillRect(20,30,CW-40,64);
+  ctx.strokeStyle='#FFD24C'; ctx.lineWidth=2; ctx.strokeRect(20,30,CW-40,64);
+  ctx.fillStyle='#fff'; ctx.font='bold 15px "Baloo 2", sans-serif'; ctx.textAlign='center';
+  wrapText(A.q.text,CW/2,55,CW-70,18);
+
+  A.doors.forEach((d,i)=>{
+    const isNear=A.near===i;
+    ctx.fillStyle= isNear? '#FFD24C' : '#4a3a86';
+    roundRect(d.x,d.y,d.w,d.h,10); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth= isNear?3:1.5; ctx.strokeRect(d.x,d.y,d.w,d.h);
+    ctx.fillStyle= isNear? '#3a2500':'#fff';
+    ctx.font='bold 12px "Baloo 2", sans-serif'; ctx.textAlign='center';
+    wrapText(String.fromCharCode(65+i)+') '+d.text, d.x+d.w/2, d.y+22, d.w-10, 14);
+    if(isNear){
+      ctx.fillStyle='#3a2500'; ctx.font='9px "Press Start 2P"'; ctx.fillText('Y / ENTER',d.x+d.w/2,d.y+d.h-8);
+    }
+  });
+
+  for(const e of A.enemies) if(e.alive) drawEnemy(e,0);
+  drawCharBody(qPlayer.x,qPlayer.y,qPlayer.w,qPlayer.h,qPlayer.facing,qPlayer.invuln,state.selectedChar,qPlayer.animT,qPlayer.onGround,qPlayer.vy,Math.abs(qPlayer.vx)>0.2);
+
+  ctx.fillStyle='rgba(20,14,40,.4)'; ctx.fillRect(0,0,CW,26);
+  ctx.fillStyle='#fff'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center';
+  const roundTxt = A.totalRounds>1 ? (' — PERGUNTA '+A.round+'/'+A.totalRounds) : '';
+  ctx.fillText('MODO PERGUNTA'+roundTxt,CW/2,17);
+}
+
+function renderBossFight(theme){
+  const B=bossFight;
+  const isFinal=B.variant==='final';
+  const g=ctx.createLinearGradient(0,0,0,GROUND_Y);
+  if(isFinal){ g.addColorStop(0,'#2b0000'); g.addColorStop(1,'#5c0d0d'); }
+  else{ g.addColorStop(0,theme.sky1); g.addColorStop(1,theme.sky2); }
+  ctx.fillStyle=g; ctx.fillRect(0,0,CW,CH);
+  ctx.fillStyle= isFinal?'#FF4B4B':theme.grass; ctx.fillRect(0,GROUND_Y,CW,8);
+  ctx.fillStyle= isFinal?'#1a0000':theme.ground; ctx.fillRect(0,GROUND_Y+8,CW,CH-GROUND_Y-8);
+
+  drawBossEntity(B);
+  drawCharBody(qPlayer.x,qPlayer.y,qPlayer.w,qPlayer.h,qPlayer.facing,qPlayer.invuln,state.selectedChar,qPlayer.animT,qPlayer.onGround,qPlayer.vy,Math.abs(qPlayer.vx)>0.2);
+
+  ctx.fillStyle='rgba(20,14,40,.4)'; ctx.fillRect(0,0,CW,26);
+  ctx.fillStyle='#fff'; ctx.font='11px "Press Start 2P"'; ctx.textAlign='center';
+  ctx.fillText((B.name||'BOSS').toUpperCase()+' — '+B.maxHp+' TAPAS PARA VENCER!',CW/2,17);
+}
+
+function wrapText(text,cx,y,maxW,lh){
+  const words=text.split(' '); let line=''; let yy=y;
+  for(const w of words){
+    const test=line+w+' ';
+    if(ctx.measureText(test).width>maxW && line!==''){ ctx.fillText(line,cx,yy); line=w+' '; yy+=lh; }
+    else line=test;
+  }
+  ctx.fillText(line,cx,yy);
+}
+
+/* boot */
+buildStageGrid();
+showScreen('title');
+setInterval(pollGamepadMenu,50);
+})();
+</script>
+</body>
+</html>
